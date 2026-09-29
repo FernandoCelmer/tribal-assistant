@@ -91,3 +91,32 @@ async def test_incoming_attack_switches_to_emergency_and_keeps_troops_home(sessi
     assert not any(e["action"] == "send_farm_attack" and e.get("ok") for e in decision.executed)
     assert any("vetado" in e["why"] for e in decision.deferred if e["action"] in ("send_farm_attack", "send_scavenge"))
     assert decision.executed and decision.executed[0]["source"] == "defense"
+
+
+def test_role_rules_pick_defense_offensive_support_expansion_or_growth() -> None:
+    from tribal_assistant.agents.coordination.roles import RoleSelector
+    from tribal_assistant.agents.coordination.threat import Threat
+
+    ctx = context(units=[unit("spear", 10), unit("light", 30)])
+    near = [Threat("Vizinho", 5000, 3.2)]
+
+    assert RoleSelector.decide(ctx, {"dangerous": near, "protection_hours": 10})[0] == Role.DEFENSE
+    assert RoleSelector.decide(ctx, {"dangerous": near, "protection_hours": 90})[0] != Role.DEFENSE
+    assert RoleSelector.decide(ctx, {"others_under_attack": [2], "own_villages": 2})[0] == Role.SUPPORT
+    assert RoleSelector.decide(ctx, {"good_targets": 4})[0] == Role.OFFENSIVE
+    assert RoleSelector.decide(context(), {})[0] == Role.GROWTH
+
+    rich = context(buildings=[building("main", 20), building("smith", 18), building("market", 8)])
+    assert RoleSelector.decide(rich, {})[0] == Role.EXPANSION
+
+
+async def test_role_switches_only_after_it_repeats(session: AsyncSession) -> None:
+    from tribal_assistant.agents.coordination.roles import RoleSelector
+
+    selector = RoleSelector(session)
+    ctx = context()
+
+    assert await selector._confirm(ctx, Role.GROWTH, Role.OFFENSIVE) == Role.GROWTH
+    assert await selector._confirm(ctx, Role.GROWTH, Role.OFFENSIVE) == Role.GROWTH
+    assert await selector._confirm(ctx, Role.GROWTH, Role.OFFENSIVE) == Role.OFFENSIVE
+    assert await selector._confirm(ctx, Role.GROWTH, Role.DEFENSE) == Role.DEFENSE

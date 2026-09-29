@@ -41,3 +41,32 @@ def test_market_offer_only_trades_surplus_for_the_lowest_resource():
 def test_own_offer_splits_the_gap_and_keeps_a_floor():
     assert EconomyProposer.own_offer({"wood": 300, "stone": 1500, "iron": 700}, 2285) == ("stone", "wood", 600)
     assert EconomyProposer.own_offer({"wood": 800, "stone": 1000, "iron": 900}, 2285) is None
+
+
+def test_skill_books_are_used():
+    book = {"key": "4001_0", "name": "Livro de Habilidades: Motivação", "detail": "", "usable": True}
+    assert UpkeepProposer.item_decision(book, {"wood": 0, "clay": 0, "iron": 0}, 2285, building=False)
+
+
+def test_reward_label_resources():
+    from tribal_assistant.agents.roles.quartermaster import QuartermasterAgent
+
+    assert QuartermasterAgent.reward_resources("Poço de argila 5 150 150 100   Tudo") == (150, 150, 100)
+    assert QuartermasterAgent.reward_resources("Mercado 1 1.000 1.200 1.000 Tudo") == (1000, 1200, 1000)
+
+
+def test_squad_is_sized_by_expected_haul_and_uses_the_paladin():
+    from tribal_assistant.agents.proposers.attack import AttackProposer
+
+    assert AttackProposer.squad({"light": 10, "spear": 30}, 200) == {"light": 3}
+    assert AttackProposer.squad({"knight": 1, "spear": 30}, 300) == {"knight": 1, "spear": 8}
+    assert AttackProposer.squad({"spear": 2}, 300) is None
+
+
+def test_scavenging_is_split_with_at_least_ten_pop_each():
+    from tribal_assistant.agents.proposers.attack import AttackProposer
+
+    parts = AttackProposer.split({"spear": 30, "sword": 10}, {1: 0.1, 2: 0.25})
+    assert set(parts) == {1, 2}
+    assert sum(parts[1].values()) > sum(parts[2].values())
+    assert len(AttackProposer.split({"spear": 13}, {1: 0.1, 2: 0.25})) == 1
