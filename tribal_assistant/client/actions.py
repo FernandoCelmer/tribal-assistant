@@ -810,7 +810,10 @@ class GameActions:
             status = " ".join((await page.locator("#village_equip_status").inner_text()).split())
             if "nenhuma relíquia equipada" in status:
                 return ActionResult(
-                    False, "equip_relic", f"relíquia não ficou equipada: {status}", {"relic": relic_id}
+                    False,
+                    "equip_relic",
+                    f"relíquia não ficou equipada: {status}",
+                    {"relic": relic_id},
                 )
 
         logger.info("Equipped relic {} in village {}", relic_id, village_id)
@@ -819,6 +822,35 @@ class GameActions:
             "equip_relic",
             f"relíquia {relic_id} equipada",
             {"relic": relic_id, "notices": messages["notices"]},
+        )
+
+    async def rename_village(self, village_id: str, name: str) -> ActionResult:
+        """Rename the village from the headquarters form."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "main")
+
+            field_ = page.locator('form[action*="action=change_name"] input[name="name"]').first
+            if not await field_.count():
+                return ActionResult(False, "rename_village", "formulário de nome não encontrado")
+
+            await field_.click()
+            await field_.fill("")
+            await field_.type(name[:32], delay=70)
+            await human_delay(400, 900)
+            await self._click_and_settle(
+                page, page.locator('form[action*="action=change_name"] input[type="submit"]').first
+            )
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "rename_village", " | ".join(messages["errors"]))
+
+        logger.info("Renamed village {} to {}", village_id, name)
+        return ActionResult(
+            True,
+            "rename_village",
+            f"aldeia renomeada para {name}",
+            {"notices": messages["notices"]},
         )
 
     async def claim_rewards(self, village_id: str) -> ActionResult:

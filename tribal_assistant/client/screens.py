@@ -1,5 +1,8 @@
 """Saves the HTML of game screens the first time they exist, so new actions can be mapped."""
 
+import re
+from datetime import datetime, timedelta
+from html import unescape
 from pathlib import Path
 from typing import ClassVar
 
@@ -30,7 +33,13 @@ class ScreenCatalog:
         "awards": ("info_player", {"mode": "awards"}),
         "farm_assistant": ("am_farm", {}),
         "profile": ("info_player", {}),
+        "mail": ("mail", {}),
+        "tribe": ("ally", {}),
+        "reports": ("report", {}),
+        "simulator": ("place", {"mode": "sim"}),
+        "dominance": ("ranking", {"mode": "dominance"}),
     }
+    REFRESH: ClassVar[timedelta] = timedelta(hours=6)
 
     def __init__(self, directory: Path | None = None) -> None:
         self.directory = directory or Path(settings.html_capture_dir) / "screens"
@@ -42,7 +51,21 @@ class ScreenCatalog:
         buildings = [screen for screen in WATCHED if levels.get(screen, 0) >= 1]
         popups = ["inventory_details", *(["statue_recruit"] if levels.get("statue", 0) >= 1 else [])]
         wanted = ["menu", *buildings, *self.ACCOUNT, *popups]
-        return [screen for screen in wanted if not self.path(screen).exists()]
+        return [screen for screen in wanted if self.stale(screen)]
+
+    def stale(self, screen: str) -> bool:
+        path = self.path(screen)
+        if not path.exists():
+            return True
+
+        age = datetime.now() - datetime.fromtimestamp(path.stat().st_mtime)
+        return age >= self.REFRESH
+
+    def text(self, screen: str, limit: int = 3000) -> str:
+        html = self.path(screen).read_text(encoding="utf-8") if self.path(screen).exists() else ""
+        html = re.sub(r"<(script|style)\b.*?</\1>", " ", html, flags=re.S | re.I)
+        text = unescape(re.sub(r"<[^>]+>", " ", html))
+        return re.sub(r"\s+", " ", text).strip()[:limit]
 
     def save(self, name: str, html: str, quiet: bool = False) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)

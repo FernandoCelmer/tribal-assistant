@@ -1,7 +1,7 @@
 """Reads the whole account state from the browser and persists it."""
 
 import random
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from loguru import logger
@@ -292,10 +292,29 @@ async def _read_village(page: Page, village_id: str, finish_free: bool = False) 
     for name in missing[:3]:
         try:
             await catalog.capture(page, village_id, name)
+            CAPTURED.append(name)
         except PlaywrightError as exc:
             logger.warning("Could not capture {} screen: {}", name, exc)
 
     return village, data["overview"]["text"]
+
+
+CAPTURED: list[str] = []
+
+
+class ReportClock:
+    """Reads the report list at least every few minutes, even when the game shows no new ones."""
+
+    EVERY = timedelta(minutes=10)
+    last: datetime | None = None
+
+    @classmethod
+    def due(cls) -> bool:
+        return cls.last is None or datetime.now(UTC) - cls.last >= cls.EVERY
+
+    @classmethod
+    def mark(cls) -> None:
+        cls.last = datetime.now(UTC)
 
 
 async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[dict[str, Any]]:
@@ -329,8 +348,9 @@ async def _read_game(known_reports: set[str], finish_free: bool = False) -> Game
         overview_text = overview_text or text
 
     report_rows: list[dict[str, Any]] = []
-    if first.new_reports or not known_reports:
+    if first.new_reports or not known_reports or ReportClock.due():
         report_rows = await _read_reports(page, village_ids[0], known_reports)
+        ReportClock.mark()
     player = parse_player(await _game_data(page), overview_text)
 
     await game_session.save_state()
@@ -352,6 +372,13 @@ async def sync_game() -> GameSnapshot:
             snapshot = await _read_game(known, config.auto_finish_free)
             async with SessionFactory() as session:
                 await GameRepository(session).persist(snapshot)
+
+                from tribal_assistant.agents.learning import LessonBook
+
+                book = LessonBook(session)
+                await book.reports(snapshot.reports, known)
+                await book.screens(ScreenCatalog(), CAPTURED)
+                CAPTURED.clear()
         except Exception as exc:
             session_state.logged_in = False
             session_state.last_error = str(exc)
