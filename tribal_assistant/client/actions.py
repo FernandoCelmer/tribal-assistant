@@ -14,6 +14,8 @@ from loguru import logger
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 
+from tribal_assistant.agents.guardrails import SCAVENGE_MIN_POP
+from tribal_assistant.agents.knowledge import UNITS
 from tribal_assistant.client.human import human_click, human_delay, reading_pause
 from tribal_assistant.client.modules.game_sync import (
     BUILD_QUEUE_JS,
@@ -47,7 +49,19 @@ UNIT_SCREEN = {
 
 QUEST_POPUP = ".quest-popup-container"
 
+SCAVENGE_HOME_JS = """() => Object.fromEntries([...document.querySelectorAll('.units-entry-all[data-unit]')]
+  .map(a => [a.dataset.unit, Number((a.innerText.match(/\\d+/) || [0])[0])]))"""
+
 FREE_FINISH = "#buildqueue .btn-instant-free"
+FREE_WAIT_MAX = 75
+FREE_WAIT_JS = "(n) => { const at = Number(n.dataset.availableFrom || 0); return at ? Math.max(0, at - Date.now() / 1000) : null; }"
+
+DAILY_CHEST = "#daily_bonus_content .reward:has(.actions a.btn)"
+DAILY_STATE_JS = """() => [...document.querySelectorAll('#daily_bonus_content .reward')].map(r => ({
+  day: (r.querySelector('.day')?.innerText || '').trim(),
+  open: !!r.querySelector('.actions a.btn'),
+  item: (r.querySelector('.db-chest')?.dataset.title || '').match(/class="name">([^<]+)/)?.[1] || null,
+}))"""
 
 UNLOCK_DIALOG_JS = """(id) => {
   const box = document.querySelector(`#popup_box_unlock-option-${id}`);
@@ -62,10 +76,13 @@ UNLOCK_DIALOG_JS = """(id) => {
   };
 }"""
 
-ERROR_JS = """() => {
-  const nodes = [...document.querySelectorAll('.error_box, .autoHideBox.error, #error, .error')];
-  const text = nodes.map(n => n.innerText.trim()).filter(Boolean);
-  return text.length ? text.join(' | ') : null;
+SCREEN_MESSAGES_JS = """() => {
+  const read = (sel) => [...document.querySelectorAll(sel)]
+    .filter(n => n.offsetParent !== null || n.closest('#autoHideBox, .autoHideBox'))
+    .map(n => n.innerText.trim()).filter(Boolean);
+  const errors = read('.error_box, .autoHideBox.error, #error, .error, .autoHideBox.fail');
+  const notices = read('.autoHideBox.success, .autoHideBox.info, .success_box, .info_box.notice, .autoHideBox:not(.error):not(.fail)');
+  return {errors: [...new Set(errors)], notices: [...new Set(notices)].filter(t => !errors.includes(t))};
 }"""
 
 NEXT_LEVEL_JS = """(id) => {
@@ -98,11 +115,24 @@ class GameActions:
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
         (directory / f"{name}-{stamp}.html").write_text(page_html, encoding="utf-8")
 
-    async def _game_error(self, page: Page) -> str | None:
+    async def screen_messages(self, page: Page) -> dict[str, list[str]]:
+        """Errors and notices the game shows on screen after an action (red boxes, green toasts)."""
         try:
-            return await _evaluate(page, ERROR_JS)
+            found = await _evaluate(page, SCREEN_MESSAGES_JS) or {}
         except PlaywrightError:
-            return None
+            return {"errors": [], "notices": []}
+
+        for text in found.get("errors", []):
+            logger.warning("Jogo (erro): {}", text)
+
+        for text in found.get("notices", []):
+            logger.info("Jogo: {}", text)
+
+        return {"errors": found.get("errors", []), "notices": found.get("notices", [])}
+
+    async def _game_error(self, page: Page) -> str | None:
+        messages = await self.screen_messages(page)
+        return " | ".join(messages["errors"]) or None
 
     async def _click_and_settle(self, page: Page, locator: Any, timeout: int = 15_000) -> None:
         """Click a control that may either navigate or update the page over AJAX."""
@@ -131,8 +161,12 @@ class GameActions:
                 break
 
             if not await button.is_visible():
+                wait = await button.evaluate(FREE_WAIT_JS)
+                if wait is None or wait > FREE_WAIT_MAX:
+                    break
+
                 try:
-                    await button.wait_for(state="visible", timeout=4_000)
+                    await button.wait_for(state="visible", timeout=int(wait * 1000) + 3_000)
                 except PlaywrightError:
                     break
 
@@ -224,6 +258,17 @@ class GameActions:
             start = option.locator(".free_send_button")
             if not await start.count() or not await start.first.is_visible():
                 return ActionResult(False, "send_scavenge", f"coleta {option_id} não está livre para enviar")
+
+            home = await page.evaluate(SCAVENGE_HOME_JS) or {}
+            units = {u: min(n, int(home.get(u, 0))) for u, n in units.items() if int(home.get(u, 0)) > 0}
+            pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
+            if pop < SCAVENGE_MIN_POP:
+                return ActionResult(
+                    False,
+                    "send_scavenge",
+                    f"só {pop} de população disponível em casa; a coleta exige {SCAVENGE_MIN_POP}",
+                    {"home": home},
+                )
 
             for unit, count in units.items():
                 field_ = page.locator(f"input.unitsInput[name='{unit}']").first
@@ -489,6 +534,130 @@ class GameActions:
             return ActionResult(
                 True, "complete_quest", f"missão {quest_id} concluída", {"quest_id": quest_id}
             )
+
+    async def open_daily_bonus(self, village_id: str) -> ActionResult:
+        """Open every unlocked daily bonus chest in the profile; items go to the inventory."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "info_player", mode="daily_bonus")
+            chests = await page.evaluate(DAILY_STATE_JS) or []
+
+            opened = 0
+            for _ in range(10):
+                reward = page.locator(DAILY_CHEST).first
+                if not await reward.count():
+                    break
+
+                await reward.locator(".chest_container").first.hover()
+                await human_delay(300, 700)
+
+                button = reward.locator(".actions a.btn").first
+                if await button.is_visible():
+                    await human_click(page, button)
+                else:
+                    await button.evaluate("(n) => n.click()")
+
+                await human_delay(900, 1800)
+
+                if not opened:
+                    self._capture(await page.content(), "daily-bonus-opened")
+
+                opened += 1
+                await self._close_popup(page)
+                await human_delay(400, 900)
+
+        if not opened:
+            return ActionResult(False, "open_daily_bonus", "nenhum baú diário para abrir", {"chests": chests})
+
+        items = [c["item"] for c in chests if c.get("open") and c.get("item")][:opened]
+        logger.info("Opened {} daily bonus chest(s)", opened)
+        return ActionResult(
+            True,
+            "open_daily_bonus",
+            f"{opened} baú(s) diário(s) aberto(s): {', '.join(items) or 'itens no inventário'}",
+            {"opened": opened, "items": items},
+        )
+
+    async def recruit_knight(self, village_id: str) -> ActionResult:
+        """Recruit a paladin at the statue with resources (never premium points)."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "statue")
+
+            launch = page.locator(".knight_recruit_launch")
+            if not await launch.count() or not await launch.first.is_visible():
+                return ActionResult(False, "recruit_knight", "sem opção de recrutar paladino nesta aldeia")
+
+            await human_click(page, launch.first)
+            await human_delay(700, 1400)
+
+            confirm = page.locator("#knight_recruit_confirm")
+            if not await confirm.count():
+                self._capture(await page.content(), "statue-recruit")
+                return ActionResult(False, "recruit_knight", "janela de recrutamento não abriu")
+
+            await human_click(page, confirm.first)
+            await page.wait_for_timeout(2_000)
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "recruit_knight", " | ".join(messages["errors"]))
+
+        logger.info("Recruiting a paladin in village {}", village_id)
+        return ActionResult(True, "recruit_knight", "paladino em recrutamento", {"notices": messages["notices"]})
+
+    async def inventory(self, village_id: str) -> list[dict[str, Any]]:
+        """Items in the inventory with their detail text and whether they can be used."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "inventory")
+            await page.wait_for_timeout(2_000)
+
+            items = []
+            for item in await page.locator(".inventory_items .item").all():
+                key = (await item.get_attribute("id") or "").removeprefix("item_")
+                await item.click()
+                await page.wait_for_timeout(700)
+                detail = page.locator(".inventory_detail").first
+                items.append({
+                    "key": key,
+                    "name": await item.get_attribute("data-title"),
+                    "detail": " ".join((await detail.inner_text()).split()),
+                    "usable": await detail.locator(".detail_actions a.btn").count() > 0,
+                })
+
+        return items
+
+    async def use_item(self, village_id: str, key: str) -> ActionResult:
+        """Use one inventory item (resource pack, construction bonus...) through its Usar button."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "inventory")
+            await page.wait_for_timeout(2_000)
+
+            item = page.locator(f"#item_{key}")
+            if not await item.count():
+                return ActionResult(False, "use_item", f"item {key} não está no inventário")
+
+            name = await item.first.get_attribute("data-title")
+            await human_click(page, item.first)
+            await human_delay(600, 1200)
+
+            use = page.locator(".inventory_detail .detail_actions a.btn").first
+            if not await use.count():
+                return ActionResult(False, "use_item", f"{name} não pode ser usado agora")
+
+            await human_click(page, use)
+            await human_delay(900, 1600)
+
+            dialog = page.locator(".popup_box_container .btn-confirm-yes, .popup_box_container a.btn:visible, .popup_box_container input.btn:visible")
+            if await dialog.count():
+                self._capture(await page.content(), f"use-item-{key}")
+                await human_click(page, dialog.first)
+                await page.wait_for_timeout(1_500)
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "use_item", " | ".join(messages["errors"]), {"item": name})
+
+        logger.info("Used item {} ({}) in village {}", key, name, village_id)
+        return ActionResult(True, "use_item", f"{name} usado", {"item": name, "notices": messages["notices"]})
 
     async def claim_rewards(self, village_id: str) -> ActionResult:
         """Claim every reward waiting in the "Recompensas" tab (resources land in this village)."""
