@@ -10,6 +10,38 @@ from tribal_assistant.agents.coordination.policy import BUILD_SLOTS
 from tribal_assistant.core.config import settings
 
 
+async def _accounts(one_per_world: bool = False) -> list:
+    from tribal_assistant.accounts.registry import AccountRegistry
+    from tribal_assistant.db.session import SessionFactory
+
+    async with SessionFactory() as session:
+        accounts = await AccountRegistry(session).contexts(enabled_only=True)
+
+    if one_per_world:
+        seen: dict[str, object] = {}
+        for account in accounts:
+            seen.setdefault(account.server, account)
+        return list(seen.values())
+
+    return accounts
+
+
+def per_account(job, one_per_world: bool = False):
+    """Runs `job` once for every enabled account, each inside its own account context."""
+    from tribal_assistant.accounts.context import use_account
+
+    async def run() -> None:
+        for account in await _accounts(one_per_world):
+            with use_account(account):
+                try:
+                    await job()
+                except Exception:
+                    logger.exception("{} failed for account {}", job.__name__, account.name)
+
+    run.__name__ = job.__name__
+    return run
+
+
 async def _sync_game_job() -> None:
     from tribal_assistant.client.human import in_quiet_hours
     from tribal_assistant.client.modules.game_sync import sync_game
@@ -131,7 +163,7 @@ async def _retention_job() -> None:
 
 def register_jobs(scheduler: AsyncIOScheduler) -> None:
     scheduler.add_job(
-        _sync_game_job,
+        per_account(_sync_game_job),
         trigger=IntervalTrigger(
             seconds=settings.sync_interval_seconds,
             jitter=max(20, settings.sync_interval_seconds // 4),
@@ -143,7 +175,7 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         replace_existing=True,
     )
     scheduler.add_job(
-        _sync_world_job,
+        per_account(_sync_world_job, one_per_world=True),
         trigger=IntervalTrigger(minutes=settings.world_sync_interval_minutes, jitter=120),
         id="sync_world",
         next_run_time=datetime.now() + timedelta(seconds=30),
@@ -153,14 +185,14 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
     )
     if settings.farm_enabled:
         scheduler.add_job(
-            _farm_tick_job,
+            per_account(_farm_tick_job),
             trigger=IntervalTrigger(minutes=5),
             id="farm_tick",
             replace_existing=True,
         )
 
     scheduler.add_job(
-        _agents_job,
+        per_account(_agents_job),
         trigger=IntervalTrigger(minutes=1, jitter=20),
         id="village_agents",
         next_run_time=datetime.now() + timedelta(seconds=90),
@@ -169,7 +201,7 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         replace_existing=True,
     )
     scheduler.add_job(
-        _free_finish_job,
+        per_account(_free_finish_job),
         trigger=IntervalTrigger(minutes=1, jitter=10),
         id="free_finish",
         next_run_time=datetime.now() + timedelta(seconds=60),
