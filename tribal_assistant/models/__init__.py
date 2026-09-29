@@ -13,6 +13,7 @@ from tribal_assistant.models.agent import (
 from tribal_assistant.models.building import Building
 from tribal_assistant.models.command import Command
 from tribal_assistant.models.farm_target import FarmTarget
+from tribal_assistant.models.lesson import Lesson
 from tribal_assistant.models.log import AppLog
 from tribal_assistant.models.player import Player
 from tribal_assistant.models.recruit_order import RecruitOrder
@@ -33,6 +34,7 @@ __all__ = [
     "Building",
     "Command",
     "FarmTarget",
+    "Lesson",
     "Player",
     "QuestRewardState",
     "QuestState",
