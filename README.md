@@ -222,7 +222,7 @@ tribal-assistant quests                                 # quests and pending rew
 
 ```bash
 pip install "tribal-assistant[mcp]"
-tribal-assistant mcp            # stdio, for Claude Code / Claude Desktop / Codex
+tribal-assistant mcp            # stdio, for Claude Code / Claude Desktop / Codex (needs the server running)
 tribal-assistant mcp --http     # streamable HTTP on 127.0.0.1:8765
 ```
 
@@ -258,25 +258,42 @@ Everything shown there is stored in the database: rounds (`agent_runs`), every r
 
 ## Architecture
 
+Four layers, each depending only on the one below:
+
 ```
-tribal_assistant/
-├── cli.py            Typer CLI
-├── agents/           village agents: roles, brains, tools, toolbox, guardrails, knowledge
-├── ai/               provider-neutral LLM layer (abstract classes + providers)
-├── mcp/              MCP server, tool groups, prompts
-├── server.py         FastAPI factory, lifespan, dashboard routes
-├── api/              HTTP routers (v1)
-├── services/         domain logic: game, world, farm, advisor, assistant
-├── repositories/     SQLAlchemy async data access
-├── models/           ORM models
-├── schemas/          Pydantic input/output
-├── client/           Playwright session, login, game actions, scrapers, sync
-├── scheduler/        APScheduler runtime and jobs
-├── db/               engine, session factory, init_db
-└── web/              dashboard (HTML, CSS design system, icons)
+web ─┐
+     ├─► api ──► core
+mcp ─┘  (HTTP)
+cli ───────────► core
 ```
 
-Layers: `api → services → repositories → models`. Scrapers are pure functions (HTML in, data out) and are tested with saved fixtures.
+| Layer | Package | Responsibility |
+|-------|---------|----------------|
+| **core** | `tribal_assistant/core` | The library and the engine: accounts, browser sessions and game actions (`game`), village agents and the coordinator (`agents`), AI providers (`ai`), database models and repositories (`models`, `repositories`, `db`), use cases (`services`), the scheduler and `runtime.Engine`. All rules and decisions live here. No web framework imports. |
+| **api** | `tribal_assistant/api` | FastAPI bridge over the core: resolves the account per request, opens the session, builds core services, translates errors to JSON. `api.app:app` also serves the dashboard. |
+| **web** | `tribal_assistant/web` | Dashboard templates and static files. Pages carry no data; the browser reads everything from `/api/v1`. |
+| **mcp** | `tribal_assistant/mcp` | MCP server that only talks to the API over HTTP (`TRIBAL_API_URL`, account from `TRIBAL_ACCOUNT`). The server must be running. |
+| **cli** | `tribal_assistant/cli.py` | Terminal commands on top of the core library. |
+
+`tests/test_architecture.py` fails if a layer imports one it should not (for example FastAPI in `core`, or `core` in `mcp`).
+
+```
+tribal_assistant/
+├── core/
+│   ├── accounts/       account context and registry
+│   ├── agents/         quests and plan agents, coordinator, proposers, tools, guardrails, learning
+│   ├── ai/             provider-neutral LLM layer
+│   ├── game/           Playwright session per account, actions, scrapers, sync, screen capture
+│   ├── db/ models/ repositories/   engine, ORM models (scoped by account and world), data access
+│   ├── schemas/        Pydantic contracts shared with the API
+│   ├── services/       use cases called by the API and the CLI
+│   ├── scheduler/      jobs run per account
+│   └── runtime.py      Engine: start and stop everything in the background
+├── api/                FastAPI app, dependencies, routers (v1), errors
+├── web/                pages, templates, CSS, JS
+├── mcp/                MCP server, HTTP client, tool groups, prompts, resources
+└── cli.py              Typer CLI
+```
 
 ## Development
 
