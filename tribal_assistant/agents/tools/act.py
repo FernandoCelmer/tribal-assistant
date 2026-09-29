@@ -499,6 +499,29 @@ class EquipRelic(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class RenameVillage(AgentTool):
+    name = "rename_village"
+    description = "Muda o nome da aldeia no Edifício Principal (até 32 caracteres). Conclui a missão 'Um nome digno'."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"name": {"type": "string", "maxLength": 32}, "reason": REASON},
+        "required": ["name", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        name = str(args["name"]).strip()[:32]
+        if not name:
+            return ToolOutcome(False, "RECUSADO: nome vazio")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) renomear para {name}")
+
+        result = await box.actions.rename_village(box.ctx.game_id, name)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (

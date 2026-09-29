@@ -29,6 +29,7 @@ class VillageContext:
     plan: list[PlanStep] = field(default_factory=list)
     plan_summary: str = ""
     plan_refreshed_at: datetime | None = None
+    lessons: str = ""
 
     @property
     def id(self) -> int:
@@ -161,6 +162,10 @@ class ContextLoader:
         ctx.plan = PlanTracker().evaluate(ctx, PlanRepository.steps(row))
         ctx.plan_summary = row.summary if row else ""
         ctx.plan_refreshed_at = row.refreshed_at if row else None
+
+        from tribal_assistant.agents.learning import LessonBook
+
+        ctx.lessons = await LessonBook(self.plans.session).summary()
 
     async def _quests(self) -> list[dict[str, Any]]:
         return [

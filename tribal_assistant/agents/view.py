@@ -11,12 +11,12 @@ KIND = {"build": "construir", "recruit": "recrutar", "unlock_scavenge": "desbloq
 
 class ContextView:
     SECTIONS: ClassVar[dict[str, tuple[str, ...]]] = {
-        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands"),
+        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "lessons"),
         "economist": ("resources", "queue", "economy_buildings", "scavenge", "plan"),
         "commander": ("resources", "queue", "military_buildings", "troops", "plan", "commands"),
         "raider": ("troops", "scavenge", "commands"),
         "quartermaster": ("quests",),
-        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands"),
+        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "lessons"),
     }
 
     def __init__(self, ctx: VillageContext, queue_slots: int) -> None:
@@ -132,3 +132,6 @@ class ContextView:
             return ""
         alert = f"ATAQUES CHEGANDO: {len(incoming)}" if incoming else "nenhum ataque chegando"
         return f"Comandos: {alert} · {len(outgoing)} saindo"
+
+    def lessons(self) -> str:
+        return self.ctx.lessons

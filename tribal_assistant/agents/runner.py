@@ -1,7 +1,7 @@
 """One round of every specialist on every own village."""
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any
 from uuid import uuid4
 
@@ -11,6 +11,7 @@ from tribal_assistant.agents.brains.base import Brain
 from tribal_assistant.agents.brains.llm import LLMBrain
 from tribal_assistant.agents.brains.rules import RuleBrain
 from tribal_assistant.agents.context import ContextLoader
+from tribal_assistant.agents.learning import LessonBook
 from tribal_assistant.agents.roles.base import VillageAgent
 from tribal_assistant.agents.roles.commander import CommanderAgent
 from tribal_assistant.agents.roles.economist import EconomistAgent
@@ -211,6 +212,12 @@ class AgentRunner:
             return
 
         await AgentRepository(session).save_quests(quests, rewards)
+
+        book = LessonBook(session)
+        for quest in quests:
+            await book.quest(quest.quest_id, quest.title, quest.state, [asdict(g) for g in quest.goals], quest.description)
+
+        await session.commit()
 
     @staticmethod
     async def _resync() -> None:

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.agents.context import VillageContext
 from tribal_assistant.agents.guardrails import Guardrails
+from tribal_assistant.agents.learning import LessonBook
 from tribal_assistant.agents.tools.act import (
     ChooseRelic,
     ClaimQuestRewards,
@@ -15,6 +16,7 @@ from tribal_assistant.agents.tools.act import (
     OpenDailyBonus,
     RecruitKnight,
     RecruitUnits,
+    RenameVillage,
     SendFarmAttack,
     SendScavenge,
     SetVillageGoal,
@@ -59,6 +61,7 @@ class Toolbox:
         UseItem,
         ChooseRelic,
         EquipRelic,
+        RenameVillage,
         SetVillageGoal,
         SetVillagePlan,
         UnlockScavenge,
@@ -85,6 +88,7 @@ class Toolbox:
         self.config = config
         self.guard = Guardrails(session, config)
         self.repo = AgentRepository(session)
+        self.lessons = LessonBook(session)
         self.acted = False
         self.trace = trace
         self.brain_name = "rules"
@@ -108,8 +112,10 @@ class Toolbox:
 
         await self._trace("tool_call", AgentTool.dump(arguments), name)
 
+        blocked = await self.lessons.blocked(name, arguments) if tool.acts and not self.dry_run else None
+
         try:
-            outcome = await tool.run(self, arguments)
+            outcome = ToolOutcome(False, blocked) if blocked else await tool.run(self, arguments)
         except (KeyError, TypeError, ValueError) as exc:
             outcome = ToolOutcome(False, f"argumentos inválidos: {exc}")
         except Exception as exc:
@@ -158,6 +164,10 @@ class Toolbox:
             reason=str(arguments.get("reason", "")),
             result=outcome.text,
         )
+
+        if not self.dry_run:
+            await self.lessons.action(self.agent.key, tool.name, arguments, outcome.ok, outcome.text)
+            await self.lessons.notices(tool.name, list(outcome.data.get("notices", [])))
 
         logger.info(
             "[{}] {} {} → {}", self.ctx.village.coords, self.agent.key, tool.name, outcome.text

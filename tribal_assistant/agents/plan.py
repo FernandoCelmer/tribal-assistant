@@ -102,8 +102,12 @@ class RulePlanner:
         for quest in ctx.quests:
             for goal in quest.get("goals", []):
                 mapped = GameKnowledge.goal_building(f"{goal.get('title', '')} {goal.get('text', '')}")
-                if mapped and mapped[0] not in ("wall", "hide") and levels.get(mapped[0], 0) < mapped[1]:
-                    add("build", mapped[0], mapped[1], f"missão: {quest.get('title', '')}")
+                if not mapped:
+                    continue
+
+                level = mapped[1] or int(goal.get("target") or 1)
+                if mapped[0] not in ("wall", "hide") and levels.get(mapped[0], 0) < level:
+                    add("build", mapped[0], level, f"missão: {quest.get('title', '')}")
 
         if levels.get("main", 0) < 20:
             add("build", "main", levels.get("main", 0) + 1, "edifício principal sem parar: acelera todas as obras")

@@ -111,6 +111,7 @@ class ListBarbarians(AgentTool):
                 "distance": r.distance,
                 "minutes": r.travel_minutes,
                 "recently_attacked": await box.repo.attacked_recently(r.coords, box.config.retarget_minutes),
+                **{k: v for k, v in (await box.lessons.target(r.coords)).items() if k in ("last_result", "avg_haul", "attacks")},
             }
             for r in rows
         ]

@@ -34,6 +34,7 @@ class OperatorAgent(VillageAgent):
         "use_item",
         "choose_relic",
         "equip_relic",
+        "rename_village",
     )
 
     async def rules(self, box: "Toolbox") -> str:

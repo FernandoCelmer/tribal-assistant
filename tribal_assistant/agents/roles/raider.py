@@ -46,7 +46,12 @@ class RaiderAgent(VillageAgent):
         if not listing.ok or not listing.text.startswith("["):
             return listing.text
 
-        targets = [t for t in json.loads(listing.text) if not t.get("recently_attacked")]
+        targets = [
+            t
+            for t in json.loads(listing.text)
+            if not t.get("recently_attacked") and t.get("last_result") not in ("red", "yellow")
+        ]
+        targets.sort(key=lambda t: (-(t.get("avg_haul") or 0), t.get("distance") or 0))
         sent = []
 
         for target in targets:
