@@ -8,6 +8,7 @@ from tribal_assistant.agents.plan import PlanTracker
 from tribal_assistant.agents.proposers.base import Proposer
 
 PITS = ("wood", "stone", "iron")
+SCAVENGE_UNLOCK = {2: (250, 300, 250), 3: (1000, 1200, 1000), 4: (10000, 12000, 10000)}
 PIT_RESOURCE = {"wood": "wood", "stone": "clay", "iron": "iron"}
 
 
@@ -53,10 +54,11 @@ class InfrastructureProposer(Proposer):
                         {"option_id": option_id, "reason": "passo do plano: coleta"},
                         f"desbloquear coleta {option_id}",
                         "renda de coleta sem arriscar tropas",
+                        cost=dict(zip(("wood", "clay", "iron"), SCAVENGE_UNLOCK.get(option_id, (0, 0, 0)), strict=True)),
                         factors=Factors(urgency=0.2, impact=0.5, opportunity=0.6),
                         horizon=Horizon.TACTICAL,
-                        confidence=0.7,
-                        risks=["custo só é conhecido na tela do jogo"],
+                        confidence=0.8,
+                        risks=["custo confirmado na tela do jogo"],
                     )
                 )
 

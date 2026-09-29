@@ -52,3 +52,19 @@ async def test_reports_teach_target_results(session):
 
     target = await book.target("480|750")
     assert target["attacks"] == 2 and target["last_result"] == "red" and target["avg_haul"] == 30
+
+
+@pytest.mark.asyncio
+async def test_learned_refusal_does_not_count_as_a_new_failure(session):
+    book = LessonBook(session)
+    args = {"option_id": 3, "reason": "x"}
+
+    for _ in range(2):
+        await book.action("infrastructure", "unlock_scavenge", args, False, "recursos insuficientes: wood")
+
+    refusal = await book.blocked("unlock_scavenge", args)
+    await book.action("infrastructure", "unlock_scavenge", args, False, refusal)
+
+    row = await LessonRepository(session).get(f"attempt:{book.signature('unlock_scavenge', args)}")
+    assert row.failed == 2
+    assert "aprendido" not in row.text

@@ -40,7 +40,7 @@ class LessonRepository:
             self.session.add(row)
 
         row.title = title[:255]
-        row.text = text or row.text
+        row.text = (text or row.text or "")[:1000] if topic in ("screen", "report", "mail", "tribe") else (text or row.text or "")[:300]
         row.seen = (row.seen or 0) + 1
         row.last_seen = now
 

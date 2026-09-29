@@ -93,6 +93,10 @@ class Coordinator:
 
         for proposal in self.score(self._unique(proposals), view.role):
             why = self._blocked(proposal, constraints, chosen, failed, slots, done)
+            if not why and not self.view.dry_run:
+                learned = await self.view.lessons.blocked(proposal.action, proposal.arguments)
+                why = learned.replace("RECUSADO: ", "") if learned else None
+
             if why:
                 decision.deferred.append(self._entry(proposal, why=why))
                 continue

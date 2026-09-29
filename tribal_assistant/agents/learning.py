@@ -11,7 +11,8 @@ from tribal_assistant.repositories.lessons import LessonRepository
 
 REPEAT_WINDOW_MINUTES = 20
 REPEAT_LIMIT = 2
-IGNORED = ("(simulação)",)
+IGNORED = ("(simulação)", "RECUSADO: aprendido")
+TEXT_LIMIT = 300
 
 
 class LessonBook:
@@ -38,7 +39,7 @@ class LessonBook:
         if row is None:
             return None
 
-        return f"RECUSADO: aprendido — {action} com os mesmos argumentos falhou {row.failed}x: {row.text}"
+        return f"RECUSADO: aprendido — {action} falhou {row.failed}x com os mesmos argumentos: {row.text[:120]}"
 
     async def action(
         self, agent: str, action: str, arguments: dict[str, Any], ok: bool, result: str
