@@ -123,3 +123,22 @@ def test_iron_surplus_buys_wood_when_wood_is_almost_gone():
 
     assert EconomyProposer.pick_offer([offer], {"wood": 20, "stone": 400, "iron": 1500}, 4247) == offer
     assert EconomyProposer.pick_offer([offer], {"wood": 900, "stone": 400, "iron": 1500}, 4247) is None
+
+
+def test_farm_is_built_before_population_locks():
+    from datetime import datetime, timedelta
+
+    from tribal_assistant.core.agents.proposers.economy import EconomyProposer
+
+    start = datetime(2026, 9, 29, 12)
+    growing = [(start, 200), (start + timedelta(hours=2), 260)]
+    assert EconomyProposer.pop_lock_hours(growing, 90) == 3.0
+    assert EconomyProposer.pop_lock_hours([(start, 200), (start + timedelta(hours=2), 200)], 90) == float("inf")
+    assert EconomyProposer.pop_lock_hours(growing[:1], 90) == float("inf")
+
+
+def test_scavenging_army_grows_with_the_farm():
+    from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
+
+    assert RecruitmentProposer.scavenge_target(854) == 341
+    assert RecruitmentProposer.scavenge_target(24000) == 1000

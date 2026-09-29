@@ -9,6 +9,8 @@ from tribal_assistant.core.agents.proposers.base import Proposer
 BATCH = 25
 MIN_BATCH = 5
 FARM_UNITS = ("light", "spear", "axe")
+SCAVENGE_SHARE = 0.4
+SCAVENGE_CAP = 1000
 
 
 class RecruitmentProposer(Proposer):
@@ -39,6 +41,10 @@ class RecruitmentProposer(Proposer):
         if research:
             items.append(research)
 
+        scavenge = self._scavenge_army(view, weight)
+        if scavenge:
+            items.append(scavenge)
+
         storage = ctx.village.storage or 1
         if any(v >= storage * 0.85 for v in ctx.stock.values()):
             for unit in FARM_UNITS:
@@ -48,6 +54,31 @@ class RecruitmentProposer(Proposer):
                     break
 
         return items
+
+    @staticmethod
+    def scavenge_target(pop_max: int) -> int:
+        """Spears worth keeping for scavenging: they pay back in hours, so the army grows with the farm."""
+        return min(SCAVENGE_CAP, int(pop_max * SCAVENGE_SHARE))
+
+    def _scavenge_army(self, view: CoordinationView, weight: float) -> Proposal | None:
+        ctx = view.ctx
+        if view.role not in (Role.GROWTH, Role.EXPANSION) or not any(not o.is_locked for o in ctx.village.scavenge):
+            return None
+
+        spear = ctx.unit("spear")
+        if spear is None or not spear.available:
+            return None
+
+        queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == "spear")
+        missing = self.scavenge_target(ctx.village.pop_max or 0) - spear.total - queued
+        if missing < MIN_BATCH or queued >= BATCH * 2:
+            return None
+
+        plan = view.guard.plan_recruit(ctx, "spear", min(BATCH, missing))
+        if plan.refusal or plan.count < MIN_BATCH:
+            return None
+
+        return self._recruit(view, "spear", plan.count, f"lanceiros para a coleta ({spear.total}/{self.scavenge_target(ctx.village.pop_max or 0)})", weight, opportunity=0.7, purpose="scavenge")
 
     def _recruit(self, view: CoordinationView, unit: str, count: int, reason: str, impact: float, opportunity: float = 0.3, purpose: str = "") -> Proposal:
         return Proposal(

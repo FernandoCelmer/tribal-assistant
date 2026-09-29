@@ -1,5 +1,7 @@
 """Economy: how much can be invested and when; storage, farm, reserves and market trades."""
 
+from datetime import UTC, datetime, timedelta
+
 from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
@@ -8,6 +10,7 @@ from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 
 MARKET_MINUTES = 360
+POP_WINDOW_HOURS = 6
 SPENDING = ("recruit_units", "train_knight", "use_item", "research_unit")
 
 
@@ -82,16 +85,21 @@ class EconomyProposer(Proposer):
             )
 
         pop = estimator.pop_ratio()
-        if pop < 0.15 and self._buildable(view, "farm"):
+        farm = ctx.building("farm")
+        farm_hours = ((farm.build_time or 0) / 3600 if farm else 0) + estimator.queue_hours()
+        lock_hours = self.pop_lock_hours(await self._pop_samples(view), ctx.pop_free)
+        early = lock_hours <= farm_hours + 1
+        if (pop < 0.15 or early) and self._buildable(view, "farm"):
+            why = f"população trava em ~{lock_hours:.1f}h e a fazenda leva ~{farm_hours:.1f}h" if early else f"só {ctx.pop_free} de população livre"
             items.append(
                 Proposal(
                     self.key,
                     "upgrade_building",
-                    {"building": "farm", "reason": "população quase no limite"},
-                    f"só {ctx.pop_free} de população livre",
-                    "liberar obras e tropas",
+                    {"building": "farm", "reason": "fazenda antes de a população travar"},
+                    why,
+                    "recrutamento e obras sem parar",
                     cost=view.build_cost("farm"),
-                    factors=Factors(urgency=clamp(1 - pop / 0.15), impact=0.7, risk_avoided=0.7),
+                    factors=Factors(urgency=max(clamp(1 - pop / 0.15), self.urgency_from_hours(lock_hours, farm_hours + 1)), impact=0.7, risk_avoided=0.7),
                     horizon=Horizon.IMMEDIATE,
                     confidence=1.0,
                 )
@@ -102,6 +110,27 @@ class EconomyProposer(Proposer):
             items.append(trade)
 
         return items
+
+    @staticmethod
+    def pop_lock_hours(samples: list[tuple[datetime, int]], pop_free: int) -> float:
+        """Hours until the farm is full at the pace population grew over the samples; inf when it is not growing."""
+        if len(samples) < 2:
+            return float("inf")
+
+        (first_at, first), (last_at, last) = samples[0], samples[-1]
+        hours = (last_at - first_at).total_seconds() / 3600
+        if hours < 0.5 or last <= first:
+            return float("inf")
+
+        return max(0.0, pop_free) / ((last - first) / hours)
+
+    @staticmethod
+    async def _pop_samples(view: CoordinationView) -> list[tuple[datetime, int]]:
+        from tribal_assistant.core.repositories.game import GameRepository
+
+        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=POP_WINDOW_HOURS)
+        rows = await GameRepository(view.session).snapshots(view.ctx.id, since)
+        return [(row.taken_at, row.pop_current) for row in rows]
 
     @staticmethod
     def _buildable(view: CoordinationView, building: str) -> bool:
