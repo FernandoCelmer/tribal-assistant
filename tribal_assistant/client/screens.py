@@ -17,14 +17,19 @@ MENU_JS = """() => {
 }"""
 
 
+POPUP_JS = "() => [...document.querySelectorAll('.popup_box_container, .popup_box, #popup_box_knight_recruit')].map(n => n.outerHTML).join('\\n')"
+
+
 class ScreenCatalog:
     ACCOUNT: ClassVar[dict[str, tuple[str, dict[str, str]]]] = {
-        "profile": ("info_player", {}),
-        "awards": ("info_player", {"mode": "awards"}),
+        "village_overview": ("overview", {}),
+        "daily_bonus": ("info_player", {"mode": "daily_bonus"}),
+        "relics": ("relic_system", {}),
         "inventory": ("inventory", {}),
-        "daily_bonus": ("daily_bonus", {}),
-        "settings": ("settings", {}),
         "flags": ("flags", {}),
+        "awards": ("info_player", {"mode": "awards"}),
+        "farm_assistant": ("am_farm", {}),
+        "profile": ("info_player", {}),
     }
 
     def __init__(self, directory: Path | None = None) -> None:
@@ -35,7 +40,8 @@ class ScreenCatalog:
 
     def missing(self, levels: dict[str, int]) -> list[str]:
         buildings = [screen for screen in WATCHED if levels.get(screen, 0) >= 1]
-        wanted = ["menu", *buildings, *self.ACCOUNT]
+        popups = ["inventory_details", *(["statue_recruit"] if levels.get("statue", 0) >= 1 else [])]
+        wanted = ["menu", *buildings, *self.ACCOUNT, *popups]
         return [screen for screen in wanted if not self.path(screen).exists()]
 
     def save(self, name: str, html: str, quiet: bool = False) -> None:
@@ -53,7 +59,29 @@ class ScreenCatalog:
             self.save(name, await page.evaluate(MENU_JS))
             return
 
+        if name == "inventory_details":
+            await _open(page, "inventory", village_id)
+            await page.wait_for_timeout(2_500)
+            parts = []
+            for item in await page.locator(".inventory_items .item").all():
+                await item.click()
+                await page.wait_for_timeout(900)
+                parts.append(await page.locator(".inventory_detail").first.evaluate("(n) => n.outerHTML"))
+            self.save(name, "\n".join(parts) or "<!-- empty -->")
+            return
+
+        if name == "statue_recruit":
+            await _open(page, "statue", village_id)
+            launch = page.locator(".knight_recruit_launch")
+            if await launch.count():
+                await launch.first.click()
+                await page.wait_for_timeout(1_500)
+            self.save(name, await page.evaluate(POPUP_JS) or "<!-- no popup -->")
+            await page.keyboard.press("Escape")
+            return
+
         screen, params = self.ACCOUNT.get(name, (name, {}))
         await _open(page, screen, village_id, **params)
+        await page.wait_for_timeout(2_500)
         html = await page.evaluate("(document.querySelector('#content_value') || document.body).outerHTML")
         self.save(name, html)

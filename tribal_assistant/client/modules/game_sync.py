@@ -280,11 +280,11 @@ async def _read_village(page: Page, village_id: str, finish_free: bool = False) 
 
     catalog = ScreenCatalog()
     missing = catalog.missing({b.name: b.level for b in village.buildings})
-    if missing:
+    for name in missing[:3]:
         try:
-            await catalog.capture(page, village_id, missing[0])
+            await catalog.capture(page, village_id, name)
         except PlaywrightError as exc:
-            logger.warning("Could not capture {} screen: {}", missing[0], exc)
+            logger.warning("Could not capture {} screen: {}", name, exc)
 
     return village, data["overview"]["text"]
 
