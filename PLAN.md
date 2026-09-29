@@ -1,12 +1,12 @@
-# tribal-wars-bot — Plano Completo
+# tribal-assistant — Plano Completo
 
-Bot automação Tribal Wars 24/7. Objetivo: dominar mundo via farm, build, recrutamento e conquista automatizados, com humano só em decisões estratégicas.
+Assistente de automação Tribal Wars 24/7. Objetivo: dominar mundo via farm, build, recrutamento e conquista automatizados, com humano só em decisões estratégicas.
 
 ---
 
 ## 1. Visão geral
 
-Bot roda navegador headless, mantém sessão viva, sincroniza estado do jogo em banco local, executa ações (farm, construir, recrutar, atacar, defender) via fila de jobs agendados. Dashboard web pra monitorar e sobrepor decisões.
+Assistente roda navegador headless, mantém sessão viva, sincroniza estado do jogo em banco local, executa ações (farm, construir, recrutar, atacar, defender) via fila de jobs agendados. Dashboard web pra monitorar e sobrepor decisões.
 
 **Não-metas MVP:** IA de estratégia global, coordenação multi-conta, PvP inteligente contra players ativos.
 
@@ -16,7 +16,7 @@ Bot roda navegador headless, mantém sessão viva, sincroniza estado do jogo em 
 
 | Camada | Tech | Motivo |
 |--------|------|--------|
-| Automação browser | Playwright (Python async) | Contorna anti-bot melhor que Selenium; suporta cookies persistentes |
+| Automação browser | Playwright (Python async) | Contorna detecção de automação melhor que Selenium; suporta cookies persistentes |
 | Parser HTML | BeautifulSoup4 + lxml | Rápido e simples |
 | Config | pydantic-settings | Type-safe env |
 | Log | loguru | Zero-config, rotate |
@@ -26,15 +26,15 @@ Bot roda navegador headless, mantém sessão viva, sincroniza estado do jogo em 
 | API | FastAPI (fase 3) | Dashboard control |
 | Frontend | Next.js (fase 4, opcional) | UI mapa + status |
 | Deploy | Docker Compose | VPS single-node |
-| Notificações | Telegram bot API | Alertas críticos |
+| Notificações | Telegram API | Alertas críticos |
 
 ---
 
 ## 3. Arquitetura
 
 ```
-tribal-wars-bot/
-├── bot/
+tribal-assistant/
+├── client/
 │   ├── config.py         # env + settings
 │   ├── browser.py        # playwright wrapper + session persist
 │   ├── human.py          # delays humanos + jitter
@@ -74,19 +74,19 @@ tribal-wars-bot/
 
 ## 4. Módulos core
 
-### 4.1 Browser (`bot/browser.py`)
+### 4.1 Browser (`client/browser.py`)
 - Chromium headed em dev, headless em prod
 - `storage_state` persistido em JSON → sessão sobrevive restart
 - User-agent fixo desktop
 - Locale pt-BR
 
-### 4.2 Login (`bot/login.py`)
+### 4.2 Login (`client/login.py`)
 - Detecta form login. Se ausente = sessão ativa
 - Submete credenciais
 - Seleciona mundo pelo `TW_SERVER`
 - Se captcha: pausa 60s pra resolver manual → salva state
 
-### 4.3 Scraper (`bot/scraper/`)
+### 4.3 Scraper (`client/scraper/`)
 - Cada tela do jogo tem um scraper puro (HTML in, dataclass out)
 - Zero side-effects, testável
 - `village.py`: recursos, pop, coords, nome
@@ -96,7 +96,7 @@ tribal-wars-bot/
 - `map.py`: parse `/map.php` — grid aldeias (bárbaras, jogadores, tribos)
 - `incoming.py`: overview screen — ataques chegando com timing
 
-### 4.4 Farm (`bot/modules/farm.py`)
+### 4.4 Farm (`client/modules/farm.py`)
 - Usa Assistente de Saque (`screen=am_farm`)
 - Configura templates A/B/C: A leve (só saque), B médio, C limpeza (com axes)
 - Ordena bárbaras por distância + último loot
@@ -104,19 +104,19 @@ tribal-wars-bot/
 - Cooldown por alvo: espera relatório voltar
 - Pausa se muralha detectada > threshold
 
-### 4.5 Builder (`bot/modules/builder.py`)
+### 4.5 Builder (`client/modules/builder.py`)
 - Fila infinita por aldeia
 - Ordem prioridade config: eco early → militar mid → muralha late
 - Templates: `early_eco`, `farm_village`, `noble_train`, `defensive`
 - Checa recursos + slots fila antes enfileirar
 
-### 4.6 Recruiter (`bot/modules/recruiter.py`)
+### 4.6 Recruiter (`client/modules/recruiter.py`)
 - Mantém quartel/estábulo/oficina cheios
 - Ratio config: `{spear: 0.5, sword: 0.3, axe: 0.2}` por aldeia
 - Respeita cap população
 - Reserva pop pra nobres se `noble_train=true`
 
-### 4.7 Defense (`bot/modules/defense.py`)
+### 4.7 Defense (`client/modules/defense.py`)
 - Poll overview a cada 30s durante alerta
 - Detecta incoming: origem, tropa suspeita (nobre = flash), chegada
 - Estratégias:
@@ -125,13 +125,13 @@ tribal-wars-bot/
   - **Stack**: solicita apoio tribo (fase 4)
 - Alerta Telegram em todo incoming
 
-### 4.8 Nobleman (`bot/modules/nobleman.py`)
+### 4.8 Nobleman (`client/modules/nobleman.py`)
 - Rastreia moedas ouro/pacotes disponíveis
 - Cunha nobres em aldeias-fábrica
 - Planeja ataques conquista: 4 nobres + suporte 5-10k
 - Timing chegadas em intervalo 100-500ms (evita snipe)
 
-### 4.9 Scheduler (`bot/scheduler.py`)
+### 4.9 Scheduler (`client/scheduler.py`)
 - APScheduler AsyncIOScheduler
 - Jobs recorrentes:
   - `sync_village` cada 5min
@@ -219,7 +219,7 @@ map_villages(id, coords, name, player, tribe, points, is_barb)
 
 | Risco | Mitigação |
 |-------|-----------|
-| Ban por bot | Conta descartável primeiro, delays humanos, sleep window, sem burst |
+| Ban por automação | Conta descartável primeiro, delays humanos, sleep window, sem burst |
 | Captcha | Pausa longa + notif Telegram pra resolver manual |
 | HTML muda | Scrapers puros isolados, testes com fixtures HTML salvo |
 | Timing errado ataques | NTP sync host, delay compensation medido |
@@ -232,20 +232,20 @@ map_villages(id, coords, name, player, tribe, points, is_barb)
 
 ```bash
 # Setup
-cd /Users/fernandocelmer/Lab/FernandoCelmer/tribal-wars-bot
+cd /Users/fernandocelmer/Lab/FernandoCelmer/tribal-assistant
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -e .
 playwright install chromium
 cp .env.example .env
 
 # Rodar MVP
-python -m bot.main
+python -m client.main
 
 # Testes (quando existirem)
 pytest tests/
 
 # Ver navegador headless
-HEADLESS=false python -m bot.main
+HEADLESS=false python -m client.main
 ```
 
 ---
@@ -265,9 +265,9 @@ HEADLESS=false python -m bot.main
 
 ## 10. Próximas ações concretas
 
-1. Rodar `python -m bot.main` — validar login funciona
-2. Ajustar seletores `bot/login.py` se HTML mudou
-3. Confirmar `bot/scraper.py` lê recursos (log deve mostrar VillageStatus)
+1. Rodar `python -m client.main` — validar login funciona
+2. Ajustar seletores `client/login.py` se HTML mudou
+3. Confirmar `client/scraper.py` lê recursos (log deve mostrar VillageStatus)
 4. Se OK: começar Fase 1 (farm assistant)
-5. Criar repo GitHub `FernandoCelmer/tribal-wars-bot`
+5. Criar repo GitHub `FernandoCelmer/tribal-assistant`
 6. Setup git-flow (develop branch, protected main)

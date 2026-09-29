@@ -1,13 +1,13 @@
-# tribal-wars-bot
+# tribal-assistant
 
 FastAPI control plane + Playwright worker para automação Tribal Wars.
 
-Arquitetura em camadas: **api → services → repositories → models** (SQLAlchemy async). Bot de navegador isolado em `app/bot/`. Scheduler `APScheduler` roda jobs recorrentes dentro do processo FastAPI.
+Arquitetura em camadas: **api → services → repositories → models** (SQLAlchemy async). Cliente de navegador isolado em `app/client/`. Scheduler `APScheduler` roda jobs recorrentes dentro do processo FastAPI.
 
 ## Setup
 
 ```bash
-cd /Users/fernandocelmer/Lab/FernandoCelmer/tribal-wars-bot
+cd /Users/fernandocelmer/Lab/FernandoCelmer/tribal-assistant
 make install
 cp .env.example .env
 # edite .env com credenciais TW
@@ -42,7 +42,7 @@ app/
 │       ├── routers.py        agrega v1
 │       ├── villages.py
 │       ├── farm.py
-│       └── bot.py
+│       └── assistant.py
 ├── core/
 │   ├── config.py             pydantic-settings
 │   ├── errors.py             DomainError + handlers
@@ -61,15 +61,15 @@ app/
 │   ├── health.py
 │   ├── village.py
 │   ├── farm.py
-│   └── bot.py
+│   └── assistant.py
 ├── repositories/             DB access
 │   ├── villages.py
 │   └── farm.py
 ├── services/                 domain logic
 │   ├── villages.py
 │   ├── farm.py
-│   └── bot.py
-├── bot/                      browser automation
+│   └── assistant.py
+├── client/                   browser automation
 │   ├── browser.py            Playwright wrapper + session state
 │   ├── human.py              delays humanos
 │   ├── login.py              login + world select
@@ -101,9 +101,13 @@ tests/
 | GET    | /api/v1/farm/targets       | lista alvos                            |
 | POST   | /api/v1/farm/targets       | adiciona alvo                          |
 | POST   | /api/v1/farm/tick          | executa uma rodada de saque            |
-| GET    | /api/v1/bot/status         | scheduler + login                      |
-| POST   | /api/v1/bot/start          | inicia scheduler                       |
-| POST   | /api/v1/bot/stop           | pausa scheduler                        |
+| GET    | /api/v1/assistant/status   | scheduler + login                      |
+| POST   | /api/v1/assistant/start    | inicia scheduler                       |
+| POST   | /api/v1/assistant/stop     | pausa scheduler                        |
+| POST   | /api/v1/assistant/sync     | sincroniza conta agora                 |
+| GET    | /api/v1/game/overview      | jogador, aldeias, tropas, comandos, relatórios, recomendações |
+| GET    | /api/v1/world/status       | dados públicos do mundo                |
+| GET    | /api/v1/world/nearby       | aldeias próximas (bárbaras/jogadores)  |
 
 ## Migrations
 
@@ -111,9 +115,3 @@ tests/
 make revision m="add x"
 make migrate
 ```
-
-## Aviso legal
-
-Uso de bot viola termos do jogo. Teste em conta descartável.
-
-Veja `PLAN.md` para roadmap completo.
