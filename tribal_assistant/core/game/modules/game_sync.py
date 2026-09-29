@@ -2,13 +2,13 @@
 
 import random
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, ClassVar
 
 from loguru import logger
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 
-from tribal_assistant.core.accounts.context import current_account
+from tribal_assistant.core.accounts.context import current_account, current_account_id
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.session import SessionFactory
 from tribal_assistant.core.errors import UpstreamError
@@ -306,30 +306,47 @@ async def _read_village(page: Page, village_id: str, finish_free: bool = False) 
     for name in missing[:3]:
         try:
             await catalog.capture(page, village_id, name)
-            CAPTURED.append(name)
+            Findings.screens().append(name)
         except PlaywrightError as exc:
             logger.warning("Could not capture {} screen: {}", name, exc)
 
     return village, data["overview"]["text"]
 
 
-CAPTURED: list[str] = []
-LEARNED: list[tuple[str, str, str, str]] = []
+class Findings:
+    """Screens captured and texts read during a sync, kept apart per account until they become lessons."""
+
+    captured: ClassVar[dict[int | None, list[str]]] = {}
+    learned: ClassVar[dict[int | None, list[tuple[str, str, str, str]]]] = {}
+
+    @classmethod
+    def screens(cls) -> list[str]:
+        return cls.captured.setdefault(current_account_id(), [])
+
+    @classmethod
+    def texts(cls) -> list[tuple[str, str, str, str]]:
+        return cls.learned.setdefault(current_account_id(), [])
+
+    @classmethod
+    def clear(cls) -> None:
+        cls.captured.pop(current_account_id(), None)
+        cls.learned.pop(current_account_id(), None)
 
 
 class ReportClock:
     """Reads the report list at least every few minutes, even when the game shows no new ones."""
 
     EVERY = timedelta(minutes=10)
-    last: datetime | None = None
+    last: ClassVar[dict[int | None, datetime]] = {}
 
     @classmethod
     def due(cls) -> bool:
-        return cls.last is None or datetime.now(UTC) - cls.last >= cls.EVERY
+        last = cls.last.get(current_account_id())
+        return last is None or datetime.now(UTC) - last >= cls.EVERY
 
     @classmethod
     def mark(cls) -> None:
-        cls.last = datetime.now(UTC)
+        cls.last[current_account_id()] = datetime.now(UTC)
 
 
 async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[dict[str, Any]]:
@@ -361,7 +378,7 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
 
         try:
             await _open(page, "report", village_id, mode="all", view=row["id"])
-            LEARNED.append((key, "report", str(row.get("title", ""))[:255], await _evaluate(page, CONTENT_TEXT_JS)))
+            Findings.texts().append((key, "report", str(row.get("title", ""))[:255], await _evaluate(page, CONTENT_TEXT_JS)))
             budget -= 1
         except PlaywrightError as exc:
             logger.debug("Could not read report {}: {}", row["id"], exc)
@@ -382,7 +399,7 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
 
         try:
             await _open(page, "mail", village_id, mode="view", view=mail["id"])
-            LEARNED.append((key, "mail", mail["title"][:255], await _evaluate(page, CONTENT_TEXT_JS)))
+            Findings.texts().append((key, "mail", mail["title"][:255], await _evaluate(page, CONTENT_TEXT_JS)))
             budget -= 1
         except PlaywrightError as exc:
             logger.debug("Could not read message {}: {}", mail["id"], exc)
@@ -440,10 +457,9 @@ async def sync_game() -> GameSnapshot:
 
                 book = LessonBook(session)
                 await book.reports(snapshot.reports, known)
-                await book.screens(ScreenCatalog(), CAPTURED)
-                await book.texts(LEARNED)
-                CAPTURED.clear()
-                LEARNED.clear()
+                await book.screens(ScreenCatalog(), Findings.screens())
+                await book.texts(Findings.texts())
+                Findings.clear()
         except Exception as exc:
             session_state.logged_in = False
             session_state.last_error = str(exc)
