@@ -276,7 +276,7 @@ In Dokploy: create a **Compose** service from the Git repository, set the compos
 
 The API is reached only through the web service, which proxies `/api/v1`, `/docs` and `/openapi.json` behind the same password. `storage/` (browser state, captures) lives in the `storage` volume.
 
-Only one server plays per database: on PostgreSQL the engine takes an advisory lock at start. A second server (for example the one on your machine while the VPS runs) only serves the API and logs "Another server already plays with this database". Stop the local server before deploying so the VPS takes over.
+Only one server may play an account. `PLAY=false` turns a server into a panel: no scheduler, no agents, no game browser (actions that need the game answer 409). Keep `PLAY=true` on the server that plays (the default) and `PLAY=false` on the others, for example play on your machine and set `PLAY=false` on the VPS.
 
 ## Architecture
 
