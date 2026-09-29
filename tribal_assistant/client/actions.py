@@ -764,6 +764,10 @@ class GameActions:
             True, "choose_relic", f"relíquia {index} escolhida", {"notices": messages["notices"]}
         )
 
+    async def _open_relics(self, page: Page, village_id: str) -> None:
+        await _open(page, "relic_system", village_id)
+        await page.wait_for_timeout(1_500)
+
     async def equip_relic(self, village_id: str) -> ActionResult:
         """Equip the first relic from the treasury into this village's free relic slot."""
         async with game_session.lock:
@@ -780,10 +784,7 @@ class GameActions:
             await human_click(page, relic)
             await human_delay(800, 1500)
 
-            equip = page.locator(
-                "button:visible:not(.btn-pp):has-text('Equipar'), a.btn:visible:not(.btn-pp):has-text('Equipar'), "
-                "button:visible:not(.btn-pp):has-text('Atribuir'), a.btn:visible:not(.btn-pp):has-text('Atribuir')"
-            )
+            equip = page.locator("#equip_button:visible")
             if not await equip.count():
                 self._capture(await page.content(), "relic-equip-missing")
                 return ActionResult(
@@ -793,15 +794,23 @@ class GameActions:
             await human_click(page, equip.first)
             await human_delay(900, 1600)
 
-            confirm = page.locator(".popup_box_container .btn-confirm-yes:visible")
+            confirm = page.locator(".evt-confirm-btn:visible, .btn-confirm-yes:visible")
             if await confirm.count():
                 await human_click(page, confirm.first)
                 await page.wait_for_timeout(1_500)
 
             messages = await self.screen_messages(page)
+            self._capture(await page.content(), "relic-equip")
             if messages["errors"]:
                 return ActionResult(
                     False, "equip_relic", " | ".join(messages["errors"]), {"relic": relic_id}
+                )
+
+            await self._open_relics(page, village_id)
+            status = " ".join((await page.locator("#village_equip_status").inner_text()).split())
+            if "nenhuma relíquia equipada" in status:
+                return ActionResult(
+                    False, "equip_relic", f"relíquia não ficou equipada: {status}", {"relic": relic_id}
                 )
 
         logger.info("Equipped relic {} in village {}", relic_id, village_id)
