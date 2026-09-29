@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Cinzel:wght@600;700&display=swap">
 <link rel="stylesheet" href="/static/tribal.css">
+<script>try{const t=localStorage.getItem("tw.theme");if(t)document.documentElement.dataset.theme=t}catch{}</script>
 </head>
 <body class="page">
 <a class="skip-link" href="#main">Pular para o conteúdo</a>
@@ -17,6 +18,9 @@
   <div class="topbar__inner">
     <a class="brand" href="/"><svg class="icon icon--lg" aria-hidden="true"><use href="/static/icons.svg#i-crown"/></svg>Tribal Assistant</a>
     <div class="topbar__utils">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Tema escuro" aria-pressed="false">
+        <svg class="icon icon--sun" aria-hidden="true"><use href="/static/icons.svg#i-sun"/></svg><svg class="icon icon--moon" aria-hidden="true"><use href="/static/icons.svg#i-moon"/></svg><span class="theme-toggle__label">Claro</span>
+      </button>
       <span id="updated" aria-live="polite">—</span>
       <a href="/docs" target="_blank" rel="noopener">API</a>
     </div>
