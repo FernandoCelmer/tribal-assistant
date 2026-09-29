@@ -24,14 +24,17 @@ class LoggingSetup:
         logger.remove()
         logger.add(sys.stderr, level=level, format=FORMAT)
 
-        if not persist or cls.store is not None:
+        if not persist:
             return
 
-        store = LogStore(settings.database_url, retention_days=settings.log_retention_days)
-        if store.start():
-            logger.add(store.sink, level=settings.log_store_level, format="{message}")
+        if cls.store is None:
+            store = LogStore(settings.database_url, retention_days=settings.log_retention_days)
+            if not store.start():
+                return
             cls.store = store
             atexit.register(store.stop)
+
+        logger.add(cls.store.sink, level=settings.log_store_level, format="{message}")
 
 
 def configure_logging(level: str = "INFO", persist: bool = True) -> None:
