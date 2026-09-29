@@ -1,0 +1,116 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+export type RunEvent = {
+  at: string;
+  run_id: string;
+  status: string;
+  trigger: string;
+  brain: string;
+  model: string | null;
+  dry_run: boolean;
+  villages: number;
+  actions_ok: number;
+  actions_refused: number;
+  actions_failed: number;
+  tokens_in: number;
+  tokens_out: number;
+  error: string | null;
+};
+
+export type StepEvent = {
+  at: string;
+  run_id: string;
+  seq: number;
+  village: string | null;
+  agent: string;
+  kind: string;
+  tool: string | null;
+  content: string;
+  is_error: boolean;
+};
+
+export type LogEvent = {
+  at: string;
+  level: string;
+  source: string;
+  message: string;
+  process: string;
+};
+
+export type StreamEvent =
+  | { kind: "run_started"; data: RunEvent }
+  | { kind: "run_finished"; data: RunEvent }
+  | { kind: "step"; data: StepEvent }
+  | { kind: "log"; data: LogEvent };
+
+export type StreamState = "connecting" | "live" | "retrying";
+
+type Listener = { event: (e: StreamEvent) => void; state: (s: StreamState) => void };
+
+const KINDS = ["run_started", "step", "run_finished", "log"] as const;
+
+class Stream {
+  private source: EventSource | null = null;
+  private listeners = new Set<Listener>();
+  private current: StreamState = "connecting";
+
+  subscribe(listener: Listener): () => void {
+    this.listeners.add(listener);
+    listener.state(this.current);
+    if (!this.source) this.open();
+    return () => {
+      this.listeners.delete(listener);
+      if (this.listeners.size === 0) this.close();
+    };
+  }
+
+  private open() {
+    const source = new EventSource("/api/v1/events");
+    this.source = source;
+    this.set("connecting");
+    source.onopen = () => this.set("live");
+    source.onerror = () => this.set("retrying");
+    for (const kind of KINDS) {
+      source.addEventListener(kind, (e: MessageEvent<string>) => {
+        let data: unknown;
+        try {
+          data = JSON.parse(e.data);
+        } catch {
+          return;
+        }
+        const event = { kind, data } as StreamEvent;
+        for (const l of this.listeners) l.event(event);
+      });
+    }
+  }
+
+  private close() {
+    this.source?.close();
+    this.source = null;
+    this.current = "connecting";
+  }
+
+  private set(state: StreamState) {
+    this.current = state;
+    for (const l of this.listeners) l.state(state);
+  }
+}
+
+const stream = new Stream();
+
+export function useEvents(handler: (event: StreamEvent) => void, enabled = true): StreamState {
+  const latest = useRef(handler);
+  latest.current = handler;
+  const [state, setState] = useState<StreamState>("connecting");
+
+  useEffect(() => {
+    if (!enabled) return;
+    return stream.subscribe({ event: (e) => latest.current(e), state: setState });
+  }, [enabled]);
+
+  return state;
+}
+
+export const STREAM_LABEL: Record<StreamState, string> = { connecting: "conectando…", live: "ao vivo", retrying: "reconectando…" };
