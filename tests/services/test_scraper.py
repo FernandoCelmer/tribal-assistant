@@ -1,4 +1,4 @@
-from app.bot.scraper.village import scrape_village
+from app.client.scraper.village import scrape_village
 
 HTML = """
 <html><body>
