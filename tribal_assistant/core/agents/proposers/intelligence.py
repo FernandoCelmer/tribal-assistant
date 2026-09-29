@@ -2,6 +2,7 @@
 
 import json
 
+from tribal_assistant.core.agents.challenges import ChallengePlan
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
 from tribal_assistant.core.agents.coordination.proposal import Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
@@ -13,7 +14,7 @@ STALE_HOURS = 24
 class IntelligenceProposer(Proposer):
     key = "intelligence"
     title = "Inteligência"
-    observes = "relatórios e histórico dos vizinhos"
+    observes = "relatórios, histórico dos vizinhos e desafios do jogo"
     delivers = "informações consolidadas e dados que faltam"
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
@@ -47,6 +48,13 @@ class IntelligenceProposer(Proposer):
         if tribes:
             first = tribes[0].text.splitlines()[:2]
             view.note(Insight("tribes", "vizinhança: " + " | ".join(first), Certainty.FACT, tribes[0].last_seen, 1.0, None, self.key))
+
+        challenges = await repo.get("challenges")
+        if challenges:
+            close = ChallengePlan.closest(json.loads(challenges.data or "{}").get("items", []), limit=3)
+            if close:
+                text = "desafios mais perto: " + " | ".join(f"{c['name']} {c['current']}/{c['target']} ({c['how']})" for c in close)
+                view.note(Insight("challenges", text, Certainty.FACT, challenges.last_seen, 1.0, close, self.key))
 
         if not targets:
             view.note(Insight("no_reports", "nenhum relatório de saque ainda: alvos são desconhecidos", Certainty.FACT, now(), 1.0, None, self.key))

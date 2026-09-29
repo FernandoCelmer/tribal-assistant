@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
+CHALLENGES = "challenges"
+
 REPEAT_WINDOW_MINUTES = 20
 REPEAT_LIMIT = 2
 IGNORED = ("(simulação)", "RECUSADO: aprendido")
@@ -166,7 +168,21 @@ class LessonBook:
                     f"screen:{name}", "screen", f"tela {name}", text, commit=False
                 )
 
+        if "awards" in names:
+            await self.challenges(catalog.path("awards"))
+
         await self.repo.session.commit()
+
+    async def challenges(self, path: Any) -> None:
+        """The achievements screen becomes the list of challenges the agents chase."""
+        from tribal_assistant.core.game.scraper.awards import AwardsParser
+
+        if not path.exists():
+            return
+
+        items = AwardsParser.parse(path.read_text(encoding="utf-8"))
+        if items:
+            await self.repo.observe(CHALLENGES, "challenges", "Desafios", f"{len(items)} desafios", {"items": items}, commit=False)
 
     async def texts(self, items: list[tuple[str, str, str, str]]) -> None:
         for key, topic, title, text in items:
