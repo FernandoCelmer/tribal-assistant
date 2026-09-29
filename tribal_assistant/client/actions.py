@@ -853,6 +853,44 @@ class GameActions:
             {"notices": messages["notices"]},
         )
 
+    async def assign_flag(self, village_id: str, flag_type: int, level: int) -> ActionResult:
+        """Assign an owned flag (type and level from the flags screen) to this village."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "flags")
+
+            box = page.locator(f"#flag_box_{flag_type}_{level}:not(.flag_box_empty)")
+            if not await box.count():
+                return ActionResult(
+                    False, "assign_flag", f"bandeira {flag_type}_{level} não disponível"
+                )
+
+            title = await box.first.get_attribute("data-title")
+            await human_click(page, box.first)
+            await human_delay(800, 1500)
+
+            confirm = page.locator(
+                ".evt-confirm-btn:visible, .btn-confirm-yes:visible, .popup_box_container a.btn:visible"
+            )
+            if await confirm.count():
+                self._capture(await page.content(), "flag-assign")
+                await human_click(page, confirm.first)
+                await page.wait_for_timeout(1_500)
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "assign_flag", " | ".join(messages["errors"]))
+
+            await _open(page, "flags", village_id)
+            current = " ".join((await page.locator("#content_value").inner_text()).split())
+
+        if title and title.split(" ")[0] not in current:
+            return ActionResult(False, "assign_flag", f"bandeira não ficou atribuída ({title})")
+
+        logger.info("Assigned flag {}_{} in village {}", flag_type, level, village_id)
+        return ActionResult(
+            True, "assign_flag", f"bandeira atribuída: {title}", {"notices": messages["notices"]}
+        )
+
     async def claim_rewards(self, village_id: str) -> ActionResult:
         """Claim every reward waiting in the "Recompensas" tab (resources land in this village)."""
         async with game_session.lock:

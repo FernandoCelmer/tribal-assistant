@@ -522,6 +522,34 @@ class RenameVillage(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class AssignFlag(AgentTool):
+    name = "assign_flag"
+    description = (
+        "Atribui uma bandeira possuída a esta aldeia (troca só a cada 24h). Tipos: 1 produção de recursos, "
+        "2 velocidade de recrutamento, 3 ataque, 4 defesa, 5 sorte, 6 população, 7 custo de paladino, 8 saque."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "flag_type": {"type": "integer", "minimum": 1, "maximum": 8},
+            "level": {"type": "integer", "minimum": 1, "maximum": 9},
+            "reason": REASON,
+        },
+        "required": ["flag_type", "level", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        flag_type, level = int(args["flag_type"]), int(args["level"])
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) atribuir bandeira {flag_type}_{level}")
+
+        result = await box.actions.assign_flag(box.ctx.game_id, flag_type, level)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (

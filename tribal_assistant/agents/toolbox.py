@@ -9,6 +9,7 @@ from tribal_assistant.agents.context import VillageContext
 from tribal_assistant.agents.guardrails import Guardrails
 from tribal_assistant.agents.learning import LessonBook
 from tribal_assistant.agents.tools.act import (
+    AssignFlag,
     ChooseRelic,
     ClaimQuestRewards,
     CompleteQuest,
@@ -62,6 +63,7 @@ class Toolbox:
         ChooseRelic,
         EquipRelic,
         RenameVillage,
+        AssignFlag,
         SetVillageGoal,
         SetVillagePlan,
         UnlockScavenge,
