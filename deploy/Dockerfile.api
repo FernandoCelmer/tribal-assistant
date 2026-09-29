@@ -1,0 +1,32 @@
+FROM python:3.13-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+RUN apt-get update -qq \
+ && apt-get install -y --no-install-recommends curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd -r -g 10001 app && useradd -r -u 10001 -g app -m -d /home/app -s /usr/sbin/nologin app
+
+WORKDIR /app
+COPY pyproject.toml poetry.lock README.md ./
+RUN pip install "poetry>=2" poetry-plugin-export \
+ && poetry export --only main -f requirements.txt -o /tmp/requirements.txt \
+ && pip install -r /tmp/requirements.txt \
+ && pip uninstall -y poetry poetry-plugin-export \
+ && playwright install --with-deps chromium
+
+COPY alembic.ini ./
+COPY alembic ./alembic
+COPY tribal_assistant ./tribal_assistant
+RUN pip install --no-deps . \
+ && mkdir -p /app/storage && chown -R app:app /app/storage
+
+ENV APP_ENV=production HEADLESS=true
+USER app
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD curl -fs http://127.0.0.1:8000/health || exit 1
+CMD ["tribal-assistant", "serve", "--host", "0.0.0.0", "--port", "8000", "--no-reload"]

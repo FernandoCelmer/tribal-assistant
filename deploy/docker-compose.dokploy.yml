@@ -1,0 +1,40 @@
+name: tribal-assistant
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    expose: ["8000"]
+    shm_size: 1gb
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?defina DATABASE_URL}
+      APP_SECRET: ${APP_SECRET:?defina APP_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      QUIET_HOURS: ${QUIET_HOURS:-}
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - storage:/app/storage
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    expose: ["3000"]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      TRIBAL_API: http://api:8000
+      WEB_USER: ${WEB_USER:-admin}
+      WEB_PASSWORD: ${WEB_PASSWORD:?defina WEB_PASSWORD}
+
+volumes:
+  storage:
