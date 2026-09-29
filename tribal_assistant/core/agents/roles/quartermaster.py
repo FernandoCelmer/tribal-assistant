@@ -3,6 +3,7 @@
 import re
 from typing import TYPE_CHECKING
 
+from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.quests import QuestRules
 from tribal_assistant.core.agents.roles.base import VillageAgent
 
@@ -44,7 +45,8 @@ class QuartermasterAgent(VillageAgent):
 
         from tribal_assistant.core.agents.tools.act import OpenDailyBonus
 
-        if OpenDailyBonus.due() and await box.lessons.due(f"daily_bonus:{box.ctx.game_id}", OpenDailyBonus.COOLDOWN_HOURS):
+        hours = knob(box.ctx, "cooldown.daily_bonus")
+        if OpenDailyBonus.due(hours) and await box.lessons.due(f"daily_bonus:{box.ctx.game_id}", hours):
             await box.lessons.mark(f"daily_bonus:{box.ctx.game_id}")
             outcome = await box.invoke("open_daily_bonus", {"reason": "baús diários grátis"})
             if outcome.ok:

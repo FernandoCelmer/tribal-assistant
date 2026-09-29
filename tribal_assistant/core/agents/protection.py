@@ -3,9 +3,7 @@
 from datetime import UTC, datetime
 
 from tribal_assistant.core.agents.context import VillageContext
-
-PREPARE_HOURS = 72
-AXE_HOURS = 12
+from tribal_assistant.core.agents.knobs import knob
 
 
 class Protection:
@@ -27,6 +25,7 @@ class Protection:
         return hours is not None and hours > 0
 
     @classmethod
-    def ending(cls, ctx: VillageContext, within: float = PREPARE_HOURS) -> bool:
+    def ending(cls, ctx: VillageContext, within: float | None = None) -> bool:
+        within = within if within is not None else knob(ctx, "defense.prepare_hours")
         hours = cls.hours(ctx)
         return hours is not None and 0 < hours <= within

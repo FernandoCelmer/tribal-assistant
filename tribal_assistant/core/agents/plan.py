@@ -1,6 +1,7 @@
 """Plan progress (no model needed) and a rule-based planner used when AI is off or fails."""
 
 from tribal_assistant.core.agents.context import VillageContext
+from tribal_assistant.core.agents.knobs import tuning
 from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.agents.pacing import BuildPacing
 from tribal_assistant.core.agents.protection import Protection
@@ -86,9 +87,9 @@ class RulePlanner:
 
     STABLE_PATH = (("main", 10), ("barracks", 5), ("smith", 5), ("stable", 3))
     STORAGE_FOR_STABLE = 6
-    WALL_AT_PROTECTION_END = 8
 
     def plan(self, ctx: VillageContext) -> tuple[str, list[PlanStep]]:
+        knobs = tuning(ctx)
         levels = ctx.levels
         village = ctx.village
         steps: list[PlanStep] = []
@@ -105,31 +106,32 @@ class RulePlanner:
         if levels.get("barracks", 0) >= 1 and ctx.building("statue") is not None and levels.get("statue", 0) < 1:
             add("build", "statue", 1, "estátua cedo: paladino saqueia desde o início")
 
-        for building, level, title in QuestRules.building_goals(ctx.quests, levels):
+        for building, level, title in QuestRules.building_goals(ctx.quests, levels, knobs):
             add("build", building, level, f"missão: {title}")
 
-        if levels.get("main", 0) < BuildPacing.main_cap(levels):
+        if levels.get("main", 0) < BuildPacing.main_cap(levels, knobs):
             add("build", "main", levels.get("main", 0) + 1, "edifício principal sem parar: acelera todas as obras")
 
         biggest = max(ctx.stock.get(r, 0) for r in ("wood", "clay", "iron"))
         hourly = max(village.wood_prod, village.clay_prod, village.iron_prod, 1)
-        if village.storage and (biggest / village.storage > 0.6 or village.storage / hourly < 6):
+        if village.storage and (biggest / village.storage > knobs.get("plan.storage_fill_share") or village.storage / hourly < knobs.get("plan.storage_min_hours")):
             add("build", "storage", levels.get("storage", 0) + 1, "armazém antes de encher: recurso perdido atrasa tudo")
 
-        if village.pop_max and ctx.pop_free < max(20, village.pop_max * 0.15):
+        if village.pop_max and ctx.pop_free < max(knobs.int("plan.farm_min_free"), village.pop_max * knobs.get("farm.free_share")):
             add("build", "farm", levels.get("farm", 0) + 1, "fazenda antes de a população travar")
 
-        for pit in BuildPacing.pits(levels):
+        for pit in BuildPacing.pits(levels, knobs):
             if levels.get(pit, 0) < 30:
                 add("build", pit, levels.get(pit, 0) + 1, "madeira na frente, ferro 3 abaixo até o estábulo")
 
         self._stable_gate(ctx, add)
 
-        for building in BuildPacing.military_due(levels, Protection.active(ctx)):
+        for building in BuildPacing.military_due(levels, Protection.active(ctx), knobs):
             add("build", building, levels.get(building, 0) + 1, "fora da proteção: 2 de quartel e estábulo a cada 3 de EP")
 
-        if Protection.ending(ctx) and levels.get("wall", 0) < self.WALL_AT_PROTECTION_END:
-            add("build", "wall", levels.get("wall", 0) + 1, "fim da proteção: muralha 8")
+        wall = knobs.int("defense.wall_target")
+        if Protection.ending(ctx) and levels.get("wall", 0) < wall:
+            add("build", "wall", levels.get("wall", 0) + 1, f"fim da proteção: muralha {wall}")
 
         locked = sorted(o.option_id for o in village.scavenge if o.is_locked and o.unlock_at is None)
         if locked:
@@ -137,7 +139,7 @@ class RulePlanner:
 
         light = ctx.unit("light")
         if light and light.available:
-            add("recruit", "light", max(10, light.total + 5), "cavalaria leve é a melhor unidade de saque")
+            add("recruit", "light", max(knobs.int("plan.light_min"), light.total + knobs.int("plan.light_step")), "cavalaria leve é a melhor unidade de saque")
         else:
             spear = ctx.unit("spear")
             if spear and spear.available and spear.total < 40:

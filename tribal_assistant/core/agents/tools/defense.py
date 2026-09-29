@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from tribal_assistant.core.agents.coordination.incoming import DodgePlanner, IncomingWatch
+from tribal_assistant.core.agents.knobs import tuning
 from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 from tribal_assistant.core.game.battle import simulate_battle
@@ -40,7 +41,7 @@ class GetIncoming(AgentTool):
         if not attacks:
             return ToolOutcome(True, "nenhum ataque chegando")
 
-        planner = DodgePlanner(box.session, await watch.clock())
+        planner = DodgePlanner(box.session, await watch.clock(), tuning(box.ctx))
         rows = []
         for attack in attacks:
             decision = planner.decide(box.ctx, attack)

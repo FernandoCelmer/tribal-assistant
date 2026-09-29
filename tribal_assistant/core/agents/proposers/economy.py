@@ -6,46 +6,37 @@ from datetime import UTC, datetime, timedelta
 from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import knob
-from tribal_assistant.core.agents.market import MIN_GAP, MarketRule
+from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
+from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 
-MARKET_MINUTES = 360
-POP_WINDOW_HOURS = 6
 SPENDING = ("recruit_units", "train_knight", "use_item", "research_unit")
-RECRUIT_BATCH = 25
 LIGHT_RESEARCH_IRON = 2000
-PARK_MEMORY_HOURS = 96
 
 
 class IronParking:
     """Surplus iron waits in market offers nobody takes: safe from loot and from overflow, cancelled when needed."""
 
-    FULL = 0.85
-    SOON_HOURS = 2.0
-    KEEP = 0.25
-    FLOOR = 0.2
     LOT = 1000
-    MIN_LOT = 500
-    THREAT_HOURS = 6.0
-    MAX_HOURS = 1
+    STEP = 100
 
     @classmethod
-    def lots(cls, iron: int, storage: int, need: int, hours_full: float, impact_hours: float | None) -> tuple[int, int] | None:
+    def lots(cls, iron: int, storage: int, need: int, hours_full: float, impact_hours: float | None, knobs: Knobs | None = None) -> tuple[int, int] | None:
         """Amount per offer and how many offers, or None when the iron should stay home."""
-        threatened = impact_hours is not None and impact_hours <= cls.THREAT_HOURS
-        pressed = storage > 0 and (iron >= storage * cls.FULL or hours_full <= cls.SOON_HOURS)
+        knobs = knobs or Knobs()
+        threatened = impact_hours is not None and impact_hours <= knobs.get("iron_parking.threat_hours")
+        pressed = storage > 0 and (iron >= storage * knobs.get("iron_parking.full_share") or hours_full <= knobs.get("iron_parking.soon_hours"))
         if not (threatened or pressed):
             return None
 
-        keep = max(need, math.ceil(storage * (cls.FLOOR if threatened else cls.KEEP)))
+        keep = max(need, math.ceil(storage * knobs.get("iron_parking.floor_share" if threatened else "iron_parking.keep_share")))
         surplus = iron - keep
         if surplus >= cls.LOT:
             return cls.LOT, surplus // cls.LOT
 
-        if surplus >= cls.MIN_LOT:
-            return surplus // 100 * 100, 1
+        if surplus >= knobs.int("iron_parking.min_lot"):
+            return surplus // cls.STEP * cls.STEP, 1
 
         return None
 
@@ -85,7 +76,7 @@ class EconomyProposer(Proposer):
                 Reservation(
                     "base",
                     "base",
-                    "reserva mínima (não vale para obras; no máximo 25% do estoque)",
+                    f"reserva mínima (não vale para obras; no máximo {knob(view, 'base_stock_share'):.0%} do estoque)",
                     base,
                     applies_to=SPENDING,
                 )
@@ -98,7 +89,7 @@ class EconomyProposer(Proposer):
 
             hours = view.estimator.hours_to_afford(cost)
             idle = not ctx.queue
-            if hours <= (0.25 if idle else 1.5):
+            if hours <= knob(view, "plan_reserve.idle_hours" if idle else "plan_reserve.busy_hours"):
                 items.append(
                     Reservation(
                         f"plan:{building}",
@@ -117,7 +108,7 @@ class EconomyProposer(Proposer):
         items = []
 
         storage_hours = estimator.storage_hours()
-        horizon = max(3.0, estimator.queue_hours() + 2)
+        horizon = max(knob(view, "storage.horizon_hours"), estimator.queue_hours() + knob(view, "storage.queue_margin_hours"))
         if storage_hours < horizon and self._buildable(view, "storage"):
             items.append(
                 Proposal(
@@ -143,8 +134,10 @@ class EconomyProposer(Proposer):
         farm = ctx.building("farm")
         farm_hours = ((farm.build_time or 0) / 3600 if farm else 0) + estimator.queue_hours()
         lock_hours = self.pop_lock_hours(await self._pop_samples(view), ctx.pop_free)
-        early = lock_hours <= farm_hours + 1
-        if (pop < 0.15 or early) and self._buildable(view, "farm"):
+        lead = knob(view, "farm.lead_hours")
+        free_share = knob(view, "farm.free_share")
+        early = lock_hours <= farm_hours + lead
+        if (pop < free_share or early) and self._buildable(view, "farm"):
             why = f"população trava em ~{lock_hours:.1f}h e a fazenda leva ~{farm_hours:.1f}h" if early else f"só {ctx.pop_free} de população livre"
             items.append(
                 Proposal(
@@ -154,7 +147,7 @@ class EconomyProposer(Proposer):
                     why,
                     "recrutamento e obras sem parar",
                     cost=view.build_cost("farm"),
-                    factors=Factors(urgency=max(clamp(1 - pop / 0.15), self.urgency_from_hours(lock_hours, farm_hours + 1)), impact=0.7, risk_avoided=0.7),
+                    factors=Factors(urgency=max(clamp(1 - pop / free_share), self.urgency_from_hours(lock_hours, farm_hours + lead)), impact=0.7, risk_avoided=0.7),
                     horizon=Horizon.IMMEDIATE,
                     confidence=1.0,
                 )
@@ -172,6 +165,7 @@ class EconomyProposer(Proposer):
     @staticmethod
     def iron_need(ctx) -> int:
         """Iron the next use asks for: a plan build, a plan recruit batch or the light cavalry research."""
+        batch = tuning(ctx).int("recruit.batch")
         needs = []
         for name in PlanTracker.next_builds(ctx.plan)[:2]:
             building = ctx.building(name)
@@ -180,7 +174,7 @@ class EconomyProposer(Proposer):
         for step in PlanTracker.next_recruits(ctx.plan)[:2]:
             unit = ctx.unit(step.target)
             if unit is not None and unit.available:
-                needs.append((unit.cost_iron or 0) * min(RECRUIT_BATCH, max(0, step.amount - unit.total)))
+                needs.append((unit.cost_iron or 0) * min(batch, max(0, step.amount - unit.total)))
 
         light = ctx.unit("light")
         if ctx.levels.get("stable", 0) >= 1 and ctx.levels.get("smith", 0) >= 1 and light is not None and not light.available:
@@ -198,12 +192,12 @@ class EconomyProposer(Proposer):
         impact = view.estimator.hours_to_impact()
         memory = f"market_parked:{ctx.game_id}"
 
-        if need > iron and impact is None and not await view.lessons.due(memory, PARK_MEMORY_HOURS) and await view.cooldown("market_release", 0.5):
+        if need > iron and impact is None and not await view.lessons.due(memory, knob(view, "market.park_memory_hours")) and await view.cooldown("market_release"):
             offers = await view.actions.market.list_own_offers(ctx.game_id)
             return [self._cancel(offer, need) for offer in IronParking.release(offers, iron, need)]
 
-        plan = IronParking.lots(iron, ctx.village.storage or 0, need, view.estimator.hours_to_full()["iron"], impact)
-        if plan is None or not await view.cooldown("market_park", 2):
+        plan = IronParking.lots(iron, ctx.village.storage or 0, need, view.estimator.hours_to_full()["iron"], impact, tuning(view))
+        if plan is None or not await view.cooldown("market_park"):
             return []
 
         merchants = await view.actions.market_merchants(ctx.game_id)
@@ -219,7 +213,7 @@ class EconomyProposer(Proposer):
             Proposal(
                 self.key,
                 "park_market_offer",
-                {"sell": "iron", "buy": buy, "amount": amount, "lots": lots, "max_hours": IronParking.MAX_HOURS, "reason": "estacionar ferro sobrando"},
+                {"sell": "iron", "buy": buy, "amount": amount, "lots": lots, "max_hours": knob_int(view, "iron_parking.offer_hours"), "reason": "estacionar ferro sobrando"},
                 why,
                 f"{amount * lots} ferro guardado nos comerciantes",
                 cost={"iron": amount * lots},
@@ -266,7 +260,7 @@ class EconomyProposer(Proposer):
     async def _pop_samples(view: CoordinationView) -> list[tuple[datetime, int]]:
         from tribal_assistant.core.repositories.game import GameRepository
 
-        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=POP_WINDOW_HOURS)
+        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=knob(view, "economy.pop_window_hours"))
         rows = await GameRepository(view.session).snapshots(view.ctx.id, since)
         return [(row.taken_at, row.pop_current) for row in rows]
 
@@ -286,15 +280,13 @@ class EconomyProposer(Proposer):
             "stone": ctx.stock.get("clay", 0),
             "iron": ctx.stock.get("iron", 0),
         }
-        if max(stock.values()) - min(stock.values()) < MIN_GAP or not await view.cooldown(
-            "market", 0.5
-        ):
+        if max(stock.values()) - min(stock.values()) < knob_int(view, "market.min_gap") or not await view.cooldown("market"):
             return None
 
         offers = await view.actions.market_offers(ctx.game_id)
         siblings = await self.managed_players(view)
         offers = [o for o in offers if o.get("player", "").split(" [")[0] not in siblings]
-        choice = self.pick_offer(offers, stock, ctx.village.storage or 0)
+        choice = self.pick_offer(offers, stock, ctx.village.storage or 0, knob_int(view, "market.max_minutes"))
         if choice is None:
             return await self._own_offer(view, stock)
 
@@ -341,8 +333,8 @@ class EconomyProposer(Proposer):
         return set(rows.scalars().all())
 
     async def _own_offer(self, view: CoordinationView, stock: dict[str, int]) -> Proposal | None:
-        plan = self.own_offer(stock, view.ctx.village.storage or 0)
-        if plan is None or not await view.cooldown("market_offer", 1):
+        plan = self.own_offer(stock, view.ctx.village.storage or 0, tuning(view))
+        if plan is None or not await view.cooldown("market_offer"):
             return None
 
         merchants = await view.actions.market_merchants(view.ctx.game_id)
@@ -358,7 +350,7 @@ class EconomyProposer(Proposer):
                 "sell": sell,
                 "buy": buy,
                 "amount": amount,
-                "max_hours": 5,
+                "max_hours": knob_int(view, "market.offer_hours"),
                 "reason": f"ofertar {sell} sobrando por {buy}",
             },
             f"nenhuma oferta boa de {buy}; {sell} sobrando",
@@ -371,8 +363,8 @@ class EconomyProposer(Proposer):
         )
 
     @staticmethod
-    def own_offer(stock: dict[str, int], storage: int) -> tuple[str, str, int] | None:
-        plan = MarketRule.lot(stock)
+    def own_offer(stock: dict[str, int], storage: int, knobs: Knobs | None = None) -> tuple[str, str, int] | None:
+        plan = MarketRule.lot(stock, (knobs or Knobs()).int("market.min_gap"))
         if plan is None:
             return None
 
@@ -384,8 +376,9 @@ class EconomyProposer(Proposer):
 
     @staticmethod
     def pick_offer(
-        offers: list[dict], stock: dict[str, int], storage: int, max_minutes: int = MARKET_MINUTES
+        offers: list[dict], stock: dict[str, int], storage: int, max_minutes: int | None = None
     ) -> dict | None:
+        max_minutes = max_minutes if max_minutes is not None else Knobs().int("market.max_minutes")
         fits = [
             o
             for o in offers

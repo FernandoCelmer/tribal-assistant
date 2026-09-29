@@ -3,7 +3,7 @@
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import knob
+from tribal_assistant.core.agents.knobs import knob, tuning
 from tribal_assistant.core.agents.pacing import BuildPacing
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
@@ -48,12 +48,12 @@ class InfrastructureProposer(Proposer):
             if self._ok(view, building):
                 items.append(self._build(view, building, f"missão pede {building} {level}", impact=0.55, opportunity=0.75))
 
-        military = BuildPacing.military_due(ctx.levels, Protection.active(ctx))
+        military = BuildPacing.military_due(ctx.levels, Protection.active(ctx), tuning(view))
         for building in military:
             if self._ok(view, building):
                 items.append(self._build(view, building, "2 de quartel e estábulo a cada 3 de EP", impact=0.62, opportunity=0.3))
 
-        if not military and ctx.levels.get("main", 0) < BuildPacing.main_cap(ctx.levels) and self._ok(view, "main"):
+        if not military and ctx.levels.get("main", 0) < BuildPacing.main_cap(ctx.levels, tuning(view)) and self._ok(view, "main"):
             items.append(self._build(view, "main", "edifício principal acelera todas as obras", impact=0.6, opportunity=0.2))
 
         pit = self.bottleneck(view, plan)
@@ -95,7 +95,7 @@ class InfrastructureProposer(Proposer):
             return None
 
         stock = view.ctx.stock
-        candidates = dict.fromkeys([*BuildPacing.pits(view.ctx.levels), *plan[1:4], *FILLER_EXTRA])
+        candidates = dict.fromkeys([*BuildPacing.pits(view.ctx.levels, tuning(view)), *plan[1:4], *FILLER_EXTRA])
         affordable = [
             pit
             for pit in candidates
@@ -124,16 +124,16 @@ class InfrastructureProposer(Proposer):
             missing = max(0, demand[resource] - view.ctx.stock.get(resource, 0))
             return missing / max(production[resource], 1)
 
-        allowed = BuildPacing.pits(view.ctx.levels) or ["wood"]
+        allowed = BuildPacing.pits(view.ctx.levels, tuning(view)) or ["wood"]
         return max(allowed, key=lambda pit: (pressure(pit), -view.ctx.levels.get(pit, 0)))
 
     @staticmethod
     def capacity_needed(view: CoordinationView, building: str) -> bool:
-        """Storage only when it fills within a day; farm only when free population drops under 30%."""
+        """Storage only when it fills within the tuned hours; farm only when free population drops under the tuned share."""
         if building == "storage":
-            return view.estimator.storage_hours() < 24
+            return view.estimator.storage_hours() < knob(view, "capacity.storage_hours")
 
-        return view.estimator.pop_ratio() < 0.3
+        return view.estimator.pop_ratio() < knob(view, "capacity.farm_free_share")
 
     @staticmethod
     def _ok(view: CoordinationView, building: str) -> bool:
@@ -142,7 +142,7 @@ class InfrastructureProposer(Proposer):
 
     @staticmethod
     def _quests(view: CoordinationView) -> list[tuple[str, int]]:
-        return [(b, lvl) for b, lvl, _ in QuestRules.building_goals(view.ctx.quests, view.ctx.levels)]
+        return [(b, lvl) for b, lvl, _ in QuestRules.building_goals(view.ctx.quests, view.ctx.levels, tuning(view))]
 
     def _build(
         self, view: CoordinationView, building: str, reason: str, impact: float, opportunity: float, purpose: str = ""

@@ -10,20 +10,19 @@ from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.estimates import Estimator
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.threat import ThreatScan
+from tribal_assistant.core.agents.knobs import Knobs, tuning
 from tribal_assistant.core.agents.learning import LessonBook
-from tribal_assistant.core.agents.noble import MIN_ARMY_POP, MIN_FARM, NobleReadiness
-from tribal_assistant.core.agents.protection import PREPARE_HOURS, Protection
+from tribal_assistant.core.agents.noble import NobleReadiness
+from tribal_assistant.core.agents.protection import Protection
 from tribal_assistant.core.models.command import Command
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.coordination import CoordinationRepository
 
-PROTECTION_WARNING_HOURS = PREPARE_HOURS
-CONFIRM_ROUNDS = 3
-
 
 class RoleSelector:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, knobs: Knobs | None = None) -> None:
         self.session = session
+        self.knobs = knobs
         self.repo = CoordinationRepository(session)
         self.lessons = LessonBook(session)
 
@@ -47,11 +46,12 @@ class RoleSelector:
         return base, base, reason
 
     async def evaluate(self, ctx: VillageContext) -> tuple[Role, str]:
-        facts = await self.facts(ctx)
-        return self.decide(ctx, facts)
+        knobs = self.knobs or tuning(ctx)
+        facts = await self.facts(ctx, knobs)
+        return self.decide(ctx, facts, knobs)
 
-    async def facts(self, ctx: VillageContext) -> dict[str, Any]:
-        scan = ThreatScan(self.session)
+    async def facts(self, ctx: VillageContext, knobs: Knobs | None = None) -> dict[str, Any]:
+        scan = ThreatScan(self.session, knobs or tuning(ctx))
         threats = await scan.near(ctx)
         dangerous = scan.dangerous(threats, ctx.village.points)
 
@@ -78,13 +78,14 @@ class RoleSelector:
         return Protection.hours(ctx)
 
     @staticmethod
-    def decide(ctx: VillageContext, facts: dict[str, Any]) -> tuple[Role, str]:
+    def decide(ctx: VillageContext, facts: dict[str, Any], knobs: Knobs | None = None) -> tuple[Role, str]:
+        knobs = knobs or tuning(ctx)
         levels = ctx.levels
         dangerous = facts.get("dangerous", [])
         protection = facts.get("protection_hours")
         light = ctx.unit("light")
 
-        if dangerous and (protection is None or protection <= PROTECTION_WARNING_HOURS):
+        if dangerous and (protection is None or protection <= knobs.get("defense.prepare_hours")):
             nearest = dangerous[0]
             when = "proteção acabando" if protection and protection > 0 else "sem proteção"
             return Role.DEFENSE, f"{when} e {nearest.player} ({nearest.points} pts) a {nearest.distance} campos"
@@ -93,10 +94,11 @@ class RoleSelector:
             return Role.SUPPORT, "outra aldeia sua está sob ataque: produzir e mandar defesa"
 
         progress = NobleReadiness.path_progress(levels)
-        if progress >= 0.8 and levels.get("farm", 0) >= MIN_FARM and NobleReadiness.army_pop(ctx) >= MIN_ARMY_POP:
+        ready = levels.get("farm", 0) >= knobs.int("noble.min_farm") and NobleReadiness.army_pop(ctx) >= knobs.int("noble.min_army_pop")
+        if progress >= knobs.get("role.expansion_progress") and ready:
             return Role.EXPANSION, f"caminho da academia em {progress:.0%}, fazenda {levels.get('farm', 0)} e exército: preparar nobre"
 
-        if light and light.total >= 20 and facts.get("good_targets", 0) >= 3 and not dangerous:
+        if light and light.total >= knobs.int("role.offensive_light") and facts.get("good_targets", 0) >= knobs.int("role.offensive_targets") and not dangerous:
             return Role.OFFENSIVE, f"{light.total} cavalarias leves e {facts['good_targets']} alvos bons: saque constante"
 
         return Role.GROWTH, "produção primeiro: sem ameaça próxima nem exército de saque"
@@ -112,4 +114,4 @@ class RoleSelector:
         count = data.get("count", 0) + 1 if data.get("role") == wanted.value else 1
         await self.lessons.repo.observe(f"role_wish:{ctx.id}", "cooldown", wanted.value, "", {"role": wanted.value, "count": count})
 
-        return wanted if count >= CONFIRM_ROUNDS else current
+        return wanted if count >= (self.knobs or tuning(ctx)).int("role.confirm_rounds") else current

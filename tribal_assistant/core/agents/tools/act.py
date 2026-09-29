@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from tribal_assistant.core.agents.knobs import Knobs, knob
 from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 
@@ -350,7 +351,7 @@ class OpenDailyBonus(AgentTool):
     name = "open_daily_bonus"
     description = (
         "Abre os baús grátis do bônus diário do perfil; os itens vão para o inventário. Vale para a conta "
-        "inteira e é verificado no máximo a cada 4 horas. Nunca usa pontos premium."
+        "inteira e é verificado no intervalo ajustável cooldown.daily_bonus. Nunca usa pontos premium."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
@@ -359,19 +360,16 @@ class OpenDailyBonus(AgentTool):
         "additionalProperties": False,
     }
     acts = True
-    COOLDOWN_HOURS: ClassVar[int] = 4
     last_check: ClassVar[datetime | None] = None
 
     @classmethod
-    def due(cls) -> bool:
+    def due(cls, hours: float | None = None) -> bool:
+        hours = hours if hours is not None else Knobs().get("cooldown.daily_bonus")
         now = datetime.now(UTC)
-        return (
-            cls.last_check is None
-            or (now - cls.last_check).total_seconds() >= cls.COOLDOWN_HOURS * 3600
-        )
+        return cls.last_check is None or (now - cls.last_check).total_seconds() >= hours * 3600
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        if not self.due():
+        if not self.due(knob(box.ctx, "cooldown.daily_bonus")):
             return ToolOutcome(False, "bônus diário já verificado há pouco")
 
         if box.dry_run:
@@ -992,7 +990,7 @@ class ParkMarketOffer(AgentTool):
     description = (
         "Estaciona recurso sobrando em ofertas próprias que quase ninguém aceita (pede o máximo que o mundo permite, "
         "viagem curta): o recurso fica nos comerciantes, não é saqueado nem estoura o armazém. Cancele com "
-        "cancel_market_offer quando precisar dele. Recusado se deixar menos que 20% do armazém do recurso."
+        "cancel_market_offer quando precisar dele. Recusado se deixar o recurso abaixo do piso iron_parking.floor_share do armazém."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
@@ -1008,9 +1006,9 @@ class ParkMarketOffer(AgentTool):
         "additionalProperties": False,
     }
     acts = True
-    FLOOR = 0.2
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        floor = knob(box.ctx, "iron_parking.floor_share")
         sell, buy = str(args["sell"]), str(args["buy"])
         amount, lots = int(args["amount"]), int(args["lots"])
         key = "clay" if sell == "stone" else sell
@@ -1020,8 +1018,8 @@ class ParkMarketOffer(AgentTool):
         if sell == buy:
             return ToolOutcome(False, "RECUSADO: troca do mesmo recurso")
 
-        if stock - amount * lots < storage * self.FLOOR:
-            return ToolOutcome(False, f"RECUSADO: {sell} ficaria abaixo de {self.FLOOR:.0%} do armazém")
+        if stock - amount * lots < storage * floor:
+            return ToolOutcome(False, f"RECUSADO: {sell} ficaria abaixo de {floor:.0%} do armazém")
 
         if box.dry_run:
             return ToolOutcome(True, f"(simulação) estacionar {lots}x {amount} {sell} pedindo {buy}")

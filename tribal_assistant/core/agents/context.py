@@ -118,10 +118,11 @@ class ContextLoader:
         ctx.lessons = await LessonBook(self.plans.session).summary()
         ctx.coordination = await self._coordination(ctx.id)
 
+        from tribal_assistant.core.agents.knobs import KnobStore
         from tribal_assistant.core.repositories.coordination import CoordinationRepository
 
         strategy = await CoordinationRepository(self.plans.session).strategy(ctx.id)
-        ctx.policy = Policy.for_role(strategy.role if strategy else "growth")
+        ctx.policy = Policy.for_role(strategy.role if strategy else "growth", await KnobStore(self.plans.session).load())
 
     async def _coordination(self, village_id: int) -> str:
         from tribal_assistant.core.repositories.coordination import CoordinationRepository

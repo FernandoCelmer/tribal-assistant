@@ -9,13 +9,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
+from tribal_assistant.core.agents.knobs import knob, knob_int
 from tribal_assistant.core.agents.knowledge import UNITS, GameKnowledge
 from tribal_assistant.core.models.agent import AgentDecision
 from tribal_assistant.core.models.world import WorldVillage
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
-
-DODGE_RADIUS = 20
 
 SCAVENGE_MIN_POP = 10
 SPY_PROBE = (1, 2)
@@ -129,8 +128,8 @@ class Guardrails:
         reserve = self.reserve(ctx)
         limits = [count, current.max_recruit or count]
         storage = ctx.village.storage or 1
-        near_full = any(value >= storage * 0.85 for value in ctx.stock.values())
-        budget_share = max(ctx.policy.recruit_budget, 0.8) if near_full else ctx.policy.recruit_budget
+        near_full = any(value >= storage * knob(ctx, "storage.near_full_share") for value in ctx.stock.values())
+        budget_share = max(ctx.policy.recruit_budget, knob(ctx, "recruit.near_full_budget")) if near_full else ctx.policy.recruit_budget
 
         for key, cost in (("wood", current.cost_wood), ("clay", current.cost_clay), ("iron", current.cost_iron)):
             if cost:
@@ -163,7 +162,7 @@ class Guardrails:
 
         distance = math.hypot(tx - ox, ty - oy)
         dodging = dodge and any(c["direction"] == "in" and c["kind"] in ("attack", "noble") for c in ctx.commands)
-        radius = DODGE_RADIUS if dodging else ctx.policy.attack_radius
+        radius = knob_int(ctx, "dodge.radius") if dodging else ctx.policy.attack_radius
         if distance > radius:
             return f"alvo a {distance:.1f} campos; limite {radius}"
 

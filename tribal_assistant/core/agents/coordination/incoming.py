@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.threat import ThreatScan
+from tribal_assistant.core.agents.knobs import Knobs, tuning
 from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.game.battle import BattleResult, simulate_battle
 from tribal_assistant.core.game.incoming import (
@@ -24,10 +25,6 @@ from tribal_assistant.core.repositories.lessons import LessonRepository
 from tribal_assistant.core.repositories.world import WorldRepository
 
 HOSTILE = ("attack", "noble")
-DODGE_MARGIN_MINUTES = 10
-CLEAR_WIN_LOSSES = 0.5
-MIN_DODGE_POP = 10
-DODGE_RADIUS = 20
 
 
 def _utc(value: Any) -> datetime:
@@ -169,9 +166,10 @@ class IncomingWatch:
 class DodgePlanner:
     """Hold when the defense wins, the attack brings a noble or is only spies; dodge when it clearly overruns us."""
 
-    def __init__(self, session: AsyncSession, clock: TravelClock) -> None:
+    def __init__(self, session: AsyncSession, clock: TravelClock, knobs: Knobs | None = None) -> None:
         self.session = session
         self.clock = clock
+        self.knobs = knobs
 
     @staticmethod
     def home_army(ctx: VillageContext) -> dict[str, int]:
@@ -190,11 +188,12 @@ class DodgePlanner:
         if not attack.army:
             return Assessment(attack, "hold", "tamanho desconhecido: segurar e reforçar")
 
+        knobs = self.knobs or tuning(ctx)
         home = self.home_army(ctx)
         wall = ctx.levels.get("wall", 0)
         battle = simulate_battle(attack.army, home, wall)
         pop = sum(UNITS[u].pop * n for u, n in home.items())
-        if battle.attacker_wins and battle.attacker_loss_ratio <= CLEAR_WIN_LOSSES and pop >= MIN_DODGE_POP:
+        if battle.attacker_wins and battle.attacker_loss_ratio <= knobs.get("dodge.max_losses") and pop >= knobs.int("dodge.min_pop"):
             return Assessment(attack, "dodge", f"ataque estimado supera a defesa (perda deles {battle.attacker_loss_ratio:.0%})", battle, troops=home)
 
         why = "defesa segura o ataque estimado" if not battle.attacker_wins else "ataque pequeno demais para valer a esquiva"
@@ -210,13 +209,15 @@ class DodgePlanner:
         if slowest is None:
             return None
 
+        knobs = self.knobs or tuning(ctx)
+        radius, margin = knobs.int("dodge.radius"), knobs.int("dodge.margin_minutes")
         options = []
         for coords, fields in barbarians:
-            if fields > DODGE_RADIUS:
+            if fields > radius:
                 continue
 
             travel = self.clock.minutes(slowest, fields)
-            if 2 * travel >= attack.minutes_left + DODGE_MARGIN_MINUTES and travel < attack.minutes_left + 24 * 60:
+            if 2 * travel >= attack.minutes_left + margin and travel < attack.minutes_left + 24 * 60:
                 options.append((travel, coords))
 
         if not options:

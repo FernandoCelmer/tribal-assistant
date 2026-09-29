@@ -9,14 +9,12 @@ from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon,
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.guardrails import SCAVENGE_MIN_POP
+from tribal_assistant.core.agents.knobs import knob, tuning
 from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 from tribal_assistant.core.agents.proposers.raid import RaidPlan, RaidPlanner
 
-LISTING = 30
-MAX_PROBES = 3
 SCAVENGERS = ("spear", "sword", "axe", "archer", "light", "marcher", "heavy")
-MIN_CONFIDENCE = 0.35
 
 
 class AttackProposer(Proposer):
@@ -26,26 +24,28 @@ class AttackProposer(Proposer):
     delivers = "propostas de saque com nível de confiança"
 
     async def constraints(self, view: CoordinationView) -> list[Constraint]:
+        least = knob(view, "raid.min_confidence")
         return [
             Constraint(
                 "min_confidence",
-                f"não atacar com confiança abaixo de {MIN_CONFIDENCE:.0%} (informação velha ou alvo que já custou tropas)",
+                f"não atacar com confiança abaixo de {least:.0%} (informação velha ou alvo que já custou tropas)",
                 self.key,
                 blocks=("send_farm_attack",),
-                min_confidence=MIN_CONFIDENCE,
+                min_confidence=least,
             )
         ]
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
         items = await self._raids(view)
-        viable = [p for p in items if p.confidence >= MIN_CONFIDENCE]
+        viable = [p for p in items if p.confidence >= knob(view, "raid.min_confidence")]
         items += self._scavenge(view, reserved={u: n for p in viable for u, n in p.troops.items()})
 
         return items
 
     async def _raids(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
-        listing = await view.read("list_barbarians", {"limit": LISTING})
+        knobs = tuning(view)
+        listing = await view.read("list_barbarians", {"limit": knobs.int("raid.listing")})
         if not listing.ok or not listing.text.startswith("["):
             return []
 
@@ -54,11 +54,11 @@ class AttackProposer(Proposer):
         light = ctx.unit("light")
         ram = ctx.unit("ram")
         has_ram = bool(ram and ram.total)
-        budget = RaidPlanner.max_raids(light.total if light else 0, ctx.policy.max_attacks_per_hour, await view.guard.attacks_last_hour(ctx))
+        budget = RaidPlanner.max_raids(light.total if light else 0, ctx.policy.max_attacks_per_hour, await view.guard.attacks_last_hour(ctx), knobs)
         median = statistics.median([int(t.get("points") or 0) for t in targets]) if targets else 0
         intel = {t["coords"]: await view.lessons.target(t["coords"]) for t in targets}
 
-        ranked = [RaidPlanner.plan(t, intel[t["coords"]], home, median, has_ram) for t in targets]
+        ranked = [RaidPlanner.plan(t, intel[t["coords"]], home, median, has_ram, knobs) for t in targets]
         order = {"probe": 0, "raid": 1, "skip": 2}
         ranked.sort(key=lambda p: (order[p.kind], -p.rate))
         by_coords = {t["coords"]: t for t in targets}
@@ -72,9 +72,9 @@ class AttackProposer(Proposer):
                 break
 
             target = by_coords[first.coords]
-            plan = RaidPlanner.plan(target, intel[first.coords], home, median, has_ram)
+            plan = RaidPlanner.plan(target, intel[first.coords], home, median, has_ram, knobs)
             if plan.kind == "probe":
-                if probes >= MAX_PROBES or await view.guard.spied_recently(plan.coords, ctx.policy.retarget_minutes):
+                if probes >= knobs.int("raid.max_probes") or await view.guard.spied_recently(plan.coords, ctx.policy.retarget_minutes):
                     continue
 
                 probes += 1
@@ -138,7 +138,7 @@ class AttackProposer(Proposer):
             "relatórios",
         )
         view.note(insight)
-        return max(0.3, insight.weight(half_life_hours=24)), f"último relatório {data.get('last_result', '?')} há {insight.age_hours():.0f}h"
+        return max(0.3, insight.weight(half_life_hours=knob(view, "raid.intel_half_life_hours"))), f"último relatório {data.get('last_result', '?')} há {insight.age_hours():.0f}h"
 
     @staticmethod
     def carry(squad: dict[str, int]) -> int:

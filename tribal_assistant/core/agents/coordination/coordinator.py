@@ -1,7 +1,7 @@
 """Turns proposals into an executed plan: role and mode, reservations, vetoes, scores, deferrals."""
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -9,11 +9,11 @@ from tribal_assistant.core.agents.coordination.budget import Budget, Reservation
 from tribal_assistant.core.agents.coordination.constraints import Constraint
 from tribal_assistant.core.agents.coordination.insight import now
 from tribal_assistant.core.agents.coordination.proposal import Proposal
-from tribal_assistant.core.agents.coordination.strategy import GOALS, LABELS, WEIGHTS, Role
+from tribal_assistant.core.agents.coordination.strategy import GOALS, LABELS, Role, Weights
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import knob_int, tuning
 
 Execute = Callable[[Proposal], Awaitable[tuple[bool, str]]]
-MAX_ACTIONS = 10
 BUILD_ACTIONS = ("upgrade_building",)
 
 
@@ -66,8 +66,12 @@ class Coordinator:
         self.view = view
         self.budget = Budget(view.ctx)
 
+    def weights(self, mode: Role) -> Weights:
+        knobs = tuning(self.view)
+        return Weights(**{item.name: knobs.get(f"weight.{mode.value}.{item.name}") for item in fields(Weights)})
+
     def score(self, proposals: list[Proposal], mode: Role) -> list[Proposal]:
-        weights = WEIGHTS[mode]
+        weights = self.weights(mode)
         for proposal in proposals:
             proposal.priority = weights.score(proposal.factors)
 
@@ -94,7 +98,7 @@ class Coordinator:
         for proposal in self.score(self._unique(proposals), view.role):
             why = self._blocked(proposal, constraints, chosen, failed, slots, done)
             if not why and not self.view.dry_run:
-                learned = await self.view.lessons.blocked(proposal.action, proposal.arguments)
+                learned = await self.view.lessons.blocked(proposal.action, proposal.arguments, tuning(self.view))
                 why = learned.replace("RECUSADO: ", "") if learned else None
 
             if why:
@@ -144,7 +148,7 @@ class Coordinator:
         if proposal.action in BUILD_ACTIONS and slots <= 0:
             return "fila de construção cheia"
 
-        if done >= MAX_ACTIONS:
+        if done >= knob_int(self.view, "coordinator.max_actions"):
             return "limite de ações por rodada"
 
         if proposal.troops and not self.budget.troops_available(proposal.troops, proposal.purpose):

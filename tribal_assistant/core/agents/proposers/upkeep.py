@@ -7,10 +7,10 @@ from loguru import logger
 
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import Knobs, tuning
 from tribal_assistant.core.agents.proposers.base import Proposer
 
 TRAINING_COST = {21: 100, 22: 200, 23: 400, 24: 700, 25: 1000}
-INVENTORY_HOURS = 0.5
 UNIT_BONUS = {"lanceiro": "spear", "espadachim": "sword", "machado": "axe", "arqueiro": "archer", "cavalaria leve": "light", "cavalaria pesada": "heavy"}
 
 
@@ -56,7 +56,7 @@ class UpkeepProposer(Proposer):
     async def _forge(self, view: CoordinationView) -> list[Proposal]:
         from tribal_assistant.core.game.forge import Forge
 
-        if not await view.cooldown("forge", 3):
+        if not await view.cooldown("forge"):
             return []
 
         state = await view.actions.forge.state(view.ctx.game_id)
@@ -73,7 +73,7 @@ class UpkeepProposer(Proposer):
         return [self._free("craft_event_item", {"materials": materials}, reason, "item do evento, ranking diário e conquista da Antiga Forja", 0.5)]
 
     async def _relic(self, view: CoordinationView) -> list[Proposal]:
-        if not await view.cooldown("relic", 6):
+        if not await view.cooldown("relic"):
             return []
 
         return [
@@ -82,7 +82,7 @@ class UpkeepProposer(Proposer):
         ]
 
     async def _flag(self, view: CoordinationView) -> list[Proposal]:
-        if not await view.cooldown("flag", 6):
+        if not await view.cooldown("flag"):
             return []
 
         state = await view.actions.flags(view.ctx.game_id)
@@ -106,7 +106,7 @@ class UpkeepProposer(Proposer):
 
     async def _knight(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
-        if ctx.levels.get("statue", 0) < 1 or not await view.cooldown("knight", 1):
+        if ctx.levels.get("statue", 0) < 1 or not await view.cooldown("knight"):
             return []
 
         state = await view.actions.knight_state(ctx.game_id)
@@ -118,7 +118,7 @@ class UpkeepProposer(Proposer):
         for skill in sorted(state.get("learnable", []), key=self.skill_rank)[:1]:
             items.append(self._free("learn_knight_skill", {"skill_id": skill}, "ponto de habilidade livre", f"habilidade {skill}", 0.5))
 
-        regimen = self.training(ctx.stock, ctx.village.storage) if state.get("can_train") else None
+        regimen = self.training(ctx.stock, ctx.village.storage, tuning(view)) if state.get("can_train") else None
         if regimen:
             price = TRAINING_COST[regimen]
             proposal = self._free("train_knight", {"regimen": regimen}, "recursos sobrando viram XP", "paladino sobe de nível", 0.35, cost={"wood": price, "clay": price, "iron": price})
@@ -132,17 +132,19 @@ class UpkeepProposer(Proposer):
         return cls.SKILL_PRIORITY.index(skill) if skill in cls.SKILL_PRIORITY else len(cls.SKILL_PRIORITY)
 
     @classmethod
-    def training(cls, stock: dict[str, int], storage: int) -> int | None:
+    def training(cls, stock: dict[str, int], storage: int, knobs: Knobs | None = None) -> int | None:
+        knobs = knobs or Knobs()
+        multiple, full = knobs.get("knight.train_stock_multiple"), knobs.get("knight.train_full_share")
         lowest = min(stock.get(r, 0) for r in ("wood", "clay", "iron"))
         for regimen, cost in cls.TRAINING:
-            if cost * 4 <= lowest or (storage and lowest >= storage * 0.8 and cost <= lowest * 0.5):
+            if cost * multiple <= lowest or (storage and lowest >= storage * full and cost <= lowest * 0.5):
                 return regimen
 
         return None
 
     async def _items(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
-        if not await view.cooldown("items", INVENTORY_HOURS):
+        if not await view.cooldown("items"):
             return []
 
         inventory = await view.actions.inventory(ctx.game_id)
@@ -152,14 +154,17 @@ class UpkeepProposer(Proposer):
 
         items = []
         for item in inventory:
-            decision = self.item_decision(item, ctx.stock, ctx.village.storage, bool(ctx.queue), attacked, home)
+            decision = self.item_decision(item, ctx.stock, ctx.village.storage, bool(ctx.queue), attacked, home, tuning(view))
             if decision:
                 items.append(self._free("use_item", {"key": item["key"]}, decision, str(item.get("name")), 0.5))
 
         return items
 
     @staticmethod
-    def item_decision(item: dict[str, Any], stock: dict[str, int], storage: int, building: bool, attacked: bool = False, home: dict[str, int] | None = None) -> str | None:
+    def item_decision(
+        item: dict[str, Any], stock: dict[str, int], storage: int, building: bool, attacked: bool = False, home: dict[str, int] | None = None, knobs: Knobs | None = None
+    ) -> str | None:
+        knobs = knobs or Knobs()
         name = str(item.get("name") or "")
         detail = str(item.get("detail") or "")
         if not item.get("usable"):
@@ -167,7 +172,7 @@ class UpkeepProposer(Proposer):
 
         unit = next((u for label, u in UNIT_BONUS.items() if label in name.lower()), None)
         if unit:
-            return f"bônus de {unit} com ataque chegando" if attacked and (home or {}).get(unit, 0) >= 20 else None
+            return f"bônus de {unit} com ataque chegando" if attacked and (home or {}).get(unit, 0) >= knobs.int("items.unit_bonus_min") else None
 
         if "livro" in name.lower() or "livro de habilidade" in detail.lower():
             return "livro de habilidade libera habilidade do paladino"
@@ -179,14 +184,14 @@ class UpkeepProposer(Proposer):
         if match:
             gain = storage * int(match.group(1)) // 100
             room = min(storage - stock.get(r, 0) for r in ("wood", "clay", "iron"))
-            if storage >= 4000 and gain <= room:
+            if storage >= knobs.int("items.pack_min_storage") and gain <= room:
                 return f"pacote de recursos cabe no armazém (+{gain})"
 
         return None
 
     async def _name(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
-        if not any(q["id"] == "1400" for q in ctx.quests) or not await view.cooldown("rename", 24):
+        if not any(q["id"] == "1400" for q in ctx.quests) or not await view.cooldown("rename"):
             return []
 
         player = (ctx.player or {}).get("name") or "Aldeia"

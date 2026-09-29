@@ -3,16 +3,11 @@
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import knob
+from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
 
-BATCH = 25
-MIN_BATCH = 5
 FARM_UNITS = ("light", "spear", "axe")
-SCAVENGE_CAP = 1000
-MIN_SPIES = 5
-SPIES_PER_LIGHT = 5
 
 
 class RecruitmentProposer(Proposer):
@@ -24,6 +19,7 @@ class RecruitmentProposer(Proposer):
     async def propose(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
         items = []
+        batch, min_batch = knob_int(view, "recruit.batch"), knob_int(view, "recruit.min_batch")
         weight = {Role.OFFENSIVE: 0.7, Role.DEFENSE: 0.6, Role.SUPPORT: 0.65, Role.EMERGENCY: 0.5}.get(view.role, 0.4)
 
         for step in PlanTracker.next_recruits(ctx.plan)[:2]:
@@ -32,9 +28,9 @@ class RecruitmentProposer(Proposer):
                 continue
 
             queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == step.target)
-            count = min(BATCH, max(0, step.amount - unit.total - queued))
+            count = min(batch, max(0, step.amount - unit.total - queued))
             plan = view.guard.plan_recruit(ctx, step.target, count)
-            if count <= 0 or plan.refusal or plan.count < min(MIN_BATCH, count):
+            if count <= 0 or plan.refusal or plan.count < min(min_batch, count):
                 continue
 
             items.append(self._recruit(view, step.target, plan.count, f"plano pede {step.amount} {step.target}", weight, purpose=f"plan:{step.target}"))
@@ -52,9 +48,9 @@ class RecruitmentProposer(Proposer):
             items.append(scavenge)
 
         storage = ctx.village.storage or 1
-        if any(v >= storage * 0.85 for v in ctx.stock.values()):
+        if any(v >= storage * knob(view, "storage.near_full_share") for v in ctx.stock.values()):
             for unit in FARM_UNITS:
-                plan = view.guard.plan_recruit(ctx, unit, BATCH)
+                plan = view.guard.plan_recruit(ctx, unit, batch)
                 if not plan.refusal:
                     items.append(self._recruit(view, unit, plan.count, "armazém quase cheio: excedente em tropas de saque", weight * 0.8, opportunity=0.6))
                     break
@@ -62,14 +58,17 @@ class RecruitmentProposer(Proposer):
         return items
 
     @staticmethod
-    def scavenge_target(pop_max: int, share: float = 0.4) -> int:
+    def scavenge_target(pop_max: int, share: float | None = None, knobs: Knobs | None = None) -> int:
         """Spears worth keeping for scavenging: they pay back in hours, so the army grows with the farm."""
-        return min(SCAVENGE_CAP, int(pop_max * share))
+        knobs = knobs or Knobs()
+        share = share if share is not None else knobs.get("scavenge_share")
+        return min(knobs.int("scavenge.cap"), int(pop_max * share))
 
     @staticmethod
-    def spy_target(light: int) -> int:
+    def spy_target(light: int, knobs: Knobs | None = None) -> int:
         """Scouts to keep: enough to probe every raid target, growing with the light cavalry."""
-        return max(MIN_SPIES, light // SPIES_PER_LIGHT)
+        knobs = knobs or Knobs()
+        return max(knobs.int("spy.min"), light // knobs.int("spy.per_light"))
 
     def _spies(self, view: CoordinationView, weight: float) -> Proposal | None:
         ctx = view.ctx
@@ -78,7 +77,7 @@ class RecruitmentProposer(Proposer):
             return None
 
         light = ctx.unit("light")
-        want = self.spy_target(light.total if light else 0)
+        want = self.spy_target(light.total if light else 0, tuning(view))
         queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == "spy")
         missing = want - spy.total - queued
         if missing <= 0:
@@ -99,16 +98,18 @@ class RecruitmentProposer(Proposer):
         if spear is None or not spear.available:
             return None
 
+        batch, min_batch = knob_int(view, "recruit.batch"), knob_int(view, "recruit.min_batch")
         queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == "spear")
-        missing = self.scavenge_target(ctx.village.pop_max or 0, knob(view, "scavenge_share")) - spear.total - queued
-        if missing < MIN_BATCH or queued >= BATCH * 2:
+        target = self.scavenge_target(ctx.village.pop_max or 0, knobs=tuning(view))
+        missing = target - spear.total - queued
+        if missing < min_batch or queued >= batch * 2:
             return None
 
-        plan = view.guard.plan_recruit(ctx, "spear", min(BATCH, missing))
-        if plan.refusal or plan.count < MIN_BATCH:
+        plan = view.guard.plan_recruit(ctx, "spear", min(batch, missing))
+        if plan.refusal or plan.count < min_batch:
             return None
 
-        return self._recruit(view, "spear", plan.count, f"lanceiros para a coleta ({spear.total}/{self.scavenge_target(ctx.village.pop_max or 0, knob(view, "scavenge_share"))})", weight, opportunity=0.7, purpose="scavenge")
+        return self._recruit(view, "spear", plan.count, f"lanceiros para a coleta ({spear.total}/{target})", weight, opportunity=0.7, purpose="scavenge")
 
     def _recruit(self, view: CoordinationView, unit: str, count: int, reason: str, impact: float, opportunity: float = 0.3, purpose: str = "") -> Proposal:
         return Proposal(
@@ -129,7 +130,7 @@ class RecruitmentProposer(Proposer):
 
     async def _research(self, view: CoordinationView) -> Proposal | None:
         ctx = view.ctx
-        if ctx.levels.get("smith", 0) < 1 or view.dry_run or not await view.cooldown("smith", 1):
+        if ctx.levels.get("smith", 0) < 1 or view.dry_run or not await view.cooldown("smith"):
             return None
 
         techs = await view.actions.smith(ctx.game_id)

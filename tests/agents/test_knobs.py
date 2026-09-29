@@ -39,3 +39,80 @@ async def test_store_keeps_value_and_history(session: AsyncSession) -> None:
     assert (await store.load()).get("filler_wait_hours") == 0.6
     rows = {r["name"]: r for r in await store.rows()}
     assert rows["filler_wait_hours"]["history"][0]["why"] == "fila parada"
+
+
+def test_every_knob_starts_positive_and_shares_stay_within_the_whole() -> None:
+    for name, spec in Knobs.SPECS.items():
+        assert spec.default > 0, name
+        if spec.share:
+            assert spec.default <= 1.0, name
+
+
+def test_policy_limits_come_from_the_knobs_and_emergency_never_raids() -> None:
+    from tribal_assistant.core.agents.coordination.policy import Policy
+
+    knobs = Knobs({"policy.offensive.attack_radius": 20, "policy.offensive.recruit_budget": 0.5, "policy.emergency.recruit_budget": 0.6})
+    offensive = Policy.for_role("offensive", knobs)
+    emergency = Policy.for_role("emergency", knobs)
+
+    assert offensive.attack_radius == 20 and offensive.recruit_budget == 0.5 and offensive.knobs is knobs
+    assert Policy.for_role("unknown").max_attacks_per_hour == 12
+    assert emergency.max_attacks_per_hour == 0 and emergency.attack_radius == 0 and emergency.recruit_budget == 0.6
+
+
+def test_lost_raids_tighten_the_raiding_knobs() -> None:
+    changes = {name: value for name, value, _ in Tuner.plan(Knobs(), Metrics(rounds=20, raids_lost=0.5))}
+
+    assert changes["raid.min_confidence"] > 0.35
+    assert changes["raid.radius_cavalry"] < 10
+    assert changes["policy.growth.attack_radius"] < 12
+    assert changes["policy.offensive.max_attacks_per_hour"] < 30
+    assert changes["raid.wall_light_factor"] > 1.0
+
+
+def test_full_storage_spends_sooner_and_threats_raise_the_defense_goals() -> None:
+    changes = {name: value for name, value, _ in Tuner.plan(Knobs(), Metrics(rounds=20, storage_full=0.5, threatened=0.3))}
+
+    assert changes["recruit.batch"] > 25
+    assert changes["storage.near_full_share"] < 0.85
+    assert changes["iron_parking.full_share"] < 0.85
+    assert changes["defense.wall_target"] > 8 and changes["defense.prepare_hours"] > 72
+
+
+def test_cooldowns_follow_what_the_checks_find() -> None:
+    idle = Metrics(rounds=20, nothing_to_do={"craft_event_item": 0.9, "research_unit": 0.0})
+    changes = {name: value for name, value, _ in Tuner.plan(Knobs(), idle)}
+
+    assert changes["cooldown.forge"] > 3
+    assert changes["cooldown.smith"] < 1
+
+
+def test_calm_windows_walk_a_knob_back_to_its_default_without_passing_it() -> None:
+    changes = {name: value for name, value, _ in Tuner.plan(Knobs({"raid.min_infantry": 12, "defense.wall_target": 9}), Metrics(rounds=20))}
+
+    assert changes["raid.min_infantry"] == 10
+    assert changes["defense.wall_target"] == 8
+    assert Knobs.toward("farm.lead_hours", 1.1, 0) == 1.0
+    assert Knobs.toward("farm.lead_hours", 1.0, 0) == 1.0
+
+
+def test_new_metrics_come_from_rounds_and_decisions() -> None:
+    rounds = [
+        {"insights": [{"text": "ataque de x: hold (defesa; nenhuma bárbara no raio longe o bastante para esquivar)"}], "deferred": [{"action": "upgrade_building", "why": "faltam 120 iron"}, {"action": "use_item", "why": "limite de ações por rodada"}]},
+        {"insights": [], "deferred": []},
+    ]
+    decisions = [("send_farm_attack", False, "limite de 12 ataques por hora atingido"), ("send_spy", True, "enviado")]
+    metrics = Tuner.measure(rounds, decisions)
+
+    assert metrics.iron_short == 0.5 and metrics.actions_capped == 0.5 and metrics.dodge_stuck == 0.5
+    assert metrics.raids_capped == 0.5
+
+
+def test_pure_planners_read_the_knobs_they_are_given() -> None:
+    from tribal_assistant.core.agents.pacing import BuildPacing
+    from tribal_assistant.core.agents.proposers.raid import RaidPlanner
+
+    wider = Knobs({"raid.radius_infantry": 6, "raid.max_cap": 20})
+    assert RaidPlanner.in_range("spear", 5, wider) and not RaidPlanner.in_range("spear", 5)
+    assert RaidPlanner.max_raids(1000, 30, 0, wider) == 20
+    assert BuildPacing.pit_caps({"wood": 6, "stone": 6}, Knobs({"pacing.iron_gap": 1}))["iron"] == 5

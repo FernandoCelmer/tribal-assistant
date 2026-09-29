@@ -3,10 +3,12 @@
 import re
 from typing import Any
 
+from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.agents.knowledge import BUILDING_BY_LABEL
 
 FORBIDDEN = ("milícia", "milicia", "militia")
-QUEST_CAPPED = {"wall": 3, "hide": 3}
+QUEST_CAPPED = {"wall": "quest.wall_cap", "hide": "quest.hide_cap"}
+UNCAPPED = 99
 
 
 class QuestRules:
@@ -32,8 +34,10 @@ class QuestRules:
         return min(hits)[2], int(numbers[-1]) if numbers else 0
 
     @classmethod
-    def building_goals(cls, quests: list[dict[str, Any]], levels: dict[str, int]) -> list[tuple[str, int, str]]:
+    def building_goals(cls, quests: list[dict[str, Any]], levels: dict[str, int], knobs: Knobs | None = None) -> list[tuple[str, int, str]]:
         """(building, level, quest title) for every open building goal the agents may build."""
+        knobs = knobs or Knobs()
+        caps = {building: knobs.int(name) for building, name in QUEST_CAPPED.items()}
         found = []
         for quest in quests:
             if cls.forbidden(quest):
@@ -45,7 +49,7 @@ class QuestRules:
                     continue
 
                 building, level = mapped[0], mapped[1] or int(goal.get("target") or 1)
-                if level > QUEST_CAPPED.get(building, 99) or levels.get(building, 0) >= level:
+                if level > caps.get(building, UNCAPPED) or levels.get(building, 0) >= level:
                     continue
 
                 found.append((building, level, str(quest.get("title", ""))))

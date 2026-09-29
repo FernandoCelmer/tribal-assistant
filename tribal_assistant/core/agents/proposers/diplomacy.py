@@ -4,10 +4,9 @@ from loguru import logger
 
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.economy import EconomyProposer
-
-APPLY_RETRY_HOURS = 48
 
 
 class DiplomacyProposer(Proposer):
@@ -45,7 +44,7 @@ class DiplomacyProposer(Proposer):
     async def _tribe(self, view: CoordinationView) -> list[Proposal]:
         from tribal_assistant.core.game.diplomacy import Diplomacy
 
-        if (view.ctx.player or {}).get("ally_id") or not await view.cooldown("tribe", 12):
+        if (view.ctx.player or {}).get("ally_id") or not await view.cooldown("tribe"):
             return []
 
         state = await view.actions.diplomacy.tribes(view.ctx.game_id)
@@ -56,7 +55,7 @@ class DiplomacyProposer(Proposer):
             invite = state["invites"][0]
             return [self._social("accept_tribe_invite", {"invite_id": str(invite["id"])}, f"convite da tribo {invite.get('tag', '')}", "proteção, apoio e comércio da tribo", 0.7)]
 
-        skip = {t["id"] for t in state.get("nearby", []) if not await view.lessons.due(f"tribe_apply:{t['id']}", APPLY_RETRY_HOURS)}
+        skip = {t["id"] for t in state.get("nearby", []) if not await view.lessons.due(f"tribe_apply:{t['id']}", knob(view, "diplomacy.apply_retry_hours"))}
         best = Diplomacy.best_tribe(state.get("nearby", []), skip)
         if best is None:
             return []
@@ -67,7 +66,7 @@ class DiplomacyProposer(Proposer):
     async def _mentor(self, view: CoordinationView) -> list[Proposal]:
         from tribal_assistant.core.game.diplomacy import Diplomacy
 
-        if not await view.cooldown("mentor", 24):
+        if not await view.cooldown("mentor"):
             return []
 
         mentors = await view.actions.diplomacy.mentors(view.ctx.game_id)

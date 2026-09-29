@@ -10,6 +10,7 @@ from tribal_assistant.core.agents.coordination.insight import Certainty, Insight
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import knob, knob_int
 from tribal_assistant.core.agents.noble import ACADEMY_PATH, Candidate, NobleReadiness, NobleTarget
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.game.world_config import WorldConfig
@@ -18,7 +19,6 @@ from tribal_assistant.core.models.world import WorldVillage
 from tribal_assistant.core.repositories.world import WorldRepository
 
 NOBLE_PATH = (*ACADEMY_PATH, ("snob", 1))
-TARGET_RADIUS = 10
 
 
 class ExpansionProposer(Proposer):
@@ -48,17 +48,19 @@ class ExpansionProposer(Proposer):
             return []
 
         cost = await self.noble_cost(view)
-        share = {r: min(int(view.ctx.stock.get(r, 0) * 0.3), cost[r]) for r in ("wood", "clay", "iron")}
-        return [Reservation("expansion", "strategic", "30% guardado para academia e nobre", share)]
+        fraction = knob(view, "expansion.reserve_share")
+        share = {r: min(int(view.ctx.stock.get(r, 0) * fraction), cost[r]) for r in ("wood", "clay", "iron")}
+        return [Reservation("expansion", "strategic", f"{fraction:.0%} guardado para academia e nobre", share)]
 
     async def target(self, view: CoordinationView) -> Candidate | None:
         ox, oy = (int(n) for n in view.ctx.village.coords.split("|"))
+        radius = knob_int(view, "expansion.target_radius")
         rows = (
             await view.session.execute(
                 select(WorldVillage)
                 .where(WorldVillage.player_id == 0)
-                .where(WorldVillage.x.between(ox - TARGET_RADIUS, ox + TARGET_RADIUS))
-                .where(WorldVillage.y.between(oy - TARGET_RADIUS, oy + TARGET_RADIUS))
+                .where(WorldVillage.x.between(ox - radius, ox + radius))
+                .where(WorldVillage.y.between(oy - radius, oy + radius))
             )
         ).scalars().all()
 
@@ -71,7 +73,7 @@ class ExpansionProposer(Proposer):
             Candidate(f"{v.x}|{v.y}", v.points, round(math.hypot(v.x - ox, v.y - oy), 1), v.bonus_id, f"{v.x}|{v.y}" in known)
             for v in rows
         ]
-        return NobleTarget.pick(candidates, TARGET_RADIUS)
+        return NobleTarget.pick(candidates, radius)
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
         progress = self.progress(view)

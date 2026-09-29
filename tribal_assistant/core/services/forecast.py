@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import ContextLoader, VillageContext
 from tribal_assistant.core.agents.coordination.estimates import RESOURCES, Estimator
+from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.attack import SCAVENGERS, AttackProposer
-from tribal_assistant.core.agents.proposers.economy import POP_WINDOW_HOURS, EconomyProposer
+from tribal_assistant.core.agents.proposers.economy import EconomyProposer
 from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.core.repositories.game import GameRepository
 from tribal_assistant.core.schemas.insight import (
@@ -45,7 +46,7 @@ class ForecastService:
         return [ScavengePlanner.plan(ctx) for ctx in await self.contexts(village_id)]
 
     async def build(self, ctx: VillageContext, cost: dict[str, int] | None = None) -> VillageForecast:
-        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=POP_WINDOW_HOURS)
+        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=knob(ctx, "economy.pop_window_hours"))
         samples = [(row.taken_at, row.pop_current) for row in await GameRepository(self.session).snapshots(ctx.id, since)]
         return self.of(ctx, cost, samples)
 

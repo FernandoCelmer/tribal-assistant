@@ -7,13 +7,12 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.agents.target_intel import TargetIntel
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
 CHALLENGES = "challenges"
 
-REPEAT_WINDOW_MINUTES = 20
-REPEAT_LIMIT = 2
 IGNORED = ("(simulação)", "RECUSADO: aprendido")
 TEXT_LIMIT = 300
 
@@ -35,9 +34,10 @@ class LessonBook:
         ]
         return f"{action}:{digest}"
 
-    async def blocked(self, action: str, arguments: dict[str, Any]) -> str | None:
+    async def blocked(self, action: str, arguments: dict[str, Any], knobs: Knobs | None = None) -> str | None:
+        knobs = knobs or Knobs()
         row = await self.repo.recent_failure(
-            f"attempt:{self.signature(action, arguments)}", REPEAT_WINDOW_MINUTES, REPEAT_LIMIT
+            f"attempt:{self.signature(action, arguments)}", knobs.int("learning.repeat_window_minutes"), knobs.int("learning.repeat_limit")
         )
         if row is None:
             return None

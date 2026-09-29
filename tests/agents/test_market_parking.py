@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 from tests.agents.builders import building, context, scavenge, unit
+from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.agents.proposers.economy import EconomyProposer, IronParking
 from tribal_assistant.core.agents.tools.act import CancelMarketOffer, ParkMarketOffer
 from tribal_assistant.core.agents.tools.insight import PlanScavenge
@@ -27,7 +28,7 @@ def test_parking_never_leaves_iron_below_the_tool_floor():
     storage = 4567
     amount, lots = IronParking.lots(4500, storage, 0, 1.0, 1.0)
 
-    assert 4500 - amount * lots >= storage * ParkMarketOffer.FLOOR
+    assert 4500 - amount * lots >= storage * Knobs().get("iron_parking.floor_share")
 
 
 def test_release_cancels_parked_iron_only_until_the_need_is_covered():

@@ -94,11 +94,12 @@ class VillageRound:
         return box
 
     async def run(self, ctx: VillageContext) -> tuple[Decision, list[Insight]]:
-        base, mode, reason = await RoleSelector(self.session).select(ctx)
-        ctx.policy = Policy.for_role(mode.value)
+        knobs = await KnobStore(self.session).load()
+        base, mode, reason = await RoleSelector(self.session, knobs).select(ctx)
+        ctx.policy = Policy.for_role(mode.value, knobs)
         view = CoordinationView(ctx, self.session, self.config, self.actions, self.dry_run, mode, base, self._box(ctx, "coordinator", "Coordenador"))
-        view.recent = await self._recent(ctx)
-        view.knobs = await KnobStore(self.session).load()
+        view.knobs = knobs
+        view.recent = await self._recent(ctx, knobs.int("coordinator.recent_minutes"))
         view.note(Insight("policy", f"limites do modo {mode.value}: {ctx.policy.describe()}", Certainty.FACT, now(), 1.0, None, "coordenador"))
         view.note(Insight("role", f"papel {base.value}: {reason}", Certainty.FACT, now(), 1.0, base.value, "coordenador"))
 

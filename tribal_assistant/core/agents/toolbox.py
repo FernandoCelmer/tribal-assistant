@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.guardrails import Guardrails
+from tribal_assistant.core.agents.knobs import tuning
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.tools.act import (
     AcceptMarketOffer,
@@ -151,7 +152,7 @@ class Toolbox:
 
         await self._trace("tool_call", AgentTool.dump(arguments), name)
 
-        blocked = await self.lessons.blocked(name, arguments) if tool.acts and not self.dry_run else None
+        blocked = await self.lessons.blocked(name, arguments, tuning(self.ctx)) if tool.acts and not self.dry_run else None
 
         try:
             outcome = ToolOutcome(False, blocked) if blocked else await tool.run(self, arguments)

@@ -3,11 +3,10 @@
 from dataclasses import dataclass
 
 from tribal_assistant.core.agents.context import VillageContext
+from tribal_assistant.core.agents.knobs import tuning
 from tribal_assistant.core.game.world_config import FARM_BONUS
 
 ACADEMY_PATH = (("main", 20), ("smith", 20), ("market", 10))
-MIN_FARM = 24
-MIN_ARMY_POP = 2000
 
 
 @dataclass(frozen=True)
@@ -30,12 +29,14 @@ class NobleReadiness:
 
     @classmethod
     def missing(cls, ctx: VillageContext) -> list[str]:
+        knobs = tuning(ctx)
+        farm, army = knobs.int("noble.min_farm"), knobs.int("noble.min_army_pop")
         levels = ctx.levels
         gaps = [f"{b} {lvl}" for b, lvl in ACADEMY_PATH if levels.get(b, 0) < lvl]
-        if levels.get("farm", 0) < MIN_FARM:
-            gaps.append(f"farm {MIN_FARM}")
-        if cls.army_pop(ctx) < MIN_ARMY_POP:
-            gaps.append(f"exército {MIN_ARMY_POP} pop")
+        if levels.get("farm", 0) < farm:
+            gaps.append(f"farm {farm}")
+        if cls.army_pop(ctx) < army:
+            gaps.append(f"exército {army} pop")
         return gaps
 
     @classmethod

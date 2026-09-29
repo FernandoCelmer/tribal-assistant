@@ -69,9 +69,10 @@ class CoordinationView:
     async def read(self, tool: str, arguments: dict[str, Any] | None = None) -> Any:
         return await self.reader.invoke(tool, arguments or {})
 
-    async def cooldown(self, name: str, hours: float) -> bool:
+    async def cooldown(self, name: str, hours: float | None = None) -> bool:
+        """Once per tuned interval (knob cooldown.<name>) for this village."""
         key = f"{name}:{self.ctx.game_id}"
-        if not await self.lessons.due(key, hours):
+        if not await self.lessons.due(key, hours if hours is not None else self.knobs.get(f"cooldown.{name}")):
             return False
 
         await self.lessons.mark(key)

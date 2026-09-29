@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.agents.target_intel import TargetIntel
 
@@ -11,15 +12,8 @@ UNIT_SPEED = 0.5
 RAIDERS = ("light", "knight", "spear", "axe", "marcher")
 CAVALRY = ("light", "knight", "marcher")
 INFANTRY = ("spear", "sword", "axe", "archer")
-RADIUS = {"spear": 4, "sword": 4, "axe": 4, "archer": 4, "light": 10, "marcher": 10, "knight": 10}
+RADIUS = {"spear": "raid.radius_infantry", "sword": "raid.radius_infantry", "axe": "raid.radius_infantry", "archer": "raid.radius_infantry", "light": "raid.radius_cavalry", "marcher": "raid.radius_cavalry", "knight": "raid.radius_cavalry"}
 WALL_LIGHT = {0: 1, 1: 2, 2: 8, 3: 22, 4: 46, 5: 85}
-MIN_INFANTRY = 10
-PALADIN_POINTS = 100
-UNKNOWN_HAUL = 300
-HISTORY_MARGIN = 1.15
-MAX_RAIDS_BASE = 3
-MAX_RAIDS_CAP = 12
-LIGHT_PER_RAID = 20
 PROBE = {"spy": 1}
 
 
@@ -44,27 +38,31 @@ class RaidPlanner:
         return distance * max((cls.minutes_per_field(u) for u, n in squad.items() if n > 0 and u in UNITS), default=0.0)
 
     @staticmethod
-    def in_range(unit: str, distance: float) -> bool:
-        return distance <= RADIUS.get(unit, 0)
+    def in_range(unit: str, distance: float, knobs: Knobs | None = None) -> bool:
+        return unit in RADIUS and distance <= (knobs or Knobs()).int(RADIUS[unit])
 
     @staticmethod
-    def max_raids(light: int, per_hour: int, sent_last_hour: int) -> int:
-        return max(0, min(MAX_RAIDS_BASE + light // LIGHT_PER_RAID, MAX_RAIDS_CAP, per_hour - sent_last_hour))
+    def max_raids(light: int, per_hour: int, sent_last_hour: int, knobs: Knobs | None = None) -> int:
+        knobs = knobs or Knobs()
+        wanted = knobs.int("raid.max_base") + light // knobs.int("raid.light_per_raid")
+        return max(0, min(wanted, knobs.int("raid.max_cap"), per_hour - sent_last_hour))
 
     @staticmethod
-    def wall_light(wall: int | None, has_ram: bool = False) -> int | None:
+    def wall_light(wall: int | None, has_ram: bool = False, knobs: Knobs | None = None) -> int | None:
         """Light cavalry that clears a barbarian behind this wall without losses; None means leave it alone."""
         if wall is None:
             return 0
 
-        if wall >= 3 and not has_ram:
+        knobs = knobs or Knobs()
+        if wall >= knobs.int("raid.ram_wall") and not has_ram:
             return None
 
-        return WALL_LIGHT.get(wall)
+        base = WALL_LIGHT.get(wall)
+        return None if base is None else max(1, round(base * knobs.get("raid.wall_light_factor")))
 
     @staticmethod
-    def paladin_allowed(data: dict[str, Any], points: int) -> bool:
-        return data.get("last_result") == "green" or 0 < points <= PALADIN_POINTS
+    def paladin_allowed(data: dict[str, Any], points: int, knobs: Knobs | None = None) -> bool:
+        return data.get("last_result") == "green" or 0 < points <= (knobs or Knobs()).int("raid.paladin_points")
 
     @staticmethod
     def production(level: int) -> float:
@@ -103,7 +101,7 @@ class RaidPlanner:
         return sum(UNITS[u].carry * n for u, n in squad.items() if u in UNITS)
 
     @classmethod
-    def squad(cls, home: dict[str, int], want: int) -> dict[str, int] | None:
+    def squad(cls, home: dict[str, int], want: int, knobs: Knobs | None = None) -> dict[str, int] | None:
         """Smallest group of raiders, fastest carriers first, that can take `want` resources."""
         squad: dict[str, int] = {}
         carried = 0
@@ -116,14 +114,15 @@ class RaidPlanner:
             squad[unit] = count
             carried += count * capacity
 
-        if not squad or carried < min(want, UNKNOWN_HAUL) * 0.5:
+        if not squad or carried < min(want, (knobs or Knobs()).int("raid.unknown_haul")) * 0.5:
             return None
 
         return squad
 
     @staticmethod
-    def secure(squad: dict[str, int], home: dict[str, int], light_needed: int) -> dict[str, int] | None:
+    def secure(squad: dict[str, int], home: dict[str, int], light_needed: int, knobs: Knobs | None = None) -> dict[str, int] | None:
         """Enough light cavalry for the wall, and never a handful of infantry on its own."""
+        minimum = (knobs or Knobs()).int("raid.min_infantry")
         squad = dict(squad)
 
         if light_needed:
@@ -133,10 +132,10 @@ class RaidPlanner:
             squad["light"] = max(squad.get("light", 0), light_needed)
 
         infantry = sum(squad.get(u, 0) for u in INFANTRY)
-        if infantry and infantry < MIN_INFANTRY and not squad.get("knight"):
+        if infantry and infantry < minimum and not squad.get("knight"):
             spare = sum(home.get(u, 0) for u in INFANTRY) - infantry
-            if infantry + spare >= MIN_INFANTRY:
-                need = MIN_INFANTRY - infantry
+            if infantry + spare >= minimum:
+                need = minimum - infantry
                 for unit in INFANTRY:
                     add = min(home.get(unit, 0) - squad.get(unit, 0), need)
                     if add > 0:
@@ -160,7 +159,8 @@ class RaidPlanner:
         return points > median and "scouted" not in data
 
     @classmethod
-    def plan(cls, target: dict[str, Any], data: dict[str, Any], home: dict[str, int], median: float, has_ram: bool = False) -> RaidPlan:
+    def plan(cls, target: dict[str, Any], data: dict[str, Any], home: dict[str, int], median: float, has_ram: bool = False, knobs: Knobs | None = None) -> RaidPlan:
+        knobs = knobs or Knobs()
         coords = str(target["coords"])
         distance = float(target.get("distance") or 0)
         points = int(target.get("points") or 0)
@@ -173,7 +173,7 @@ class RaidPlanner:
             return RaidPlan(coords, "skip", f"{data['defenders_left']} defensor(es) na aldeia segundo o último relatório")
 
         if cls.needs_probe(data, points, median):
-            if home.get("spy", 0) >= 1 and cls.in_range("light", distance):
+            if home.get("spy", 0) >= 1 and cls.in_range("light", distance, knobs):
                 return RaidPlan(coords, "probe", "alvo grande sem espionagem" if big else "sondar antes de saquear", dict(PROBE))
 
             if big:
@@ -183,15 +183,15 @@ class RaidPlanner:
                 return RaidPlan(coords, "skip", "dois relatórios amarelos seguidos")
 
         wall = data.get("wall")
-        light_needed = cls.wall_light(wall, has_ram)
+        light_needed = cls.wall_light(wall, has_ram, knobs)
         if light_needed is None:
             return RaidPlan(coords, "skip", f"muralha {wall}: precisa de aríetes")
 
-        allowed = {u: n for u, n in home.items() if u in RAIDERS and n > 0 and cls.in_range(u, distance)}
+        allowed = {u: n for u, n in home.items() if u in RAIDERS and n > 0 and cls.in_range(u, distance, knobs)}
         if wall:
             allowed = {u: n for u, n in allowed.items() if u in CAVALRY}
 
-        if not cls.paladin_allowed(data, points):
+        if not cls.paladin_allowed(data, points, knobs):
             allowed.pop("knight", None)
 
         if not allowed:
@@ -199,12 +199,12 @@ class RaidPlanner:
 
         pace = min(cls.minutes_per_field(u) for u in allowed)
         expected = cls.expected(data, distance * pace / 60)
-        want = expected if expected is not None else int((data.get("avg_haul") or UNKNOWN_HAUL) * HISTORY_MARGIN)
+        want = expected if expected is not None else int((data.get("avg_haul") or knobs.int("raid.unknown_haul")) * knobs.get("raid.history_margin"))
         if want <= 0:
             return RaidPlan(coords, "skip", "espionagem mostra aldeia vazia")
 
-        squad = cls.squad(allowed, want)
-        squad = cls.secure(squad, allowed, light_needed if wall else 0) if squad else None
+        squad = cls.squad(allowed, want, knobs)
+        squad = cls.secure(squad, allowed, light_needed if wall else 0, knobs) if squad else None
         if squad is None:
             return RaidPlan(coords, "skip", "tropas insuficientes para um grupo seguro")
 
