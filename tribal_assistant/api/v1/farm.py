@@ -25,3 +25,8 @@ async def add_target(
 @farm_router.post("/tick", response_model=FarmTickResult)
 async def farm_tick(service: FarmServiceDep) -> FarmTickResult:
     return await service.tick()
+
+
+@farm_router.delete("/targets/{target_id}", status_code=204)
+async def remove_target(target_id: int, service: FarmServiceDep) -> None:
+    await service.remove(target_id)

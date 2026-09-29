@@ -24,3 +24,11 @@ async def nearby(
     limit: int = Query(default=50, ge=1, le=500),
 ) -> list[NearbyVillage]:
     return await service.nearby(village_id, kind, radius, limit)
+
+
+@world_router.post("/sync", response_model=WorldStatus)
+async def sync(service: WorldServiceDep) -> WorldStatus:
+    from tribal_assistant.core.game.modules.world_sync import sync_world
+
+    await sync_world()
+    return await service.status()

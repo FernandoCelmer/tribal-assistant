@@ -65,6 +65,7 @@ class AgentActRequest(BaseModel):
     tool: str
     arguments: dict[str, Any] = {}
     dry_run: bool = True
+    source: str = Field(default="api", max_length=16, description="Who asked: api, mcp or web (kept in the decision log).")
 
 
 class AgentActOut(BaseModel):

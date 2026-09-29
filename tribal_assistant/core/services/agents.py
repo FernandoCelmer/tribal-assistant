@@ -51,7 +51,7 @@ class AgentService:
             ctx=contexts[0],
             session=self.session,
             config=await self.settings_repository.get(),
-            run_id=f"api-{uuid4().hex[:8]}",
+            run_id=f"{request.source}-{uuid4().hex[:8]}",
             dry_run=request.dry_run,
         )
         outcome = await box.invoke(request.tool, request.arguments)
