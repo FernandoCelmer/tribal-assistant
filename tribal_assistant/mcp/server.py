@@ -1,6 +1,7 @@
 """MCP server: account state, world data, farm list, guarded game actions, knowledge resources and workflow prompts."""
 
 import argparse
+import asyncio
 from collections.abc import Sequence
 
 from mcp.server.mcpserver import MCPServer
@@ -83,9 +84,17 @@ class TribalMcpServer:
         parser.add_argument("--port", type=int, default=8765)
         return parser.parse_args(argv)
 
+    @staticmethod
+    def select_account() -> None:
+        """Every tool works on one account: TRIBAL_ACCOUNT, or the first enabled one."""
+        from tribal_assistant.accounts.context import set_account
+
+        set_account(_pick_account())
+
     def main(self, argv: Sequence[str] | None = None) -> None:
         configure_logging(settings.log_level)
         args = self.parse_args(argv)
+        self.select_account()
         mcp = self.build()
 
         if args.http:
@@ -93,6 +102,21 @@ class TribalMcpServer:
             return
 
         mcp.run()
+
+
+def _pick_account():
+    import os
+
+    from tribal_assistant.accounts.registry import AccountRegistry
+    from tribal_assistant.db.session import SessionFactory, init_db
+
+    async def find():
+        await init_db()
+        async with SessionFactory() as session:
+            raw = os.environ.get("TRIBAL_ACCOUNT", "")
+            return await AccountRegistry(session).find(int(raw) if raw.isdigit() else None)
+
+    return asyncio.run(find())
 
 
 def main(argv: Sequence[str] | None = None) -> None:
