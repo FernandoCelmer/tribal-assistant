@@ -29,6 +29,8 @@ accounts_app = typer.Typer(help="Game accounts: list, add, enable or remove.", n
 db_app = typer.Typer(help="Database: copy the old single-account data into PostgreSQL or a new file.", no_args_is_help=True)
 app.add_typer(accounts_app, name="accounts")
 app.add_typer(db_app, name="db")
+docs_app = typer.Typer(help="Local docs library the agents search: load docs/ into the database, search it.", no_args_is_help=True)
+app.add_typer(docs_app, name="docs")
 
 SELECTED_ACCOUNT: dict[str, int | None] = {"id": None}
 
@@ -453,6 +455,28 @@ def db_copy(
     if report.skipped:
         console.print(f"sem dados na origem: {', '.join(report.skipped)}")
     console.print("Pronto. Coloque DATABASE_URL com o destino no .env e suba o servidor.")
+
+
+@docs_app.command("sync")
+def docs_sync() -> None:
+    """Load every Markdown file under docs/ into the database, one row per section."""
+    from tribal_assistant.core.services.docs import DocsService
+
+    report = _run(_with_session(lambda s: DocsService(s).sync()))
+    console.print(f"{report.files} arquivo(s), {report.updated} atualizado(s), {report.removed} removido(s), {report.chunks} trecho(s)")
+
+
+@docs_app.command("search")
+def docs_search(
+    query: Annotated[str, typer.Argument(help="Pergunta ou palavras-chave.")],
+    limit: Annotated[int, typer.Option(min=1, max=20)] = 5,
+) -> None:
+    """Search the docs library like the agents do."""
+    from tribal_assistant.core.services.docs import DocsService
+
+    for hit in _run(_with_session(lambda s: DocsService(s).search(query, limit))):
+        console.print(f"[bold]{hit.path}[/bold] · {hit.title}{' · ' + hit.section if hit.section else ''} ({hit.score})")
+        console.print(hit.text[:300].replace("\n", " ") + "\n")
 
 
 def main() -> None:

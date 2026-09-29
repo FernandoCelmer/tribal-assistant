@@ -64,6 +64,21 @@ async def _sync_world_job() -> None:
         logger.exception("world sync failed")
 
 
+async def _docs_job() -> None:
+    from tribal_assistant.core.db.session import SessionFactory
+    from tribal_assistant.core.services.docs import DocsService
+
+    try:
+        async with SessionFactory() as session:
+            report = await DocsService(session).sync()
+    except Exception:
+        logger.exception("docs sync failed")
+        return
+
+    if report.updated or report.removed:
+        logger.info("Docs synced: {} file(s) updated, {} removed, {} sections", report.updated, report.removed, report.chunks)
+
+
 async def _build_slot_free(session, now: datetime, slots: int) -> bool:
     from sqlalchemy import func, select
 
@@ -155,6 +170,15 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         ),
         id="sync_game",
         next_run_time=datetime.now() + timedelta(seconds=10),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _docs_job,
+        trigger=IntervalTrigger(hours=6, jitter=300),
+        id="sync_docs",
+        next_run_time=datetime.now() + timedelta(seconds=60),
         max_instances=1,
         coalesce=True,
         replace_existing=True,
