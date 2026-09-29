@@ -1,13 +1,13 @@
-# Tribal Assistant — Tribal Wars assistant, CLI and web dashboard
+# Tribal Assistant — Tribal Wars agents, API, panel and CLI
 
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Playwright](https://img.shields.io/badge/Playwright-browser-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/python/)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-FE5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
 
-**Tribal Assistant** is an open-source Python assistant for the browser strategy game **Tribal Wars** (Guerra Tribal / Die Stämme). It syncs your account through a real browser session, stores villages, resources, troops, buildings, commands and reports in a local database, recommends what to build next, finds barbarian villages to farm, and shows everything in a medieval-themed web dashboard with light and dark mode.
+**Tribal Assistant** is an open-source Python assistant for the browser strategy game **Tribal Wars** (Guerra Tribal / Die Stämme). It plays your accounts through a real browser session: village agents decide builds, troops, raids, scavenging, trades, quests, the event forge, tribe and mentor, while a coordinator weighs their proposals. Everything they see and decide is stored in the database (SQLite or PostgreSQL) and shown in a Next.js panel with light and dark mode.
 
-Use it three ways: as a **CLI** (`tribal-assistant`), as a **Python library** (`import tribal_assistant`), or as a **FastAPI server** with a dashboard.
+Use it as a **server** (`tribal-assistant serve` plus the panel in `apps/web`), a **CLI** (`tribal-assistant`), a **Python library** (`import tribal_assistant`) or an **MCP server** for AI clients.
 
 | Light | Dark |
 |-------|------|
@@ -24,13 +24,14 @@ Use it three ways: as a **CLI** (`tribal-assistant`), as a **Python library** (`
 ## Features
 
 - **Account sync** — player, points, ranking, villages, resources and production, storage, population, troops, recruitment queue, buildings, incoming and outgoing commands, battle reports.
-- **Build advisor** — ranks the next building upgrades by priority, cost and time until resources are available.
+- **Village agents** — specialists propose, the coordinator scores and executes the best moves within the guardrails; see [Village agents](#village-agents).
+- **Challenges** — reads the game achievements and chases the ones the agents can reach; combat against players, premium and account resets stay out.
 - **Raids** — the attack agent picks nearby barbarian villages from the world data, sizes each squad by the average haul and skips targets that keep coming back yellow.
 - **World data** — downloads the public world files and lists nearby barbarian or player villages with travel times per unit.
 - **Scavenging** — shows each scavenge option, its return time and unlock state.
 - **Incoming attack alerts** — highlights attacks and nobles heading to your villages.
 - **Scheduler** — APScheduler jobs with jitter and configurable quiet hours.
-- **Dashboard** — responsive web UI, keyboard accessible, light theme and graphite dark theme, component docs at `/componentes`.
+- **Panel** — Next.js app in `apps/web`: responsive, keyboard accessible, light and dark themes, paginated lists, in-app confirmations.
 - **REST API** — FastAPI with OpenAPI docs at `/docs`.
 
 ## Install
@@ -72,7 +73,7 @@ See [.env.example](.env.example) for the full list.
 
 ```bash
 tribal-assistant --help
-tribal-assistant serve                      # API + dashboard + scheduler on :8000
+tribal-assistant serve                      # API + engine (scheduler, agents) on :8000
 tribal-assistant sync                       # sync the account now
 tribal-assistant status                     # player, villages, incoming attacks
 tribal-assistant status --json
@@ -168,7 +169,7 @@ Each round has three stages per village:
 
 New villages are picked up automatically after the next sync.
 
-**AI plans, rules execute.** Only the Strategist calls the model: it writes a **village plan** (up to 12 ordered steps — build X to level N, recruit, unlock scavenging) with `set_village_plan`. The other agents execute the plan with rules, at zero token cost. The plan is rewritten only when it is missing, older than `plan_refresh_minutes`, finished or stuck, so the model runs a few times a day instead of five times per round. Without an AI key the same plan comes from a built-in rule planner (quests, advisor, balanced production, path to the first nobleman).
+**AI plans, rules execute.** Only the Strategist calls the model: it writes a **village plan** (up to 12 ordered steps — build X to level N, recruit, unlock scavenging) with `set_village_plan`. The other agents execute the plan with rules, at zero token cost. The plan is rewritten only when it is missing, older than `plan_refresh_minutes`, finished or stuck, so the model runs a few times a day instead of five times per round. Without an AI key the same plan comes from a built-in rule planner (quests, balanced production, path to the first nobleman).
 
 Plan progress is measured from the real village state every round (pending, queued, done, blocked) and shown on `/agentes`.
 
@@ -188,7 +189,7 @@ The schedule and AI options are **runtime settings** stored in the database, not
 | `plan_refresh_minutes` | `360` | minutes before the strategist rewrites the plan (free with rules; one AI call when AI is on) |
 | `llm_max_steps` | `6` | tool rounds per AI conversation |
 
-Every decision, including refusals, is stored with its reason and shown in the dashboard.
+Every decision, including refusals, is stored with its reason and shown in the panel.
 
 ```bash
 tribal-assistant agents run --dry-run                   # simulate a round
@@ -220,23 +221,27 @@ tribal-assistant mcp            # stdio, for Claude Code / Claude Desktop / Code
 tribal-assistant mcp --http     # streamable HTTP on 127.0.0.1:8765
 ```
 
-The repository ships a `.mcp.json`, so Claude Code picks the server up when opened in this folder. It exposes 29 tools and 5 prompts (`grow_village`, `farm_round`, `first_noble_plan`, `agent_round`, `daily_routine`), including `get_coordination` and `set_village_role`:
+The repository ships a `.mcp.json`, so Claude Code picks the server up when opened in this folder. It exposes 26 tools and 5 prompts (`grow_village`, `farm_round`, `first_noble_plan`, `agent_round`, `daily_routine`), including `get_coordination` and `set_village_role`:
 
-- **read-only:** `get_overview`, `get_quests`, `get_plans`, `get_agent_decisions`, `get_agents_config`, `lookup_knowledge`, `get_world_status`, `list_nearby`
-- **game actions:** `upgrade_building`, `recruit_units`, `send_farm_attack`, `claim_quest_rewards`, `complete_quest` and `run_agents`. They pass the guardrails and default to `dry_run=true`.
-- **other:** `sync_account`, `sync_world`, `set_village_goal`, `update_agent_settings`
+- **read-only:** `get_overview`, `get_village_state`, `get_quests`, `get_plans`, `get_coordination`, `get_agent_decisions`, `get_agents_config`, `lookup_knowledge`, `get_world_status`, `list_nearby`, `list_barbarians`
+- **game actions:** `upgrade_building`, `recruit_units`, `send_farm_attack`, `send_scavenge`, `unlock_scavenge`, `claim_quest_rewards`, `complete_quest`, `open_daily_bonus` and `run_agents`. They pass the guardrails and default to `dry_run=true`.
+- **other:** `sync_account`, `sync_world`, `set_village_goal`, `set_village_plan`, `set_village_role`, `update_agent_settings`
 
-## Web dashboard and API
+## Panel and API
 
 ```bash
-tribal-assistant serve
+tribal-assistant serve     # API and engine on :8000
+make web-install && make web   # Next.js panel on :3000, proxies /api/v1 to TRIBAL_API (default http://127.0.0.1:8000)
+make web-types             # regenerate the panel types from the API's OpenAPI schema
 ```
+
+`WEB_PASSWORD` (and `WEB_USER`, default `admin`) puts the whole panel behind a password; leave it unset locally.
 
 Each topic is its own page, reached from the sidebar (a drawer on phones):
 
 | Page | What it shows |
 |------|---------------|
-| `/` Visão geral | assistant status, account, village resources, what to upgrade, scavenging, quests, troop movements |
+| `/` Visão geral | whether the server plays, account, village resources, next move of the coordinator, scavenging, quests, troop movements |
 | `/aldeia` | troops and buildings |
 | `/arredores` | nearby villages with travel times |
 | `/relatorios` | battle reports with loot |
@@ -286,8 +291,8 @@ cli ───────────► core
 | Layer | Package | Responsibility |
 |-------|---------|----------------|
 | **core** | `tribal_assistant/core` | The library and the engine: accounts, browser sessions and game actions (`game`), village agents and the coordinator (`agents`), AI providers (`ai`), database models and repositories (`models`, `repositories`, `db`), use cases (`services`), the scheduler and `runtime.Engine`. All rules and decisions live here. No web framework imports. |
-| **api** | `tribal_assistant/api` | FastAPI bridge over the core: resolves the account per request, opens the session, builds core services, translates errors to JSON. `api.app:app` also serves the dashboard. |
-| **web** | `tribal_assistant/web` | Dashboard templates and static files. Pages carry no data; the browser reads everything from `/api/v1`. |
+| **api** | `tribal_assistant/api` | FastAPI bridge over the core: resolves the account per request, opens the session, builds core services, translates errors to JSON. |
+| **web** | `apps/web` | Next.js panel. Server components read `/api/v1`; the middleware proxies the API and guards the panel with `WEB_PASSWORD`. |
 | **mcp** | `tribal_assistant/mcp` | MCP server that only talks to the API over HTTP (`TRIBAL_API_URL`, account from `TRIBAL_ACCOUNT`). The server must be running. |
 | **cli** | `tribal_assistant/cli.py` | Terminal commands on top of the core library. |
 
@@ -306,7 +311,6 @@ tribal_assistant/
 │   ├── scheduler/      jobs run per account
 │   └── runtime.py      Engine: start and stop everything in the background
 ├── api/                FastAPI app, dependencies, routers (v1), errors
-├── web/                pages, templates, CSS, JS
 ├── mcp/                MCP server, HTTP client, tool groups, prompts, resources
 └── cli.py              Typer CLI
 ```
@@ -317,6 +321,7 @@ tribal_assistant/
 make test        # pytest
 make lint        # ruff
 make typecheck   # mypy
+make web-check   # panel type check and build
 ```
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
