@@ -1,14 +1,18 @@
 """Village ORM model."""
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Integer, String
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.building import Building
+    from app.models.command import Command
+    from app.models.recruit_order import RecruitOrder
+    from app.models.scavenge_option import ScavengeOption
     from app.models.unit import Unit
 
 
@@ -27,10 +31,24 @@ class Village(Base, TimestampMixin):
     storage: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     pop_current: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     pop_max: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    wood_prod: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    clay_prod: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    iron_prod: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     buildings: Mapped[list["Building"]] = relationship(
         back_populates="village", cascade="all, delete-orphan"
     )
     units: Mapped[list["Unit"]] = relationship(
+        back_populates="village", cascade="all, delete-orphan"
+    )
+    recruit_orders: Mapped[list["RecruitOrder"]] = relationship(
+        back_populates="village", cascade="all, delete-orphan"
+    )
+    commands: Mapped[list["Command"]] = relationship(
+        back_populates="village", cascade="all, delete-orphan"
+    )
+    scavenge_options: Mapped[list["ScavengeOption"]] = relationship(
         back_populates="village", cascade="all, delete-orphan"
     )
