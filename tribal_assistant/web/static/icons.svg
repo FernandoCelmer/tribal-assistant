@@ -1,5 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-  <!-- 16×16 icon sprite. Fill/stroke follow currentColor; cut-outs use the icon-accent custom property (the surface colour). -->
   <symbol id="i-wood" viewBox="0 0 16 16">
     <circle cx="4.8" cy="10.8" r="3.4"/><circle cx="11.2" cy="10.8" r="3.4"/><circle cx="8" cy="5" r="3.4"/>
     <g fill="none" style="stroke:var(--icon-accent,#f2e8c9)" stroke-width="1"><circle cx="4.8" cy="10.8" r="1.5"/><circle cx="11.2" cy="10.8" r="1.5"/><circle cx="8" cy="5" r="1.5"/></g>

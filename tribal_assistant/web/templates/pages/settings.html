@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Configurações · Tribal Assistant{% endblock %}
+{% block content %}
+  <form class="settings-page" id="agent-settings" novalidate>
+    <section class="panel" aria-labelledby="h-set-agents">
+      <div class="panel__header"><h1 class="panel__title" id="h-set-agents"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-shield"/></svg>Agentes</h1></div>
+      <div class="panel__body settings-grid">
+        <label class="setting setting--switch"><input type="checkbox" name="enabled"><span><b>Rodar automaticamente</b><small>Os agentes rodam sozinhos no intervalo abaixo enquanto o servidor estiver ligado.</small></span></label>
+        <label class="setting setting--switch"><input type="checkbox" name="dry_run"><span><b>Só simular</b><small>Decidem e registram tudo, mas não mexem no jogo.</small></span></label>
+        <label class="setting setting--switch"><input type="checkbox" name="auto_finish_free"><span><b>Concluir grátis quando possível</b><small>Usa o botão gratuito de concluir obras curtas. Nunca o pago.</small></span></label>
+        <div class="setting"><label class="field__label" for="s-interval">Intervalo entre rodadas</label>
+          <div class="input-unit"><input class="input" id="s-interval" name="interval_minutes" type="number" min="1" max="1440"><span>min</span></div>
+          <small class="field__help">Menor intervalo = mais ações e mais custo de IA.</small></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-set-guard">
+      <div class="panel__header"><h2 class="panel__title" id="h-set-guard"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-key"/></svg>Travas de segurança</h2><span class="panel__meta">valem para qualquer agente e para o MCP</span></div>
+      <div class="panel__body settings-grid">
+        <div class="setting"><label class="field__label" for="s-reserve">Reserva de recursos</label>
+          <div class="input-unit"><input class="input" id="s-reserve" name="resource_reserve" type="number" min="0" max="90" data-percent><span>%</span></div>
+          <small class="field__help">Parte do armazém que o recrutamento nunca gasta.</small></div>
+        <div class="setting"><label class="field__label" for="s-budget">Orçamento de recrutamento</label>
+          <div class="input-unit"><input class="input" id="s-budget" name="recruit_budget" type="number" min="0" max="100" data-percent><span>%</span></div>
+          <small class="field__help">Quanto da sobra pode virar tropa por rodada (sobe para 80% com armazém quase cheio).</small></div>
+        <div class="setting"><label class="field__label" for="s-slots">Vagas na fila de obras</label>
+          <input class="input" id="s-slots" name="build_queue_slots" type="number" min="1" max="5">
+          <small class="field__help">Sem premium o jogo aceita 2.</small></div>
+        <div class="setting"><label class="field__label" for="s-attacks">Ataques por hora</label>
+          <input class="input" id="s-attacks" name="max_attacks_per_hour" type="number" min="0" max="200">
+          <small class="field__help">Por aldeia. 0 desliga os saques.</small></div>
+        <div class="setting"><label class="field__label" for="s-radius">Raio dos saques</label>
+          <div class="input-unit"><input class="input" id="s-radius" name="attack_radius" type="number" min="1" max="50"><span>campos</span></div>
+          <small class="field__help">Só aldeias bárbaras dentro desse raio. Jogadores nunca.</small></div>
+        <div class="setting"><label class="field__label" for="s-retarget">Repetir o mesmo alvo após</label>
+          <div class="input-unit"><input class="input" id="s-retarget" name="retarget_minutes" type="number" min="0" max="1440"><span>min</span></div>
+          <small class="field__help">Evita mandar tropas para a mesma bárbara em seguida.</small></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-set-ai">
+      <div class="panel__header"><h2 class="panel__title" id="h-set-ai"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-star"/></svg>Inteligência artificial</h2></div>
+      <div class="panel__body panel__body--column">
+        <dl class="ai-card" id="ai-card"><div><dt>Provedor</dt><dd>—</dd></div></dl>
+        <p class="field__help">Provedor, modelo e chave ficam no arquivo <code>.env</code> (<code>AI_PROVIDER</code>, <code>AI_MODEL</code>, <code>AI_API_KEY</code>) e não aparecem aqui por segurança.</p>
+        <fieldset class="fieldset setting-agents">
+          <legend>Agentes que usam IA</legend>
+          <p class="field__help">Os demais seguem o plano com regras, sem gastar tokens. O mais econômico é só o Estrategista.</p>
+          <div class="setting-agents__list">
+            <label class="check"><input type="checkbox" name="llm_agents" value="strategist"> Estrategista <small class="muted">escreve o plano</small></label>
+            <label class="check"><input type="checkbox" name="llm_agents" value="economist"> Economista</label>
+            <label class="check"><input type="checkbox" name="llm_agents" value="commander"> Comandante</label>
+            <label class="check"><input type="checkbox" name="llm_agents" value="raider"> Saqueador</label>
+            <label class="check"><input type="checkbox" name="llm_agents" value="quartermaster"> Missões</label>
+          </div>
+        </fieldset>
+        <div class="settings-grid">
+          <div class="setting"><label class="field__label" for="s-plan">Refazer o plano a cada</label>
+            <div class="input-unit"><input class="input" id="s-plan" name="plan_refresh_hours" type="number" min="1" max="168"><span>h</span></div>
+            <small class="field__help">Também refaz quando o plano termina ou trava.</small></div>
+          <div class="setting"><label class="field__label" for="s-steps">Passos por conversa</label>
+            <input class="input" id="s-steps" name="llm_max_steps" type="number" min="1" max="20">
+            <small class="field__help">Limite de chamadas de ferramenta por agente.</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-set-system">
+      <div class="panel__header"><h2 class="panel__title" id="h-set-system"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-globe"/></svg>Sistema</h2><span class="panel__meta">somente leitura · definido no .env</span></div>
+      <div class="panel__body"><dl class="kv-grid" id="system-info"></dl></div>
+    </section>
+
+    <div class="settings-bar">
+      <span class="muted" id="settings-state">Sem alterações</span>
+      <button class="btn" type="reset" id="settings-reset">Desfazer</button>
+      <button class="btn btn--primary" type="submit">Salvar configurações</button>
+    </div>
+  </form>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/settings.js"></script>{% endblock %}

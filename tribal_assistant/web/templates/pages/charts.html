@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Gráficos · Tribal Assistant{% endblock %}
+{% block content %}
+  <section class="panel" id="metrics" aria-labelledby="h-metrics">
+    <div class="panel__header">
+      <h1 class="panel__title" id="h-metrics"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-star"/></svg>Métricas dos agentes</h1>
+      <div class="panel__actions">
+        <div class="segmented" role="group" aria-label="Período">
+          <button class="segmented__btn" type="button" data-hours="24" aria-pressed="true">24 h</button>
+          <button class="segmented__btn" type="button" data-hours="168" aria-pressed="false">7 dias</button>
+          <button class="segmented__btn" type="button" data-hours="720" aria-pressed="false">30 dias</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel__body panel__body--column">
+      <dl class="kpis" id="kpis"></dl>
+
+      <div class="grid-2">
+        <figure class="figure">
+          <figcaption class="figure__title">Ações por hora, por agente
+            <button class="btn btn--subtle btn--sm" type="button" data-table-toggle="hourly-table">ver tabela</button>
+          </figcaption>
+          <ul class="legend" id="hourly-legend"></ul>
+          <div id="hourly-chart"></div>
+          <div class="table-scroll" id="hourly-table" hidden aria-label="Ações por hora"></div>
+        </figure>
+        <figure class="figure">
+          <figcaption class="figure__title">Motivos de recusa das travas</figcaption>
+          <div id="refusal-chart"></div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="evolution" aria-labelledby="h-evolution">
+    <div class="panel__header">
+      <h2 class="panel__title" id="h-evolution"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-castle"/></svg>Evolução da aldeia</h2>
+      <span class="panel__meta">um ponto por sincronização</span>
+      <div class="panel__actions">
+        <label class="sr-only" for="history-village">Aldeia</label>
+        <select class="select" id="history-village"></select>
+        <label class="sr-only" for="history-hours">Período</label>
+        <select class="select" id="history-hours">
+          <option value="24">24 h</option><option value="168" selected>7 dias</option><option value="720">30 dias</option>
+        </select>
+      </div>
+    </div>
+    <div class="panel__body">
+      <div class="grid-2">
+        <figure class="figure">
+          <figcaption class="figure__title">Pontos</figcaption>
+          <div id="points-chart"></div>
+        </figure>
+        <figure class="figure">
+          <figcaption class="figure__title">Recursos em estoque</figcaption>
+          <ul class="legend" id="resources-legend"></ul>
+          <div id="resources-chart"></div>
+        </figure>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/charts-page.js"></script>{% endblock %}

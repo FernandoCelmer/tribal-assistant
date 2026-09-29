@@ -1,4 +1,24 @@
 (() => {
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.querySelector(".sidebar-backdrop");
+  const opener = document.querySelector("[data-sidebar-open]");
+
+  const setSidebar = (open) => {
+    document.body.classList.toggle("sidebar-open", open);
+    if (backdrop) backdrop.hidden = !open;
+    opener?.setAttribute("aria-expanded", String(open));
+    if (open) sidebar?.querySelector("a, button")?.focus();
+  };
+
+  opener?.addEventListener("click", () => setSidebar(true));
+  document.querySelectorAll("[data-sidebar-close]").forEach((el) => el.addEventListener("click", () => setSidebar(false)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.body.classList.contains("sidebar-open")) {
+      setSidebar(false);
+      opener?.focus();
+    }
+  });
+
   const root = document.documentElement;
   const themeToggle = document.querySelector("[data-theme-toggle]");
   if (themeToggle) {

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Aldeia · Tribal Assistant{% endblock %}
+{% block content %}
+  <section class="panel" aria-labelledby="h-village-page">
+    <div class="panel__header">
+      <div class="panel__heading">
+        <h1 class="panel__title" id="h-village-page"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-castle"/></svg>Tropas e edifícios</h1>
+        <span class="panel__meta" id="v-meta"></span>
+      </div>
+      <div class="panel__actions">
+        <label class="sr-only" for="village-select">Escolher aldeia</label>
+        <select class="select" id="village-select" hidden></select>
+      </div>
+    </div>
+    <p id="village-empty" class="panel__body empty" hidden>Nenhuma aldeia sincronizada ainda. Sincronize na Visão geral.</p>
+  </section>
+
+  <section class="panel" id="army" aria-label="Tropas e edifícios">
+    <div class="tabs" role="tablist" aria-label="Tropas e edifícios">
+      <button class="tab" type="button" role="tab" id="tab-troops" aria-selected="true" aria-controls="tp-troops">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-swords"/></svg>Tropas</button>
+      <button class="tab" type="button" role="tab" id="tab-buildings" aria-selected="false" aria-controls="tp-buildings" tabindex="-1">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-hammer"/></svg>Edifícios</button>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="tp-troops" aria-labelledby="tab-troops">
+      <div class="table-scroll" aria-label="Tropas">
+        <table class="table">
+          <thead><tr>
+            <th scope="col">Unidade</th><th scope="col" class="num">Na aldeia</th><th scope="col" class="num">Fora</th><th scope="col" class="num">Total</th>
+            <th scope="col" class="num">Pode recrutar</th><th scope="col" class="num">Madeira</th><th scope="col" class="num">Argila</th>
+            <th scope="col" class="num">Ferro</th><th scope="col" class="num">Pop</th><th scope="col" class="num">Tempo</th><th scope="col">Status</th>
+          </tr></thead>
+          <tbody id="units"></tbody>
+        </table>
+      </div>
+      <div class="panel__footer" id="recruit-queue"></div>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="tp-buildings" aria-labelledby="tab-buildings" hidden>
+      <div class="table-scroll" aria-label="Edifícios">
+        <table class="table">
+          <thead><tr>
+            <th scope="col">Edifício</th><th scope="col" class="num">Nível</th><th scope="col">Fila</th>
+            <th scope="col" class="num">Madeira</th><th scope="col" class="num">Argila</th><th scope="col" class="num">Ferro</th>
+            <th scope="col" class="num">Pop</th><th scope="col" class="num">Tempo</th><th scope="col">Status</th>
+          </tr></thead>
+          <tbody id="buildings"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/village.js"></script>{% endblock %}

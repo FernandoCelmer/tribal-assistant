@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Tribal Assistant{% endblock %}
+{% block content %}
+  <header class="banner"{{ banner_style|safe }}>
+    <div class="banner__plaque">
+      <p class="banner__eyebrow" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-crown"/></svg></p>
+      <h1 class="banner__title">Tribal Assistant</h1>
+      <p class="banner__tagline">Painel de comando da sua conta</p>
+    </div>
+  </header>
+
+  <div class="grid-2" id="overview">
+    <section class="panel panel--ornate" aria-labelledby="h-assistant">
+      <div class="panel__header panel__header--wood">
+        <h2 class="panel__title" id="h-assistant"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-gear"/></svg>Assistente</h2>
+      </div>
+      <div class="panel__body panel__body--column">
+        <div class="indicator-grid">
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-plug"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">API</span><span class="indicator__value" id="s-health">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-hourglass"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Scheduler</span><span class="indicator__value" id="s-running">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-key"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Login</span><span class="indicator__value" id="s-login">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-globe"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Mundo</span><span class="indicator__value" id="s-world">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-clock"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Último sync</span><span class="indicator__value" id="s-sync">—</span></span></div>
+        </div>
+        <div class="alert alert--danger" id="s-error" role="alert" hidden>
+          <svg class="icon alert__icon" aria-hidden="true"><use href="/static/icons.svg#i-alert"/></svg>
+          <div><strong class="alert__title">Último erro</strong><span id="s-error-text"></span></div>
+        </div>
+        <div class="btn-row btn-row--end">
+          <button class="btn btn--primary btn--lg" id="btn-sync" type="button"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-refresh"/></svg>Sincronizar agora</button>
+          <button class="btn btn--lg" id="btn-start" type="button"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-play"/></svg>Iniciar</button>
+          <button class="btn btn--lg" id="btn-stop" type="button"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-stop"/></svg>Parar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--ornate" aria-labelledby="h-account">
+      <div class="panel__header panel__header--wood">
+        <h2 class="panel__title" id="h-account"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-crown"/></svg>Conta</h2>
+      </div>
+      <div class="panel__body panel__body--column" id="player"><p class="empty">Sem dados do jogador ainda.</p></div>
+    </section>
+  </div>
+
+  <section class="panel" id="commands-card" aria-labelledby="h-commands" hidden>
+    <div class="panel__header">
+      <h2 class="panel__title" id="h-commands"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-swords"/></svg>Movimentos de tropas</h2>
+      <span class="badge badge--danger" id="inc-count" hidden></span>
+    </div>
+    <div class="table-scroll" aria-label="Movimentos de tropas">
+      <table class="table">
+        <thead><tr><th scope="col">Tipo</th><th scope="col">Aldeia</th><th scope="col">Comando</th><th scope="col">Chegada</th><th scope="col" class="num">Em</th></tr></thead>
+        <tbody id="commands"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="village" aria-labelledby="h-village">
+    <div class="panel__header">
+      <div class="panel__heading">
+        <h2 class="panel__title" id="h-village"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-castle"/></svg>Aldeia</h2>
+        <span class="panel__meta" id="v-meta"></span>
+      </div>
+      <div class="panel__actions">
+        <label class="sr-only" for="village-select">Escolher aldeia</label>
+        <select class="select" id="village-select" hidden></select>
+      </div>
+    </div>
+    <div class="panel__body">
+      <p id="village-empty" class="empty">Nenhuma aldeia sincronizada ainda. Clique em “Sincronizar agora”.</p>
+      <div id="village-body" hidden>
+        <div class="resource-grid">
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--wood"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-wood"/></svg></span>
+            <span class="resource__label">Madeira</span>
+            <span class="resource__value res--wood" id="r-wood">—</span>
+            <span class="resource__sub" id="r-wood-sub"></span>
+            <div class="meter meter--wood" aria-hidden="true"><i id="r-wood-bar"></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--clay"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-clay"/></svg></span>
+            <span class="resource__label">Argila</span>
+            <span class="resource__value res--clay" id="r-clay">—</span>
+            <span class="resource__sub" id="r-clay-sub"></span>
+            <div class="meter meter--clay" aria-hidden="true"><i id="r-clay-bar"></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--iron"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-iron"/></svg></span>
+            <span class="resource__label">Ferro</span>
+            <span class="resource__value res--iron" id="r-iron">—</span>
+            <span class="resource__sub" id="r-iron-sub"></span>
+            <div class="meter meter--iron" aria-hidden="true"><i id="r-iron-bar"></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--storage"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-storage"/></svg></span>
+            <span class="resource__label">Armazém</span>
+            <span class="resource__value" id="r-storage">—</span>
+            <span class="resource__sub" id="r-storage-sub"></span>
+            <div class="meter meter--placeholder" aria-hidden="true"><i></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--pop"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-pop"/></svg></span>
+            <span class="resource__label">População</span>
+            <span class="resource__value" id="r-pop">—</span>
+            <span class="resource__sub" id="r-pop-sub"></span>
+            <div class="meter meter--pop" aria-hidden="true"><i id="r-pop-bar"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-2 grid-2--wide-left" id="village-detail" hidden>
+    <section class="panel" aria-labelledby="h-recs">
+      <div class="panel__header"><h2 class="panel__title" id="h-recs"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-hammer"/></svg>O que evoluir</h2></div>
+      <div class="panel__body"><ul class="rec-list" id="recs"></ul></div>
+    </section>
+    <section class="panel" aria-labelledby="h-scavenge">
+      <div class="panel__header"><h2 class="panel__title" id="h-scavenge"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-compass"/></svg>Coleta</h2></div>
+      <div class="panel__body"><ul class="tiles" id="scavenge"></ul></div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="h-quests">
+    <div class="panel__header">
+      <h2 class="panel__title" id="h-quests"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-scroll"/></svg>Missões</h2>
+      <span class="panel__meta" id="quests-meta"></span>
+    </div>
+    <div class="panel__body"><ul class="rec-list" id="quests"></ul></div>
+  </section>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/overview.js"></script>{% endblock %}
