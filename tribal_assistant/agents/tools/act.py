@@ -480,6 +480,25 @@ class ChooseRelic(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class EquipRelic(AgentTool):
+    name = "equip_relic"
+    description = "Equipa a primeira relíquia da Tesouraria no espaço livre desta aldeia (bônus em raio)."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"reason": REASON},
+        "required": ["reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        if box.dry_run:
+            return ToolOutcome(True, "(simulação) equipar relíquia")
+
+        result = await box.actions.equip_relic(box.ctx.game_id)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (

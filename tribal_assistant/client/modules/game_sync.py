@@ -139,7 +139,8 @@ REPORT_DETAILS_PER_SYNC = 5
 
 FIND_LINK_JS = """(want) => {
   const current = String((window.game_data && game_data.village && game_data.village.id) || '');
-  return [...document.querySelectorAll('a[href]')].findIndex(a => {
+  document.querySelectorAll('a[data-tw-nav]').forEach(a => a.removeAttribute('data-tw-nav'));
+  const link = [...document.querySelectorAll('a[href]')].find(a => {
     if (!a.offsetParent) return false;
     let url;
     try { url = new URL(a.getAttribute('href'), location.href); } catch { return false; }
@@ -152,6 +153,9 @@ FIND_LINK_JS = """(want) => {
     }
     return true;
   });
+  if (!link) return false;
+  link.setAttribute('data-tw-nav', '1');
+  return true;
 }"""
 
 
@@ -166,22 +170,27 @@ def _url(screen: str, village_id: str | None = None, **params: str) -> str:
 
 async def _open(page: Page, screen: str, village_id: str | None = None, **params: str) -> None:
     """Reach a screen the way a player would: click its link when one is on the page."""
-    index = -1
+    found = False
     if village_id and page.url.startswith(settings.tw_world_url.rstrip("/")):
         want = {"screen": screen, "village": village_id, **params}
         try:
-            index = await page.evaluate(FIND_LINK_JS, want)
+            found = bool(await page.evaluate(FIND_LINK_JS, want))
         except PlaywrightError:
-            index = -1
+            found = False
 
-    if index >= 0:
+    if found:
         try:
             async with page.expect_navigation(wait_until="load", timeout=20_000):
-                await human_click(page, page.locator("a[href]").nth(index))
+                await human_click(page, page.locator('a[data-tw-nav="1"]').first)
         except PlaywrightError:
             logger.debug("Link click to {} did not navigate, loading URL", screen)
-            index = -1
-    if index < 0:
+            found = False
+
+    if found and f"screen={screen}" not in page.url:
+        logger.debug("Link click landed on {} instead of {}, loading URL", page.url, screen)
+        found = False
+
+    if not found:
         await page.goto(_url(screen, village_id, **params), wait_until="load")
     await reading_pause(page)
 

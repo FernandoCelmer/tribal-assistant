@@ -192,9 +192,16 @@ class GameActions:
             finished = await self.click_free_finish(page)
 
         if not finished:
-            return ActionResult(False, "finish_free", "nenhuma construção com conclusão grátis agora")
+            return ActionResult(
+                False, "finish_free", "nenhuma construção com conclusão grátis agora"
+            )
 
-        return ActionResult(True, "finish_free", f"{finished} construção(ões) concluída(s) grátis", {"finished": finished})
+        return ActionResult(
+            True,
+            "finish_free",
+            f"{finished} construção(ões) concluída(s) grátis",
+            {"finished": finished},
+        )
 
     async def unlock_scavenge(self, village_id: str, option_id: int) -> ActionResult:
         """Unlock a scavenging tier from the rally point, after checking its cost against the stock."""
@@ -204,14 +211,20 @@ class GameActions:
             option = page.locator(".options-container .scavenge-option").nth(option_id - 1)
             button = option.locator(".unlock-button")
             if not await button.count() or not await button.first.is_visible():
-                return ActionResult(False, "unlock_scavenge", f"coleta {option_id} não está disponível para desbloquear")
+                return ActionResult(
+                    False,
+                    "unlock_scavenge",
+                    f"coleta {option_id} não está disponível para desbloquear",
+                )
 
             await button.first.scroll_into_view_if_needed()
             await human_delay(300, 900)
             await button.first.click()
 
             try:
-                await page.locator(f"#popup_box_unlock-option-{option_id}").wait_for(state="visible", timeout=8_000)
+                await page.locator(f"#popup_box_unlock-option-{option_id}").wait_for(
+                    state="visible", timeout=8_000
+                )
             except PlaywrightError:
                 return ActionResult(False, "unlock_scavenge", "janela de desbloqueio não abriu")
 
@@ -224,12 +237,27 @@ class GameActions:
                 await self._close_popup(page)
                 return ActionResult(False, "unlock_scavenge", info["blocked"], {"cost": cost})
 
-            short = [k for k, v in (("wood", info["wood"]), ("stone", info["stone"]), ("iron", info["iron"])) if v > info["have"][k]]
+            short = [
+                k
+                for k, v in (
+                    ("wood", info["wood"]),
+                    ("stone", info["stone"]),
+                    ("iron", info["iron"]),
+                )
+                if v > info["have"][k]
+            ]
             if short:
                 await self._close_popup(page)
-                return ActionResult(False, "unlock_scavenge", "recursos insuficientes: " + ", ".join(short), {"cost": cost})
+                return ActionResult(
+                    False,
+                    "unlock_scavenge",
+                    "recursos insuficientes: " + ", ".join(short),
+                    {"cost": cost},
+                )
 
-            confirm = page.locator(f"#popup_box_unlock-option-{option_id} .scavenge-option-unlock-dialog a.btn").first
+            confirm = page.locator(
+                f"#popup_box_unlock-option-{option_id} .scavenge-option-unlock-dialog a.btn"
+            ).first
             await human_delay(600, 1500)
             await confirm.click()
             await page.wait_for_timeout(2_000)
@@ -237,7 +265,9 @@ class GameActions:
             if error := await self._game_error(page):
                 return ActionResult(False, "unlock_scavenge", error, {"cost": cost})
 
-            logger.info("Unlocking scavenging option {} in village {} for {}", option_id, village_id, cost)
+            logger.info(
+                "Unlocking scavenging option {} in village {} for {}", option_id, village_id, cost
+            )
             return ActionResult(
                 True,
                 "unlock_scavenge",
@@ -245,7 +275,9 @@ class GameActions:
                 {"option_id": option_id, "cost": cost, "duration": info["duration"]},
             )
 
-    async def send_scavenge(self, village_id: str, option_id: int, units: dict[str, int]) -> ActionResult:
+    async def send_scavenge(
+        self, village_id: str, option_id: int, units: dict[str, int]
+    ) -> ActionResult:
         """Send troops scavenging on one tier with the free start button (never the premium +20%)."""
         units = {u: n for u, n in units.items() if n > 0}
         if not units:
@@ -257,10 +289,14 @@ class GameActions:
             option = page.locator(".options-container .scavenge-option").nth(option_id - 1)
             start = option.locator(".free_send_button")
             if not await start.count() or not await start.first.is_visible():
-                return ActionResult(False, "send_scavenge", f"coleta {option_id} não está livre para enviar")
+                return ActionResult(
+                    False, "send_scavenge", f"coleta {option_id} não está livre para enviar"
+                )
 
             home = await page.evaluate(SCAVENGE_HOME_JS) or {}
-            units = {u: min(n, int(home.get(u, 0))) for u, n in units.items() if int(home.get(u, 0)) > 0}
+            units = {
+                u: min(n, int(home.get(u, 0))) for u, n in units.items() if int(home.get(u, 0)) > 0
+            }
             pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
             if pop < SCAVENGE_MIN_POP:
                 return ActionResult(
@@ -284,7 +320,9 @@ class GameActions:
             await page.wait_for_timeout(2_000)
 
             if error := await self._game_error(page):
-                return ActionResult(False, "send_scavenge", error, {"option_id": option_id, "units": units})
+                return ActionResult(
+                    False, "send_scavenge", error, {"option_id": option_id, "units": units}
+                )
 
             logger.info("Scavenging option {} in village {} with {}", option_id, village_id, units)
             return ActionResult(
@@ -294,7 +332,9 @@ class GameActions:
                 {"option_id": option_id, "units": units},
             )
 
-    async def upgrade_building(self, village_id: str, building: str, finish_free: bool = True) -> ActionResult:
+    async def upgrade_building(
+        self, village_id: str, building: str, finish_free: bool = True
+    ) -> ActionResult:
         """Queue the next level of `building` from the headquarters screen."""
         async with game_session.lock:
             page = await self._in_game(village_id, "main")
@@ -305,7 +345,10 @@ class GameActions:
             if not await button.count() or not await button.first.is_visible():
                 reason = await page.evaluate(BUILDING_ERROR_JS, building)
                 return ActionResult(
-                    False, "upgrade_building", reason or "sem botão de construção", {"building": building}
+                    False,
+                    "upgrade_building",
+                    reason or "sem botão de construção",
+                    {"building": building},
                 )
 
             level = await button.first.get_attribute("data-level-next")
@@ -319,12 +362,17 @@ class GameActions:
 
             after = await _evaluate(page, BUILD_QUEUE_JS) or []
             next_after = await page.evaluate(NEXT_LEVEL_JS, building)
-            finished = next_before is not None and next_after is not None and next_after > next_before
+            finished = (
+                next_before is not None and next_after is not None and next_after > next_before
+            )
 
             if len(after) <= len(before) and not finished:
                 self._capture(await page.content(), f"main-upgrade-{building}")
                 return ActionResult(
-                    False, "upgrade_building", "fila de construção não mudou", {"building": building}
+                    False,
+                    "upgrade_building",
+                    "fila de construção não mudou",
+                    {"building": building},
                 )
 
             finished = await self.click_free_finish(page) if finish_free else 0
@@ -341,14 +389,18 @@ class GameActions:
         """Recruit `count` units of `unit` in the building that trains it."""
         screen = UNIT_SCREEN.get(unit)
         if screen is None or count <= 0:
-            return ActionResult(False, "recruit", f"unidade {unit!r} não recrutável aqui", {"unit": unit})
+            return ActionResult(
+                False, "recruit", f"unidade {unit!r} não recrutável aqui", {"unit": unit}
+            )
 
         async with game_session.lock:
             page = await self._in_game(village_id, screen)
 
             field_ = page.locator(f"#train_form input[name='{unit}']")
             if not await field_.count() or not await field_.first.is_visible():
-                return ActionResult(False, "recruit", f"{unit} indisponível em {screen}", {"unit": unit})
+                return ActionResult(
+                    False, "recruit", f"{unit} indisponível em {screen}", {"unit": unit}
+                )
 
             available = page.locator(f"#{unit}_0_a")
             if await available.count():
@@ -371,7 +423,9 @@ class GameActions:
                 True, "recruit", f"{count} {unit} em recrutamento", {"unit": unit, "count": count}
             )
 
-    async def send_attack(self, village_id: str, x: int, y: int, units: dict[str, int]) -> ActionResult:
+    async def send_attack(
+        self, village_id: str, x: int, y: int, units: dict[str, int]
+    ) -> ActionResult:
         """Send an attack from the rally point: fill troops and target, confirm."""
         units = {u: n for u, n in units.items() if n > 0}
         if not units:
@@ -385,7 +439,9 @@ class GameActions:
             for unit, count in units.items():
                 box = page.locator(f"#unit_input_{unit}")
                 if not await box.count():
-                    return ActionResult(False, "send_attack", f"sem campo para {unit}", {"unit": unit})
+                    return ActionResult(
+                        False, "send_attack", f"sem campo para {unit}", {"unit": unit}
+                    )
 
                 home = await box.first.get_attribute("data-all-count")
                 if home is not None and int(home) < count:
@@ -566,7 +622,9 @@ class GameActions:
                 await human_delay(400, 900)
 
         if not opened:
-            return ActionResult(False, "open_daily_bonus", "nenhum baú diário para abrir", {"chests": chests})
+            return ActionResult(
+                False, "open_daily_bonus", "nenhum baú diário para abrir", {"chests": chests}
+            )
 
         items = [c["item"] for c in chests if c.get("open") and c.get("item")][:opened]
         logger.info("Opened {} daily bonus chest(s)", opened)
@@ -584,7 +642,9 @@ class GameActions:
 
             launch = page.locator(".knight_recruit_launch")
             if not await launch.count() or not await launch.first.is_visible():
-                return ActionResult(False, "recruit_knight", "sem opção de recrutar paladino nesta aldeia")
+                return ActionResult(
+                    False, "recruit_knight", "sem opção de recrutar paladino nesta aldeia"
+                )
 
             await human_click(page, launch.first)
             await human_delay(700, 1400)
@@ -602,7 +662,9 @@ class GameActions:
                 return ActionResult(False, "recruit_knight", " | ".join(messages["errors"]))
 
         logger.info("Recruiting a paladin in village {}", village_id)
-        return ActionResult(True, "recruit_knight", "paladino em recrutamento", {"notices": messages["notices"]})
+        return ActionResult(
+            True, "recruit_knight", "paladino em recrutamento", {"notices": messages["notices"]}
+        )
 
     async def inventory(self, village_id: str) -> list[dict[str, Any]]:
         """Items in the inventory with their detail text and whether they can be used."""
@@ -616,12 +678,14 @@ class GameActions:
                 await item.click()
                 await page.wait_for_timeout(700)
                 detail = page.locator(".inventory_detail").first
-                items.append({
-                    "key": key,
-                    "name": await item.get_attribute("data-title"),
-                    "detail": " ".join((await detail.inner_text()).split()),
-                    "usable": await detail.locator(".detail_actions a.btn").count() > 0,
-                })
+                items.append(
+                    {
+                        "key": key,
+                        "name": await item.get_attribute("data-title"),
+                        "detail": " ".join((await detail.inner_text()).split()),
+                        "usable": await detail.locator(".detail_actions a.btn").count() > 0,
+                    }
+                )
 
         return items
 
@@ -646,7 +710,9 @@ class GameActions:
             await human_click(page, use)
             await human_delay(900, 1600)
 
-            dialog = page.locator(".popup_box_container .btn-confirm-yes, .popup_box_container a.btn:visible, .popup_box_container input.btn:visible")
+            dialog = page.locator(
+                ".popup_box_container .btn-confirm-yes, .popup_box_container a.btn:visible, .popup_box_container input.btn:visible"
+            )
             if await dialog.count():
                 self._capture(await page.content(), f"use-item-{key}")
                 await human_click(page, dialog.first)
@@ -654,10 +720,14 @@ class GameActions:
 
             messages = await self.screen_messages(page)
             if messages["errors"]:
-                return ActionResult(False, "use_item", " | ".join(messages["errors"]), {"item": name})
+                return ActionResult(
+                    False, "use_item", " | ".join(messages["errors"]), {"item": name}
+                )
 
         logger.info("Used item {} ({}) in village {}", key, name, village_id)
-        return ActionResult(True, "use_item", f"{name} usado", {"item": name, "notices": messages["notices"]})
+        return ActionResult(
+            True, "use_item", f"{name} usado", {"item": name, "notices": messages["notices"]}
+        )
 
     async def choose_relic(self, village_id: str, index: int) -> ActionResult:
         """Pick one of the starter relics offered in the treasury (relic_system)."""
@@ -666,12 +736,20 @@ class GameActions:
 
             link = page.locator(f'a.btn[href*="mode=choose_relic"][href*="index={index}"]')
             if not await link.count():
-                return ActionResult(False, "choose_relic", "nenhuma relíquia inicial para escolher")
+                self._capture(await page.content(), "relic-missing")
+                return ActionResult(
+                    False,
+                    "choose_relic",
+                    "nenhuma relíquia inicial para escolher",
+                    {"url": page.url},
+                )
 
             await self._click_and_settle(page, link.first)
             await human_delay(700, 1400)
 
-            confirm = page.locator(".popup_box_container .btn-confirm-yes, .popup_box_container a.btn:visible")
+            confirm = page.locator(
+                ".popup_box_container .btn-confirm-yes, .popup_box_container a.btn:visible"
+            )
             if await confirm.count():
                 await human_click(page, confirm.first)
                 await page.wait_for_timeout(1_500)
@@ -682,7 +760,57 @@ class GameActions:
                 return ActionResult(False, "choose_relic", " | ".join(messages["errors"]))
 
         logger.info("Chose starter relic {} in village {}", index, village_id)
-        return ActionResult(True, "choose_relic", f"relíquia {index} escolhida", {"notices": messages["notices"]})
+        return ActionResult(
+            True, "choose_relic", f"relíquia {index} escolhida", {"notices": messages["notices"]}
+        )
+
+    async def equip_relic(self, village_id: str) -> ActionResult:
+        """Equip the first relic from the treasury into this village's free relic slot."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "relic_system")
+            await page.wait_for_timeout(2_000)
+
+            relic = page.locator("#relics img[data-id]").first
+            if not await relic.count():
+                return ActionResult(
+                    False, "equip_relic", "nenhuma relíquia no inventário da tesouraria"
+                )
+
+            relic_id = await relic.get_attribute("data-id")
+            await human_click(page, relic)
+            await human_delay(800, 1500)
+
+            equip = page.locator(
+                "button:visible:not(.btn-pp):has-text('Equipar'), a.btn:visible:not(.btn-pp):has-text('Equipar'), "
+                "button:visible:not(.btn-pp):has-text('Atribuir'), a.btn:visible:not(.btn-pp):has-text('Atribuir')"
+            )
+            if not await equip.count():
+                self._capture(await page.content(), "relic-equip-missing")
+                return ActionResult(
+                    False, "equip_relic", "botão de equipar não encontrado", {"relic": relic_id}
+                )
+
+            await human_click(page, equip.first)
+            await human_delay(900, 1600)
+
+            confirm = page.locator(".popup_box_container .btn-confirm-yes:visible")
+            if await confirm.count():
+                await human_click(page, confirm.first)
+                await page.wait_for_timeout(1_500)
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(
+                    False, "equip_relic", " | ".join(messages["errors"]), {"relic": relic_id}
+                )
+
+        logger.info("Equipped relic {} in village {}", relic_id, village_id)
+        return ActionResult(
+            True,
+            "equip_relic",
+            f"relíquia {relic_id} equipada",
+            {"relic": relic_id, "notices": messages["notices"]},
+        )
 
     async def claim_rewards(self, village_id: str) -> ActionResult:
         """Claim every reward waiting in the "Recompensas" tab (resources land in this village)."""
