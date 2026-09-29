@@ -15,6 +15,7 @@ from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.db.session import get_session
 from tribal_assistant.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.repositories.agents import AgentRepository
+from tribal_assistant.repositories.coordination import CoordinationRepository
 from tribal_assistant.repositories.lessons import LessonRepository
 from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
 from tribal_assistant.schemas.agents import (
@@ -28,6 +29,7 @@ from tribal_assistant.schemas.agents import (
     QuestRewardOut,
     QuestsOut,
 )
+from tribal_assistant.schemas.coordination import CoordinationOut, ProposerOut, RoleIn, RoleOut
 from tribal_assistant.schemas.plan import VillagePlanOut
 
 
@@ -57,6 +59,52 @@ class AgentService:
         outcome = await box.invoke(request.tool, request.arguments)
 
         return AgentActOut(ok=outcome.ok, dry_run=request.dry_run, detail=outcome.text, data=outcome.data)
+
+    async def coordination(self) -> list[CoordinationOut]:
+        repo = CoordinationRepository(self.session)
+        names = {v.id: f"{v.name} ({v.coords})" for v in await self._own_villages()}
+        items = []
+        for row in await repo.latest():
+            strategy = await repo.strategy(row.village_id)
+            out = CoordinationOut.model_validate(row)
+            out.village = names.get(row.village_id, str(row.village_id))
+            out.manual_role = bool(strategy and strategy.manual)
+            items.append(out)
+
+        return sorted(items, key=lambda o: o.village_id)
+
+    async def coordination_history(self, village_id: int, limit: int = 20) -> list[CoordinationOut]:
+        rows = await CoordinationRepository(self.session).history(village_id, limit)
+        return [CoordinationOut.model_validate(row) for row in rows]
+
+    async def set_role(self, village_id: int, body: RoleIn) -> RoleOut:
+        from tribal_assistant.agents.coordination.roles import RoleSelector
+
+        repo = CoordinationRepository(self.session)
+        if body.role is None:
+            contexts = await ContextLoader(self.session).load([village_id])
+            if not contexts:
+                raise NotFoundError(f"aldeia {village_id} não sincronizada")
+
+            role, reason = RoleSelector.derive(contexts[0])
+            row = await repo.set_strategy(village_id, role.value, reason, manual=False)
+        else:
+            row = await repo.set_strategy(village_id, body.role, body.reason or "definido no painel", manual=True)
+
+        return RoleOut(village_id=row.village_id, role=row.role, manual=row.manual, reason=row.reason)
+
+    @staticmethod
+    def proposers() -> list[ProposerOut]:
+        from tribal_assistant.agents.coordination.round import VillageRound
+
+        return [ProposerOut(**item) for item in VillageRound.describe()]
+
+    async def _own_villages(self):
+        from sqlalchemy import select
+
+        from tribal_assistant.models.village import Village
+
+        return (await self.session.execute(select(Village).where(Village.is_own.is_(True)))).scalars().all()
 
     async def lessons(self, topic: str | None = None, limit: int = 100) -> list[LessonOut]:
         rows = await LessonRepository(self.session).list(topic, limit)
