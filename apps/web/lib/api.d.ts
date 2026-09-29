@@ -688,6 +688,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/challenges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Challenges */
+        get: operations["challenges_api_v1_challenges_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/system/info": {
         parameters: {
             query?: never;
@@ -1011,6 +1028,46 @@ export interface components {
             queued_level: number | null;
             /** Queued Until */
             queued_until: string | null;
+        };
+        /** ChallengeOut */
+        ChallengeOut: {
+            /** Group */
+            group: string;
+            /** Name */
+            name: string;
+            /** Tier */
+            tier?: string | null;
+            /** Level */
+            level: number;
+            /** Description */
+            description: string;
+            /** Current */
+            current?: number | null;
+            /** Target */
+            target?: number | null;
+            /** Ratio */
+            ratio?: number | null;
+            /** Earned */
+            earned: boolean;
+            /** Done */
+            done: boolean;
+            /** Status */
+            status: string;
+            /** Agent */
+            agent: string;
+            /** How */
+            how: string;
+        };
+        /** ChallengesOut */
+        ChallengesOut: {
+            /** Updated At */
+            updated_at?: string | null;
+            /** Items */
+            items: components["schemas"]["ChallengeOut"][];
+            /** Summary */
+            summary: {
+                [key: string]: number;
+            };
         };
         /** CommandOut */
         CommandOut: {
@@ -3062,6 +3119,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProposerOut"][];
+                };
+            };
+        };
+    };
+    challenges_api_v1_challenges_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChallengesOut"];
                 };
             };
         };
