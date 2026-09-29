@@ -11,7 +11,10 @@ if TYPE_CHECKING:
 class OperatorAgent(VillageAgent):
     key = "operator"
     title = "Operador"
-    mission = "Executar ordens diretas do jogador, sempre dentro das travas de segurança."
+    mission = (
+        "Executar ordens diretas do jogador, uma de cada vez, sempre dentro das travas de segurança. "
+        "Não tome iniciativa além do pedido, não contorne um RECUSADO e responda com o resultado do jogo."
+    )
     tools = (
         "get_village_state",
         "get_quests",
@@ -26,6 +29,9 @@ class OperatorAgent(VillageAgent):
         "unlock_scavenge",
         "send_scavenge",
         "set_village_plan",
+        "open_daily_bonus",
+        "recruit_knight",
+        "use_item",
     )
 
     async def rules(self, box: "Toolbox") -> str:

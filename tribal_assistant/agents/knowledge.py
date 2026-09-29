@@ -43,6 +43,7 @@ BUILDINGS: dict[str, BuildingInfo] = {
         BuildingInfo("market", "Mercado", 25, {"main": 3, "storage": 2}, "Troca e envio de recursos; mais níveis, mais mercadores."),
         BuildingInfo("place", "Praça de reunião", 1, {}, "Envia ataques e apoio; mostra tropas em casa."),
         BuildingInfo("statue", "Estátua", 1, {}, "Nomeia o paladino."),
+        BuildingInfo("church", "Igreja", 3, {"main": 5, "farm": 5}, "Só em mundos com igreja; tropas fora do raio de fé perdem força."),
         BuildingInfo("watchtower", "Torre de vigia", 20, {}, "Detecta tropas se aproximando (requisitos fora dos docs)."),
         BuildingInfo("wood", "Bosque", 30, {}, "Produz madeira: 30/h no nível 1, 117/h no 10, 530/h no 20."),
         BuildingInfo("stone", "Poço de argila", 30, {}, "Produz argila."),
@@ -76,16 +77,30 @@ BUILDING_BY_LABEL = {info.label.lower(): info.id for info in BUILDINGS.values()}
 
 STRATEGY = """\
 Estratégia de base (docs/help):
-- Início: evolua Bosque, Poço de argila e Mina de ferro; proteja recursos com Esconderijo e Muralha.
-- Quartel exige Edifício principal 3; saqueie aldeias bárbaras vizinhas com lanceiros no começo.
-- Nunca deixe o Armazém encher; suba o Armazém antes de um recurso passar de 85% da capacidade.
-- Suba a Fazenda antes de a população passar de 85%.
-- Mercado exige Edifício principal 3 e Armazém 2.
-- Cavalaria leve (Estábulo 3) é a melhor unidade de saque: rápida e carrega 80.
-- Caminho do primeiro nobre: Edifício principal 20, Ferreiro 20, Mercado 10, então Academia.
-- Aldeia final: recursos, Fazenda e Armazém 30; Edifício principal 20; Ferreiro 20; Muralha 20.
-- Missões dão recursos: conclua as missões e colete as recompensas assim que possível.
-- Saque só aldeias bárbaras. Nunca ataque jogadores sem ordem explícita.
+Economia
+- Início: evolua Bosque, Poço de argila e Mina de ferro juntos; o mais baixo sobe primeiro.
+- Nunca deixe o Armazém encher: suba-o antes de um recurso passar de 85% da capacidade.
+- Suba a Fazenda antes de a população passar de 85%; sem população nada é construído nem recrutado.
+- Edifício principal mais alto acelera todas as obras; acompanhe-o com as minas.
+- Esconderijo é barato e protege recursos do saque; Muralha (exige Quartel 1) multiplica a defesa.
+- Coleta (praça de reunião) rende recursos sem arriscar tropas: desbloqueie os níveis 1 a 4 em ordem.
+- Missões e bônus diário dão recursos grátis: conclua, colete e abra os baús assim que possível.
+Exército
+- Quartel exige Edifício principal 3; lanceiros saqueiam bem no começo (carregam 25).
+- Ferreiro exige Edifício principal 5 e Quartel 1; Estábulo exige Quartel 5, Ferreiro 5, Edifício principal 10.
+- Cavalaria leve (Estábulo 3) é a melhor unidade de saque: 10 min/campo e carrega 80.
+- Defesa: lanceiros contra cavalaria, espadachins contra infantaria; mantenha tropas em casa com ataque chegando.
+Saque
+- Saque só aldeias bárbaras (sem dono). Nunca ataque jogadores.
+- Aldeias bárbaras de pontos altos podem ser ex-jogadores com tropas: prefira as de poucos pontos e perto.
+- Grupos pequenos e frequentes rendem mais que um grande; não repita o mesmo alvo logo em seguida.
+Nobre
+- Academia exige Edifício principal 20, Ferreiro 20 e Mercado 10; Mercado exige Edifício principal 3 e Armazém 2.
+- Nobre custa 40000/50000/50000 e 100 de população: Armazém 20 (50675) e Fazenda altos antes.
+- Nobre nunca vai sozinho (morre); cada ataque tira 20-35 de lealdade, conquista exige 3-5 ataques seguidos.
+- Início tardio num mundo antigo: defesa primeiro (lanceiros e espadachins), nobre depois.
+Aldeia final: recursos, Fazenda e Armazém 30; Edifício principal 20; Ferreiro 20; Muralha 20.
+Nunca gaste pontos premium.
 """
 
 

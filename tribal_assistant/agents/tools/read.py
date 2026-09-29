@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 class GetVillageState(AgentTool):
     name = "get_village_state"
     description = (
-        "Estado atual resumido da aldeia (o mesmo do início da conversa, atualizado após suas ações). "
-        "Só chame se precisar conferir o efeito de uma ação."
+        "Estado atual resumido da aldeia: recursos, fila, edifícios, tropas, coleta, missões, plano e ataques "
+        "(o mesmo do início da conversa, atualizado após suas ações). Só chame para conferir o efeito de uma ação."
     )
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
@@ -29,7 +29,10 @@ class GetVillageState(AgentTool):
 
 class GetQuests(AgentTool):
     name = "get_quests"
-    description = "Missões ativas com metas e progresso, e quantas recompensas estão prontas para coletar."
+    description = (
+        "Missões ativas em JSON com metas, progresso (current/target) e can_complete, e quantas recompensas "
+        "estão prontas. O resumo já está no estado; chame só se precisar do detalhe das metas."
+    )
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
         return ToolOutcome(
@@ -40,14 +43,15 @@ class GetQuests(AgentTool):
 class LookupKnowledge(AgentTool):
     name = "lookup_knowledge"
     description = (
-        "Fatos do jogo (docs oficiais): requisitos e nível máximo de um edifício, ou custo, "
-        "velocidade, carga e ataque/defesa de uma unidade."
+        "Fatos do jogo (ajuda oficial): requisitos, nível máximo e papel de um edifício; custo, população, "
+        "velocidade, carga, ataque/defesa e requisito de uma unidade; ou a estratégia de base (kind=strategy). "
+        "Use só em caso de dúvida; o jogo tem a palavra final."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
-            "kind": {"type": "string", "enum": ["building", "unit", "strategy"]},
-            "id": {"type": "string", "description": "Id do edifício (main, barracks...) ou unidade (spear, light...)."},
+            "kind": {"type": "string", "enum": ["building", "unit", "strategy"], "description": "O que consultar."},
+            "id": {"type": "string", "description": "Id do edifício (main, barracks, snob...) ou da unidade (spear, light...); vazio para strategy."},
         },
         "required": ["kind"],
         "additionalProperties": False,
@@ -70,14 +74,15 @@ class LookupKnowledge(AgentTool):
 class ListBarbarians(AgentTool):
     name = "list_barbarians"
     description = (
-        "Aldeias bárbaras mais próximas desta aldeia com distância e minutos de viagem por unidade, "
-        "indicando as atacadas recentemente. Use antes de send_farm_attack."
+        "Aldeias bárbaras dentro do raio de ataque, da mais perto para a mais longe, em JSON com coords, pontos, "
+        "distância, minutos de viagem por unidade e recently_attacked (pule essas). Usa a lista local de "
+        "farm quando faltam dados do mundo. Chame uma vez antes de send_farm_attack."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
-            "radius": {"type": "integer", "minimum": 1, "maximum": 50},
-            "limit": {"type": "integer", "minimum": 1, "maximum": 30},
+            "radius": {"type": "integer", "minimum": 1, "maximum": 50, "description": "Raio em campos; limitado ao raio de ataque."},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 30, "description": "Máximo de alvos (padrão 10)."},
         },
         "additionalProperties": False,
     }

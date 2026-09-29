@@ -17,11 +17,16 @@ class StrategistAgent(VillageAgent):
     key = "strategist"
     title = "Estrategista"
     mission = (
-        "Escrever o plano da aldeia com set_village_plan: até 12 passos em ordem de prioridade que os "
-        "outros agentes executam sozinhos. Equilibre: metas de missão (dão recursos), armazém antes de "
-        "encher, fazenda antes de a população travar, produção equilibrada, quartel e tropas de saque, "
-        "coleta desbloqueada, e o caminho do primeiro nobre (Edifício principal 20, Ferreiro 20, Mercado "
-        "10, Academia). Use lookup_knowledge só se tiver dúvida de requisito."
+        "Escrever o plano da aldeia com set_village_plan: até 12 passos em ordem de prioridade que o "
+        "economista e o comandante executam sozinhos, sem IA. Ordem de prioridade: 1) metas de missão "
+        "próximas (dão recursos); 2) Armazém antes de um recurso passar de 85%; 3) Fazenda antes de a "
+        "população passar de 85%; 4) minas equilibradas, a mais baixa primeiro; 5) Quartel 3 e tropas de "
+        "saque (lanceiros, depois cavalaria leve com Estábulo 3); 6) coleta desbloqueada em ordem; "
+        "7) caminho do primeiro nobre (Edifício principal 20, Ferreiro 20, Mercado 10, Academia). "
+        "Passo build = nível a atingir (não +1, no máximo 3 níveis acima do atual); passo recruit = total "
+        "de tropas a ter. Não inclua o que está feito ou bloqueado por requisito sem antes planejar o "
+        "requisito. Respeite o objetivo da aldeia se houver. Use lookup_knowledge só se tiver dúvida de "
+        "requisito. Uma chamada set_village_plan basta; set_village_goal só se o objetivo mudar."
     )
     tools = ("lookup_knowledge", "set_village_plan", "set_village_goal")
 

@@ -8,11 +8,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.agents.context import VillageContext
-from tribal_assistant.agents.knowledge import GameKnowledge
+from tribal_assistant.agents.knowledge import UNITS, GameKnowledge
 from tribal_assistant.models.farm_target import FarmTarget
 from tribal_assistant.models.world import WorldVillage
 from tribal_assistant.repositories.agents import AgentRepository
 from tribal_assistant.schemas.agent_settings import AgentSettings
+
+SCAVENGE_MIN_POP = 10
 
 
 @dataclass(frozen=True)
@@ -101,6 +103,10 @@ class Guardrails:
             current = ctx.unit(unit)
             if current is None or current.home < count:
                 return f"só há {current.home if current else 0} {unit} em casa"
+
+        pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
+        if pop < SCAVENGE_MIN_POP:
+            return f"coleta exige pelo menos {SCAVENGE_MIN_POP} de população; as tropas somam {pop}"
 
         if any(c["direction"] == "in" and c["kind"] in ("attack", "noble") for c in ctx.commands):
             return "ataque chegando; tropas ficam em casa"

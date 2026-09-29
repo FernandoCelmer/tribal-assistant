@@ -17,10 +17,11 @@ class RaiderAgent(VillageAgent):
     key = "raider"
     title = "Saqueador"
     mission = (
-        "Saquear aldeias bárbaras próximas com as tropas em casa: escolha os alvos mais perto que não "
-        "foram atacados recentemente e mande grupos pequenos (5 cavalaria leve ou 10 lanceiros). "
-        "Nunca ataque jogadores. Mantenha tropas em casa se houver ataque chegando. "
-        "Tropas que sobrarem depois dos saques vão coletar no nível de coleta mais alto que estiver livre."
+        "Saquear aldeias bárbaras próximas com as tropas em casa e mandar o resto coletar. Passos: "
+        "1) se houver ATAQUES CHEGANDO, não faça nada; 2) list_barbarians e descarte alvos "
+        "recently_attacked; 3) até 3 ataques nos alvos mais perto e de poucos pontos, grupo de 5 cavalaria "
+        "leve, senão 10 lanceiros, senão 10 bárbaros; 4) tropas que sobrarem vão para o nível de coleta "
+        "mais alto livre com send_scavenge. Nunca ataque jogadores e não mande todas as tropas de defesa."
     )
     tools = ("get_village_state", "list_barbarians", "send_farm_attack", "send_scavenge", "lookup_knowledge")
 

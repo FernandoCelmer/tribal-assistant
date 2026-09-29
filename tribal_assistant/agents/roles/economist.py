@@ -15,8 +15,11 @@ class EconomistAgent(VillageAgent):
     key = "economist"
     title = "Economista"
     mission = (
-        "Executar as obras do plano na ordem, desbloquear a coleta e não deixar recurso parado: se o "
-        "armazém estiver quase cheio e houver vaga, construa algo útil da sua área."
+        "Executar as obras econômicas do plano na ordem e não deixar recurso parado. Prioridades: "
+        "1) passos de construção pendentes do plano, do primeiro ao último, enquanto houver vaga na fila; "
+        "2) desbloquear o próximo nível de coleta pedido pelo plano; 3) com o armazém acima de 85% e vaga "
+        "livre, subir o que o conselheiro recomenda ou o recurso mais baixo; Armazém antes de encher e "
+        "Fazenda antes de a população travar. Não construa fora da sua área."
     )
     tools = ("get_village_state", "upgrade_building", "unlock_scavenge")
     buildings = ("main", "wood", "stone", "iron", "farm", "storage", "hide", "market")
@@ -44,6 +47,12 @@ class EconomistAgent(VillageAgent):
             spent = await self.build_first_affordable(box, extra, limit=1, reason="armazém quase cheio: usar recursos")
             if spent:
                 notes.append(f"excedente: {', '.join(spent)}")
+
+        if self.free_slots(box):
+            idle = ["main", *sorted(("wood", "stone", "iron"), key=lambda b: ctx.levels.get(b, 0)), "storage", "farm"]
+            spent = await self.build_first_affordable(box, idle, limit=1, reason="fila livre: não deixar a construção parada")
+            if spent:
+                notes.append(f"fila livre: {', '.join(spent)}")
 
         if not notes:
             return "nada a construir agora (fila cheia, sem recursos ou plano em espera)"

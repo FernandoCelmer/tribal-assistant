@@ -10,6 +10,8 @@ from tribal_assistant.agents.guardrails import Guardrails
 from tribal_assistant.agents.tools.act import (
     ClaimQuestRewards,
     CompleteQuest,
+    OpenDailyBonus,
+    RecruitKnight,
     RecruitUnits,
     SendFarmAttack,
     SendScavenge,
@@ -17,6 +19,7 @@ from tribal_assistant.agents.tools.act import (
     SetVillagePlan,
     UnlockScavenge,
     UpgradeBuilding,
+    UseItem,
 )
 from tribal_assistant.agents.tools.base import AgentTool, ToolOutcome
 from tribal_assistant.agents.tools.read import (
@@ -48,7 +51,10 @@ class Toolbox:
         SendFarmAttack,
         SendScavenge,
         ClaimQuestRewards,
+        OpenDailyBonus,
         CompleteQuest,
+        RecruitKnight,
+        UseItem,
         SetVillageGoal,
         SetVillagePlan,
         UnlockScavenge,

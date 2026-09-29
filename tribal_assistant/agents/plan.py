@@ -5,7 +5,6 @@ from tribal_assistant.agents.knowledge import GameKnowledge
 from tribal_assistant.schemas.plan import PlanStep
 
 RESOURCES = ("wood", "stone", "iron")
-NOBLE_PATH = (("main", 20), ("smith", 20), ("market", 10), ("snob", 1))
 
 
 class PlanTracker:
@@ -82,10 +81,13 @@ class PlanTracker:
 
 
 class RulePlanner:
-    """A sensible default plan from quests, the advisor, economy balance and the noble path."""
+    """Early-game plan: main building nonstop, balanced pits, storage and farm ahead of the caps, path to the stable."""
+
+    STABLE_PATH = (("main", 10), ("barracks", 5), ("smith", 5), ("stable", 3))
 
     def plan(self, ctx: VillageContext) -> tuple[str, list[PlanStep]]:
         levels = ctx.levels
+        village = ctx.village
         steps: list[PlanStep] = []
         seen: set[tuple[str, str]] = set()
 
@@ -93,54 +95,54 @@ class RulePlanner:
             key = (kind, target)
             if key in seen:
                 return
+
             seen.add(key)
             steps.append(PlanStep(kind=kind, target=target, amount=amount, reason=reason))
 
         for quest in ctx.quests:
             for goal in quest.get("goals", []):
                 mapped = GameKnowledge.goal_building(f"{goal.get('title', '')} {goal.get('text', '')}")
-                if mapped and levels.get(mapped[0], 0) < mapped[1]:
+                if mapped and mapped[0] not in ("wall", "hide") and levels.get(mapped[0], 0) < mapped[1]:
                     add("build", mapped[0], mapped[1], f"missão: {quest.get('title', '')}")
 
-        for rec in ctx.village.recommendations:
-            if rec.priority == "high":
-                add("build", rec.building, rec.to_level, rec.reason)
+        if levels.get("main", 0) < 20:
+            add("build", "main", levels.get("main", 0) + 1, "edifício principal sem parar: acelera todas as obras")
 
-        lowest = min(RESOURCES, key=lambda b: levels.get(b, 0))
-        add("build", lowest, levels.get(lowest, 0) + 1, "equilibrar produção")
+        biggest = max(ctx.stock.get(r, 0) for r in ("wood", "clay", "iron"))
+        hourly = max(village.wood_prod, village.clay_prod, village.iron_prod, 1)
+        if village.storage and (biggest / village.storage > 0.6 or village.storage / hourly < 6):
+            add("build", "storage", levels.get("storage", 0) + 1, "armazém antes de encher: recurso perdido atrasa tudo")
 
-        target_pits = min(30, levels.get("main", 1) + 3)
-        for pit in RESOURCES:
-            if levels.get(pit, 0) < target_pits:
-                add("build", pit, min(levels.get(pit, 0) + 2, target_pits), "produção acompanha o edifício principal")
+        if village.pop_max and ctx.pop_free < max(20, village.pop_max * 0.15):
+            add("build", "farm", levels.get("farm", 0) + 1, "fazenda antes de a população travar")
 
-        if levels.get("barracks", 0) < 3:
-            add("build", "barracks", 3, "recrutar e liberar missões de exército")
+        pits = sorted(RESOURCES, key=lambda b: levels.get(b, 0))
+        for pit in pits:
+            if levels.get(pit, 0) < 30:
+                add("build", pit, levels.get(pit, 0) + 1, "minas equilibradas: produção por hora primeiro")
 
-        if levels.get("smith", 0) < 1 and levels.get("main", 0) >= 5:
-            add("build", "smith", 1, "libera pesquisas e o caminho do nobre")
+        for building, target in self.STABLE_PATH:
+            if levels.get(building, 0) < target:
+                add("build", building, levels.get(building, 0) + 1, "caminho do estábulo: cavalaria leve para saquear")
+                break
 
-        if levels.get("market", 0) < 1 and levels.get("main", 0) >= 3 and levels.get("storage", 0) >= 2:
-            add("build", "market", 1, "mercado para trocas futuras")
-
-        building, target = min(NOBLE_PATH, key=lambda nt: levels.get(nt[0], 0) / nt[1])
-        if levels.get(building, 0) < target:
-            add("build", building, levels.get(building, 0) + 1, "caminho do primeiro nobre")
-
-        locked = sorted(o.option_id for o in ctx.village.scavenge if o.is_locked)
+        locked = sorted(o.option_id for o in village.scavenge if o.is_locked and o.unlock_at is None)
         if locked:
             add("unlock_scavenge", str(locked[0]), 1, "coleta rende recursos sem arriscar tropas")
-
-        spear = ctx.unit("spear")
-        if spear and spear.available:
-            add("recruit", "spear", max(20, spear.total + 10), "tropas de saque e defesa")
 
         light = ctx.unit("light")
         if light and light.available:
             add("recruit", "light", max(10, light.total + 5), "cavalaria leve é a melhor unidade de saque")
+        else:
+            spear = ctx.unit("spear")
+            if spear and spear.available and spear.total < 30:
+                add("recruit", "spear", min(30, spear.total + 10), "tropas para saque, coleta e missões")
+
+        if any(c["direction"] == "in" and c["kind"] in ("attack", "noble") for c in ctx.commands):
+            add("build", "wall", levels.get("wall", 0) + 1, "ataque chegando: muralha")
 
         summary = (
-            f"Plano automático: {sum(1 for s in steps if s.kind == 'build')} obras, "
-            f"prioridade em missões, armazém/fazenda e caminho do nobre ({building} {target})."
+            f"Plano automático: {sum(1 for s in steps if s.kind == 'build')} obras — edifício principal contínuo, "
+            "minas equilibradas, armazém e fazenda à frente dos limites, caminho do estábulo."
         )
         return summary, steps[:12]

@@ -14,10 +14,16 @@ if TYPE_CHECKING:
 
 RULES = """\
 Regras:
-- O estado da aldeia já está abaixo; não chame ferramentas de leitura sem necessidade.
-- Cada ação precisa de um "reason" curto. Se uma ação for RECUSADA, não repita; ajuste.
-- Seja objetivo: poucas chamadas, sem explicações longas.
-- Termine com um resumo de uma frase.
+- Você age só nesta aldeia e só com as ferramentas que recebeu.
+- O estado da aldeia já está na mensagem; só chame ferramentas de leitura para conferir o efeito de uma ação.
+- As travas valem sempre: reserva de recursos, orçamento de recrutamento, vagas na fila, raio de ataque, \
+limite de ataques por hora, intervalo entre ataques ao mesmo alvo e só aldeias bárbaras.
+- Resposta RECUSADO é final: não repita a mesma chamada nem tente contornar; ajuste ou pare.
+- Nunca gaste pontos premium, nunca ataque jogadores, nunca venda nem envie recursos.
+- Com ATAQUES CHEGANDO no estado, tropas ficam em casa.
+- Toda ação leva um "reason" curto (até 8 palavras), ex.: "missão: Bosque 5".
+- Economize: no máximo 5 chamadas, sem texto entre elas; se nada for útil, não chame ferramentas.
+- Resposta final: uma frase em português com o que fez e o próximo passo, ou por que não fez nada.
 """
 
 
@@ -35,7 +41,10 @@ class VillageAgent(ABC):
         return f"Você é o {self.title} de uma aldeia no Tribal Wars (servidor brasileiro).\nMissão: {self.mission}{area}\n\n{RULES}"
 
     def task_prompt(self, ctx: VillageContext, config: AgentSettings) -> str:
-        return f"{ContextView(ctx, config.build_queue_slots).render(self.key)}\n\nFaça o seu trabalho nesta rodada."
+        return (
+            f"{ContextView(ctx, config.build_queue_slots).render(self.key)}\n\n"
+            "Decida e aja nesta rodada seguindo sua missão e as regras."
+        )
 
     def needs_llm(self, ctx: VillageContext, config: AgentSettings) -> bool:
         return True

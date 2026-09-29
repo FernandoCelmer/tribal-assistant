@@ -18,8 +18,11 @@ class CommanderAgent(VillageAgent):
     key = "commander"
     title = "Comandante"
     mission = (
-        "Executar as obras militares e o recrutamento do plano, sem estourar a reserva; com o armazém "
-        "quase cheio, transformar o excedente em tropas de saque."
+        "Executar as obras militares e o recrutamento do plano. Prioridades: 1) próximo passo militar "
+        "pendente do plano (quartel, estábulo, ferreiro, muralha, academia); 2) recrutar o que falta para "
+        "o total de tropas do plano, em lotes de até 25; 3) com o armazém acima de 85%, transformar o "
+        "excedente em tropas de saque (cavalaria leve, senão lanceiros, senão bárbaros). Não recrute "
+        "unidade que o plano não pede fora do caso de excedente, e não construa fora da sua área."
     )
     tools = ("get_village_state", "upgrade_building", "recruit_units")
     buildings = ("barracks", "stable", "garage", "smith", "wall", "statue", "snob", "watchtower", "place")
