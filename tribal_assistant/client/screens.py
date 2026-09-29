@@ -96,7 +96,7 @@ class ScreenCatalog:
         if name == "statue_train":
             await _open(page, "statue", village_id)
             launch = page.locator(".knight_train_launch")
-            if await launch.count():
+            if await launch.count() and await launch.first.is_visible():
                 await launch.first.click()
                 await page.wait_for_timeout(1_500)
             self.save(name, await page.evaluate(POPUP_JS) or "<!-- no popup -->")
@@ -106,7 +106,7 @@ class ScreenCatalog:
         if name == "statue_recruit":
             await _open(page, "statue", village_id)
             launch = page.locator(".knight_recruit_launch")
-            if await launch.count():
+            if await launch.count() and await launch.first.is_visible():
                 await launch.first.click()
                 await page.wait_for_timeout(1_500)
             self.save(name, await page.evaluate(POPUP_JS) or "<!-- no popup -->")
