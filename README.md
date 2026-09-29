@@ -202,6 +202,17 @@ tribal-assistant agents set enabled=true interval_minutes=15
 tribal-assistant quests                                 # quests and pending rewards
 ```
 
+## Docs library
+
+Everything under `docs/` (official help, guides, forum tutorials saved locally) is loaded into the database one section per row and searched with PostgreSQL full-text search in Portuguese: accents ignored, title words weigh most, common synonyms of the game expanded (requisitos/requerimentos, custo/preço, tropas/unidades). SQLite falls back to a plain word search.
+
+```bash
+tribal-assistant docs sync                     # load docs/ into the database (only changed files)
+tribal-assistant docs search "custo da academia"
+```
+
+The server reloads `docs/` every 6 hours. The strategist and the MCP clients use `search_docs` (best sections with the document path) and `read_doc` (a whole document); the API serves `/api/v1/docs/search`, `/read`, `/catalog` and `/sync`. Folders named `raw` and `screenshots` are skipped.
+
 ## AI providers
 
 | `AI_PROVIDER` | Key variable | Default model | Endpoint |
