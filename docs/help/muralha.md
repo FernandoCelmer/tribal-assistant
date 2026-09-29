@@ -1,0 +1,34 @@
+# Muralha
+
+Fonte: https://help.tribalwars.com.br/index.php?title=Muralha
+
+A muralha tem como função inteiramente proteger a aldeia, sua força é determinada pela defesa básica, quanto maior o nível da muralha maior sua defesa básica.
+
+Nível maximo: **20**
+
+**Requerimentos:** [Quartel](https://help.tribalwars.com.br/index.php?title=Quartel) (Nível 1)
+
+![](https://help.tribalwars.com.br/images/7/74/Wall1.png)
+
+| Nível | Requerimentos | População necessária/total | Factor de defesa em tropas defensivas |
+|---|---|---|---|
+| 1 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)50 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)100 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)20 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)5 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)5 | 4% |
+| 2 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)63 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)127 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)25 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)1 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)6 | 8% |
+| 3 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)79 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)163 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)32 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)1 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)7 | 12% |
+| 4 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)100 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)207 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)40 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)1 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)8 | 16% |
+| 5 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)126 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)264 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)50 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)1 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)9 | 20% |
+| 6 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)159 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)337 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)64 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)2 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)11 | 24% |
+| 7 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)200 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)430 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)80 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)2 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)13 | 29% |
+| 8 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)252 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)548 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)101 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)2 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)15 | 34% |
+| 9 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)318 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)698 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)127 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)3 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)18 | 39% |
+| 10 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)400 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)890 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)160 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)3 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)21 | 44% |
+| 11 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)504 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)1.135 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)202 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)3 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)24 | 49% |
+| 12 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)635 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)1.447 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)254 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)4 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)28 | 55% |
+| 13 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)801 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)1.846 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)320 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)5 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)33 | 60% |
+| 14 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)1.009 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)2.353 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)404 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)5 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)38 | 66% |
+| 15 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)1.271 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)3.000 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)508 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)7 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)45 | 72% |
+| 16 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)1.602 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)3.825 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)641 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)8 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)53 | 79% |
+| 17 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)2.018 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)4.877 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)807 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)9 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)62 | 85% |
+| 18 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)2.543 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)6.218 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)1.017 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)10 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)72 | 92% |
+| 19 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)3.204 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)7.928 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)1.281 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)12 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)84 | 99% |
+| 20 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)4.037 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)10.109 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)1.615 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)15 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)99 | 107% |

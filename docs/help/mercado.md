@@ -1,0 +1,45 @@
+# Mercado
+
+Fonte: https://help.tribalwars.com.br/index.php?title=Mercado
+
+No mercado você pode negociar com outros jogadores recursos que esta em falta em alguma de suas aldeias.Você pode aceitar ofertas alheias ou criar a sua própria oferta.Além disso você pode transferir recursos de uma aldeia para outra. Salientando que a cada nível construído do mercado o número de mercadores será maior (assim você poderá transportar maiores quantidades de recursos).
+
+Nível maximo: **25**
+
+**Requerimentos:** [Edifício Principal](edificio-principal.md) (Nível 3) [Armazém](armazem.md) (Nível 2)
+
+![](https://help.tribalwars.com.br/images/9/9f/Mercado2.png)
+
+| Nível | Requrtimentos | População necessária/total | Mercadores |
+|---|---|---|---|
+| 1 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)100 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)100 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)100 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)20 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)20 | 1 |
+| 2 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)126 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)127 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)126 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)3 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)23 | 2 |
+| 3 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)159 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)163 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)159 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)4 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)27 | 3 |
+| 4 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)200 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)207 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)200 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)5 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)32 | 4 |
+| 5 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)252 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)264 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)252 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)5 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)37 | 5 |
+| 6 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)318 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)337 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)318 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)7 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)44 | 6 |
+| 7 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)400 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)430 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)400 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)7 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)51 | 7 |
+| 8 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)504 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)548 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)504 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)9 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)60 | 8 |
+| 9 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)635 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)698 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)635 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)10 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)70 | 9 |
+| 10 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)800 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)890 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)800 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)12 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)82 | 10 |
+| 11 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)1.009 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)1.135 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)1.009 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)14 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)96 | 11 |
+| 12 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)1.271 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)1.447 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)1.271 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)16 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)112 | 14 |
+| 13 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)1.601 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)1.846 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)1.601 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)20 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)132 | 19 |
+| 14 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)2.018 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)2.353 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)2.018 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)22 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)154 | 26 |
+| 15 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)2.542 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)3.000 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)2.542 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)26 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)180 | 35 |
+| 16 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)3.203 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)3.825 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)3.203 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)31 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)211 | 46 |
+| 17 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)4.036 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)4.877 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)4.036 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)36 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)247 | 59 |
+| 18 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)5.085 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)6.218 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)5.085 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)42 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)289 | 74 |
+| 19 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)6.407 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)7.928 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)6.407 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)49 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)338 | 91 |
+| 20 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)8.073 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)10.109 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)8.073 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)57 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)395 | 110 |
+| 21 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)10.172 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)12.889 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)10.172 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)67 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)462 | 131 |
+| 22 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)12.817 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)16.433 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)12.817 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)79 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)541 | 154 |
+| 23 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)16.149 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)20.952 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)16.149 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)92 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)633 | 179 |
+| 24 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)20.348 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)26.714 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)20.348 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)107 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)740 | 206 |
+| 25 | ![](https://help.tribalwars.com.br/images/3/31/Holz.png)25.639 ![](https://help.tribalwars.com.br/images/a/ae/Lehm.png)34.060 ![](https://help.tribalwars.com.br/images/a/a5/Eisen.png)25.639 | ![](https://help.tribalwars.com.br/images/2/25/Homem.png)126 / ![](https://help.tribalwars.com.br/images/2/25/Homem.png)866 | 235 |
+
+### Páginas relacionadas
+
+- [Comércio livre](https://help.tribalwars.com.br/index.php?title=Com%C3%A9rcio_livre)
+- [Comércio](comercio.md)
+- [Rácio](https://help.tribalwars.com.br/index.php?title=R%C3%A1cio)
