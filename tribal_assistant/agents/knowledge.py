@@ -5,6 +5,7 @@ own "can build" answer stays the final word.
 """
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
@@ -101,7 +102,15 @@ Nobre
 - Início tardio num mundo antigo: defesa primeiro (lanceiros e espadachins), nobre depois.
 Aldeia final: recursos, Fazenda e Armazém 30; Edifício principal 20; Ferreiro 20; Muralha 20.
 Nunca gaste pontos premium.
+Guias completos: lookup_knowledge kind=guide id=inicio (primeiros dias), avancado (várias aldeias, tribo) ou nobre (conquista).
 """
+
+GUIDES = {
+    "inicio": "Primeiros dias: economia de saque, ordem de construção, missões, coleta, tropas e rotina.",
+    "avancado": "Fase avançada: especialização de aldeias, mercado, ataques sincronizados, defesa e tribo.",
+    "nobre": "Conquista: academia, espionagem, limpeza, nobres sincronizados e defesa da aldeia nova.",
+}
+GUIDES_DIR = Path(__file__).parent / "guides"
 
 
 class GameKnowledge:
@@ -110,6 +119,14 @@ class GameKnowledge:
     buildings = BUILDINGS
     units = UNITS
     strategy = STRATEGY
+    guides = GUIDES
+
+    @classmethod
+    def guide(cls, name: str) -> str | None:
+        if name not in GUIDES:
+            return None
+
+        return (GUIDES_DIR / f"{name}.md").read_text(encoding="utf-8")
 
     @classmethod
     def building(cls, building: str) -> dict[str, Any] | None:

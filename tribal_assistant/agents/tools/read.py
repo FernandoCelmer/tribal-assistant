@@ -44,14 +44,15 @@ class LookupKnowledge(AgentTool):
     name = "lookup_knowledge"
     description = (
         "Fatos do jogo (ajuda oficial): requisitos, nível máximo e papel de um edifício; custo, população, "
-        "velocidade, carga, ataque/defesa e requisito de uma unidade; ou a estratégia de base (kind=strategy). "
+        "velocidade, carga, ataque/defesa e requisito de uma unidade; a estratégia de base (kind=strategy); "
+        "ou um guia completo (kind=guide, id=inicio, avancado ou nobre). "
         "Use só em caso de dúvida; o jogo tem a palavra final."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
-            "kind": {"type": "string", "enum": ["building", "unit", "strategy"], "description": "O que consultar."},
-            "id": {"type": "string", "description": "Id do edifício (main, barracks, snob...) ou da unidade (spear, light...); vazio para strategy."},
+            "kind": {"type": "string", "enum": ["building", "unit", "strategy", "guide"], "description": "O que consultar."},
+            "id": {"type": "string", "description": "Id do edifício (main, barracks, snob...) ou da unidade (spear, light...); inicio, avancado ou nobre para guide; vazio para strategy."},
         },
         "required": ["kind"],
         "additionalProperties": False,
@@ -63,6 +64,13 @@ class LookupKnowledge(AgentTool):
 
         if kind == "strategy":
             return ToolOutcome(True, GameKnowledge.strategy)
+
+        if kind == "guide":
+            text = GameKnowledge.guide(key)
+            if text is None:
+                return ToolOutcome(False, f"guia {key!r} desconhecido; use {', '.join(GameKnowledge.guides)}")
+
+            return ToolOutcome(True, text)
 
         info = GameKnowledge.building(key) if kind == "building" else GameKnowledge.unit(key)
         if info is None:
