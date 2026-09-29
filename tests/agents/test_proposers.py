@@ -91,3 +91,18 @@ def test_mine_follows_the_resource_that_blocks_builds():
     view.build_cost = lambda b: {"wood": ctx.building(b).next_wood, "clay": ctx.building(b).next_clay, "iron": ctx.building(b).next_iron} if ctx.building(b) else {}
 
     assert InfrastructureProposer.bottleneck(view, ["main"]) == "wood"
+
+
+def test_twenty_swordsmen_fill_two_scavenging_tiers():
+    from tribal_assistant.agents.proposers.attack import AttackProposer
+
+    parts = AttackProposer.split({"sword": 20}, {1: 0.1, 2: 0.25})
+    assert set(parts) == {1, 2}
+    assert parts[1]["sword"] + parts[2]["sword"] == 20
+
+
+def test_iron_surplus_buys_wood_when_wood_is_almost_gone():
+    offer = {"receive": "wood", "receive_amount": 1000, "pay": "iron", "pay_amount": 1000, "player": "a", "minutes": 120, "can_accept": True}
+
+    assert EconomyProposer.pick_offer([offer], {"wood": 20, "stone": 400, "iron": 1500}, 4247) == offer
+    assert EconomyProposer.pick_offer([offer], {"wood": 900, "stone": 400, "iron": 1500}, 4247) is None

@@ -78,10 +78,16 @@ class InfrastructureProposer(Proposer):
         """The pit whose resource the next builds miss the most, measured in hours of production."""
         production = view.estimator.production()
         demand = dict.fromkeys(("wood", "clay", "iron"), 0)
-        for building in [*plan[:4], "main", "storage", "farm"]:
+        for building in dict.fromkeys([*plan[:4], "main"]):
             for resource, amount in view.build_cost(building).items():
                 if resource in demand:
                     demand[resource] += amount
+
+        for step in PlanTracker.next_recruits(view.ctx.plan)[:1]:
+            unit = view.ctx.unit(step.target)
+            if unit is not None:
+                for resource, per in (("wood", unit.cost_wood), ("clay", unit.cost_clay), ("iron", unit.cost_iron)):
+                    demand[resource] += (per or 0) * 10
 
         def pressure(pit: str) -> float:
             resource = PIT_RESOURCE[pit]

@@ -146,7 +146,7 @@ class UpkeepProposer(Proposer):
         if match:
             gain = storage * int(match.group(1)) // 100
             room = min(storage - stock.get(r, 0) for r in ("wood", "clay", "iron"))
-            if storage >= 5000 and gain <= room:
+            if storage >= 4000 and gain <= room:
                 return f"pacote de recursos cabe no armazém (+{gain})"
 
         return None

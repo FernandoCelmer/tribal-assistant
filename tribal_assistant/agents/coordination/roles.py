@@ -17,7 +17,7 @@ from tribal_assistant.models.village import Village
 from tribal_assistant.repositories.coordination import CoordinationRepository
 
 NOBLE_PATH = (("main", 20), ("smith", 20), ("market", 10))
-PROTECTION_WARNING_HOURS = 24
+PROTECTION_WARNING_HOURS = 48
 CONFIRM_ROUNDS = 3
 
 

@@ -137,6 +137,7 @@ class LessonBook:
                 else (report.loot_wood + report.loot_clay + report.loot_iron)
             )
             attacks = int(past.get("attacks", 0)) + 1
+            streak = int(past.get("yellow_streak", 0)) + 1 if report.result in ("yellow", "red") else 0
             total = int(past.get("total_haul", 0)) + haul
             await self.repo.observe(
                 key,
@@ -149,6 +150,7 @@ class LessonBook:
                     "attacks": attacks,
                     "total_haul": total,
                     "avg_haul": total // attacks,
+                    "yellow_streak": streak,
                 },
                 ok=report.result == "green",
                 commit=False,

@@ -208,9 +208,9 @@ class EconomyProposer(Proposer):
             and o["receive"] != o["pay"]
             and o["pay_amount"] <= o["receive_amount"]
             and (o.get("minutes") or 0) <= max_minutes
-            and stock[o["pay"]] - o["pay_amount"] >= storage * 0.2
+            and stock[o["pay"]] - o["pay_amount"] >= storage * 0.1
             and stock[o["receive"]] + o["receive_amount"] <= storage
-            and stock[o["pay"]] - o["pay_amount"] >= stock[o["receive"]]
+            and (stock[o["pay"]] - o["pay_amount"] >= stock[o["receive"]] or stock[o["receive"]] < storage * 0.1)
         ]
         fits.sort(
             key=lambda o: (

@@ -55,7 +55,7 @@ class AttackProposer(Proposer):
             if len(items) >= MAX_RAIDS:
                 break
 
-            if target.get("recently_attacked"):
+            if target.get("recently_attacked") or target.get("yellow_streak", 0) >= 2:
                 continue
 
             want = int((target.get("avg_haul") or UNKNOWN_HAUL) * 1.15)
@@ -132,18 +132,21 @@ class AttackProposer(Proposer):
     @staticmethod
     def split(units: dict[str, int], factors: dict[int, float]) -> dict[int, dict[str, int]]:
         """Share troops among free scavenging tiers; lower tiers get more (weight 1/loot factor), each part at least 10 pop."""
+        def pop(part: dict[str, int]) -> int:
+            return sum(UNITS[u].pop * n for u, n in part.items() if u in UNITS)
+
         options = sorted(factors, reverse=True)
         while options:
-            weights = {o: 1 / factors[o] for o in options}
-            total = sum(weights.values())
-            parts = {o: {u: int(n * weights[o] / total) for u, n in units.items()} for o in options}
-            top = options[0]
-            for unit, count in units.items():
-                parts[top][unit] += count - sum(p[unit] for p in parts.values())
+            for weights in ({o: 1 / factors[o] for o in options}, dict.fromkeys(options, 1.0)):
+                total = sum(weights.values())
+                parts = {o: {u: int(n * weights[o] / total) for u, n in units.items()} for o in options}
+                top = options[0]
+                for unit, count in units.items():
+                    parts[top][unit] += count - sum(p[unit] for p in parts.values())
 
-            parts = {o: {u: n for u, n in p.items() if n > 0} for o, p in parts.items()}
-            if all(sum(UNITS[u].pop * n for u, n in p.items() if u in UNITS) >= SCAVENGE_MIN_POP for p in parts.values()):
-                return parts
+                parts = {o: {u: n for u, n in p.items() if n > 0} for o, p in parts.items()}
+                if all(pop(p) >= SCAVENGE_MIN_POP for p in parts.values()):
+                    return parts
 
             options = options[:-1]
 
