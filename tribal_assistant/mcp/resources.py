@@ -23,6 +23,15 @@ class Resources:
             return GameKnowledge.strategy
 
         @mcp.resource(
+            "tribal://knowledge/guide/{name}",
+            title="Game guide",
+            description="Full pt-BR guide: inicio (first days), avancado (many villages, tribe) or nobre (conquest).",
+            mime_type="text/markdown",
+        )
+        def guide(name: str) -> str:
+            return GameKnowledge.guide(name) or f"guia desconhecido; use {', '.join(GameKnowledge.guides)}"
+
+        @mcp.resource(
             "tribal://knowledge/buildings",
             title="Buildings",
             description="Every documented building: label, max level, requirements and role.",

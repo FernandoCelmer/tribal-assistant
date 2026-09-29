@@ -133,16 +133,24 @@ class StateTools(ToolGroup):
 
         @GuardedTool(mcp, title="Game knowledge", annotations=READ_ONLY)
         async def lookup_knowledge(
-            kind: Annotated[Literal["building", "unit", "strategy"], Field(description="building, unit, or strategy for the base playbook.")],
-            id: Annotated[str, Field(description="Building id or pt-BR name (main, barracks, snob, 'Academia'...) or unit id (spear, light, snob...); ignored for strategy.")] = "",
+            kind: Annotated[Literal["building", "unit", "strategy", "guide"], Field(description="building, unit, strategy for the base playbook, or guide for a full pt-BR guide.")],
+            id: Annotated[str, Field(description="Building id or pt-BR name (main, barracks, snob, 'Academia'...) or unit id (spear, light, snob...); inicio, avancado or nobre for guide; ignored for strategy.")] = "",
         ) -> Knowledge:
             """Facts from the official pt-BR help pages. building: label, max_level, requires
             (building -> level) and role. unit: cost, pop, attack, defense (general/cavalry/archer),
             minutes_per_field, carry and research requirement. strategy: the base playbook the
-            agents follow. World settings can differ; the game's own answer is final.
+            agents follow. guide: a full guide (inicio = first days, avancado = many villages and
+            tribe, nobre = conquest). World settings can differ; the game's own answer is final.
             """
             if kind == "strategy":
                 return Knowledge(strategy=GameKnowledge.strategy)
+
+            if kind == "guide":
+                text = GameKnowledge.guide(id)
+                if text is None:
+                    raise NotFoundError(f"guia {id!r} desconhecido: use {', '.join(GameKnowledge.guides)}")
+
+                return Knowledge(guide=id, text=text)
 
             info = GameKnowledge.building(id) if kind == "building" else GameKnowledge.unit(id)
             if info is None:
