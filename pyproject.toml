@@ -1,7 +1,7 @@
 [project]
-name = "tribal-wars-bot"
+name = "tribal-assistant"
 version = "0.1.0"
-description = "Tribal Wars automation bot — FastAPI control plane + Playwright worker."
+description = "Tribal Wars assistant — FastAPI control plane + Playwright game client."
 requires-python = ">=3.12"
 readme = "README.md"
 authors = [{ name = "Fernando Celmer", email = "fernandocelmer@gmail.com" }]
@@ -34,7 +34,7 @@ dev = [
 ]
 
 [project.scripts]
-tw-bot = "app.cli:main"
+tribal-assistant = "app.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -43,6 +43,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["app*"]
+
+[tool.poetry]
+packages = [{ include = "app" }]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
