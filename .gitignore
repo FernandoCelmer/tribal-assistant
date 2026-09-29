@@ -16,3 +16,6 @@ playwright-state.json
 /build/
 /dist/
 /docs/guides/raw/
+/docs/forum/**/*.py
+/docs/forum/**/.log
+/docs/forum/**/.stdout
