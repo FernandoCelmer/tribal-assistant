@@ -38,7 +38,8 @@ class AttackProposer(Proposer):
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
         items = await self._raids(view)
-        items += self._scavenge(view, reserved={u: n for p in items for u, n in p.troops.items()})
+        viable = [p for p in items if p.confidence >= MIN_CONFIDENCE]
+        items += self._scavenge(view, reserved={u: n for p in viable for u, n in p.troops.items()})
 
         return items
 

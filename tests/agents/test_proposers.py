@@ -164,3 +164,56 @@ def test_next_build_reservation_lets_small_recruit_batches_through_while_the_que
 
     assert budget.affordable({"wood": 250, "clay": 150, "iron": 50}, "scavenge", "recruit_units")
     assert not budget.affordable({"wood": 250, "clay": 150, "iron": 50}, "", "upgrade_building")
+
+
+async def test_vetoed_raids_do_not_hold_troops_back_from_scavenging():
+    from tests.agents.builders import context, scavenge, unit
+    from tribal_assistant.core.agents.coordination.proposal import Proposal
+    from tribal_assistant.core.agents.proposers.attack import AttackProposer
+
+    class View:
+        pass
+
+    view = View()
+    view.ctx = context(units=[unit("spear", 14), unit("sword", 20)], scavenge_options=[scavenge(1), scavenge(2)])
+    view.dry_run = False
+    view.role = None
+    notes = []
+    view.note = notes.append
+    proposer = AttackProposer()
+
+    async def raids(_view):
+        return [Proposal("attack", "send_farm_attack", {"target": "1|1"}, "saque", "", troops={"spear": 14, "sword": 13}, confidence=0.2)]
+
+    proposer._raids = raids
+    items = await proposer.propose(view)
+    sent = [p for p in items if p.action == "send_scavenge"]
+    assert sent and sum(sum(p.troops.values()) for p in sent) == 34
+
+
+def test_idle_queue_takes_the_cheapest_pit_that_fits_when_the_plan_is_far():
+    from tests.agents.builders import building, context
+    from tribal_assistant.core.agents.coordination.estimates import Estimator
+    from tribal_assistant.core.agents.proposers.infrastructure import InfrastructureProposer
+
+    class Guard:
+        @staticmethod
+        def check_upgrade(ctx, name):
+            return None
+
+    class View:
+        pass
+
+    ctx = context(buildings=[building("barracks", 4, cost=900), building("wood", 11, cost=300), building("stone", 10, cost=250), building("iron", 7, cost=200)], stock=400)
+    view = View()
+    view.ctx = ctx
+    view.guard = Guard()
+    view.estimator = Estimator(ctx)
+    view.build_cost = lambda b: {"wood": ctx.building(b).next_wood, "clay": ctx.building(b).next_clay, "iron": ctx.building(b).next_iron} if ctx.building(b) else {}
+
+    assert InfrastructureProposer.filler(view, ["barracks"]) == "stone"
+
+    busy = context(buildings=[building("barracks", 4, cost=900), building("stone", 10, cost=250), building("smith", 3, queued_level=4)], stock=400)
+    view.ctx = busy
+    view.estimator = Estimator(busy)
+    assert InfrastructureProposer.filler(view, ["barracks"]) is None

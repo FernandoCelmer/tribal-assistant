@@ -13,6 +13,7 @@ NON_ECONOMIC = ("wall", "market", "hide", "watchtower", "statue", "garage")
 CAPACITY = ("storage", "farm")
 SCAVENGE_UNLOCK = {2: (250, 300, 250), 3: (1000, 1200, 1000), 4: (10000, 12000, 10000)}
 PIT_RESOURCE = {"wood": "wood", "stone": "clay", "iron": "iron"}
+FILLER_WAIT_HOURS = 0.25
 
 
 class InfrastructureProposer(Proposer):
@@ -60,6 +61,10 @@ class InfrastructureProposer(Proposer):
             resource = PIT_RESOURCE[pit]
             items.append(self._build(view, pit, f"{resource} é o que mais trava as próximas obras", impact=weight, opportunity=0.3))
 
+        filler = self.filler(view, plan)
+        if filler:
+            items.append(self._build(view, filler, "fila vazia: obra que cabe no estoque agora", impact=0.4, opportunity=0.8))
+
         for option_id in PlanTracker.next_unlocks(ctx.plan)[:1]:
             if not view.guard.check_unlock_scavenge(ctx, option_id):
                 items.append(
@@ -78,6 +83,23 @@ class InfrastructureProposer(Proposer):
                 )
 
         return items
+
+    @classmethod
+    def filler(cls, view: CoordinationView, plan: list[str]) -> str | None:
+        """With the queue idle and the next planned build still far away, the cheapest pit that fits the stock now."""
+        if view.ctx.queue or not plan:
+            return None
+
+        if view.estimator.hours_to_afford(view.build_cost(plan[0])) <= FILLER_WAIT_HOURS:
+            return None
+
+        stock = view.ctx.stock
+        affordable = [
+            pit
+            for pit in BuildPacing.pits(view.ctx.levels)
+            if (cost := view.build_cost(pit)) and all(stock.get(r, 0) >= cost.get(r, 0) for r in ("wood", "clay", "iron")) and cls._ok(view, pit)
+        ]
+        return min(affordable, key=lambda pit: sum(view.build_cost(pit).get(r, 0) for r in ("wood", "clay", "iron")), default=None)
 
     @staticmethod
     def bottleneck(view: CoordinationView, plan: list[str]) -> str:
