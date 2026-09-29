@@ -144,3 +144,12 @@
     wraps.forEach((w) => { ro.observe(w); if (w.firstElementChild) ro.observe(w.firstElementChild); });
   }
 })();
+
+(() => {
+  const select = document.querySelector("[data-account-switch]");
+  if (!select) return;
+  select.addEventListener("change", () => {
+    document.cookie = `tw_account=${select.value}; path=/; max-age=31536000; samesite=lax`;
+    location.reload();
+  });
+})();

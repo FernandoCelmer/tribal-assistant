@@ -1364,3 +1364,6 @@ a:hover { color: var(--color-link-hover); }
 }
 .settings-bar .muted { margin-right: auto; }
 .settings-bar .is-dirty { color: var(--color-warning-text); font-weight: 600; }
+
+.sidebar__account { display: grid; gap: var(--space-1, 4px); padding: 0 var(--space-4, 16px) var(--space-3, 12px); }
+.sidebar__account .select { width: 100%; }
