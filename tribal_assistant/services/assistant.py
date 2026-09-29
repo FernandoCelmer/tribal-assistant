@@ -2,8 +2,8 @@
 
 from tribal_assistant.client.state import session_state
 from tribal_assistant.core.config import settings
-from tribal_assistant.schemas.assistant import CommandResult, AssistantStatus
 from tribal_assistant.scheduler.runtime import scheduler
+from tribal_assistant.schemas.assistant import AssistantStatus, CommandResult
 
 
 class AssistantService:

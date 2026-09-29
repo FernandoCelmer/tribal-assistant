@@ -45,7 +45,7 @@ class FarmService:
             logger.info("Farm disabled by config, skipping tick")
             return FarmTickResult(dispatched=0, skipped=0)
 
-        from tribal_assistant.client.modules.farm import FarmRunner  # local import breaks cycle
+        from tribal_assistant.client.modules.farm import FarmRunner
 
         targets = list(await self.repository.list(enabled_only=True))
         runner = FarmRunner()
