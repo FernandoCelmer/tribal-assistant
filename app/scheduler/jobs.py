@@ -1,5 +1,7 @@
 """Scheduled jobs. Kept trivial: each job calls a service/module coroutine."""
 
+from datetime import datetime, timedelta
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
@@ -7,13 +9,26 @@ from loguru import logger
 from app.core.config import settings
 
 
-async def _sync_village_job() -> None:
-    from app.bot.modules.village_sync import sync_current_village
+async def _sync_game_job() -> None:
+    from app.client.human import in_quiet_hours
+    from app.client.modules.game_sync import sync_game
+
+    if in_quiet_hours():
+        logger.info("Quiet hours, skipping game sync")
+        return
+    try:
+        await sync_game()
+    except Exception:  # noqa: BLE001
+        logger.exception("game sync failed")
+
+
+async def _sync_world_job() -> None:
+    from app.client.modules.world_sync import sync_world
 
     try:
-        await sync_current_village()
+        await sync_world()
     except Exception:  # noqa: BLE001
-        logger.exception("village sync failed")
+        logger.exception("world sync failed")
 
 
 async def _farm_tick_job() -> None:
@@ -33,9 +48,24 @@ async def _farm_tick_job() -> None:
 
 def register_jobs(scheduler: AsyncIOScheduler) -> None:
     scheduler.add_job(
-        _sync_village_job,
-        trigger=IntervalTrigger(minutes=5),
-        id="sync_village",
+        _sync_game_job,
+        trigger=IntervalTrigger(
+            seconds=settings.sync_interval_seconds,
+            jitter=max(20, settings.sync_interval_seconds // 4),
+        ),
+        id="sync_game",
+        next_run_time=datetime.now() + timedelta(seconds=10),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _sync_world_job,
+        trigger=IntervalTrigger(minutes=settings.world_sync_interval_minutes, jitter=120),
+        id="sync_world",
+        next_run_time=datetime.now() + timedelta(seconds=30),
+        max_instances=1,
+        coalesce=True,
         replace_existing=True,
     )
     if settings.farm_enabled:
