@@ -1,4 +1,4 @@
-.PHONY: install venv playwright run test lint typecheck migrate revision fmt
+.PHONY: install venv playwright run test lint typecheck migrate revision fmt web web-install web-types web-check
 
 VENV=.venv
 PY=$(VENV)/bin/python
@@ -32,3 +32,15 @@ migrate:
 
 revision:
 	$(VENV)/bin/alembic revision --autogenerate -m "$(m)"
+
+web-install:
+	cd apps/web && npm install
+
+web:
+	cd apps/web && npm run dev
+
+web-types:
+	cd apps/web && npm run api:types
+
+web-check:
+	cd apps/web && npm run check
