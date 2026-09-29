@@ -211,58 +211,6 @@ export interface paths {
         patch: operations["update_village_api_v1_villages__village_id__patch"];
         trace?: never;
     };
-    "/api/v1/farm/targets": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Targets */
-        get: operations["list_targets_api_v1_farm_targets_get"];
-        put?: never;
-        /** Add Target */
-        post: operations["add_target_api_v1_farm_targets_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/farm/tick": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Farm Tick */
-        post: operations["farm_tick_api_v1_farm_tick_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/farm/targets/{target_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Remove Target */
-        delete: operations["remove_target_api_v1_farm_targets__target_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/assistant/status": {
         parameters: {
             query?: never;
@@ -1158,74 +1106,6 @@ export interface components {
              */
             created_at: string;
         };
-        /** FarmTarget */
-        FarmTarget: {
-            /** Coords */
-            coords: string;
-            /**
-             * Template
-             * @default A
-             */
-            template: string;
-            /**
-             * Wall Level
-             * @default 0
-             */
-            wall_level: number;
-            /**
-             * Enabled
-             * @default true
-             */
-            enabled: boolean;
-            /** Id */
-            id: number;
-            /** Last Attack At */
-            last_attack_at: string | null;
-            /** Last Loot */
-            last_loot: number;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
-        };
-        /** FarmTargetCreate */
-        FarmTargetCreate: {
-            /** Coords */
-            coords: string;
-            /**
-             * Template
-             * @default A
-             */
-            template: string;
-            /**
-             * Wall Level
-             * @default 0
-             */
-            wall_level: number;
-            /**
-             * Enabled
-             * @default true
-             */
-            enabled: boolean;
-        };
-        /** FarmTickResult */
-        FarmTickResult: {
-            /** Dispatched */
-            dispatched: number;
-            /** Skipped */
-            skipped: number;
-            /**
-             * Errors
-             * @default []
-             */
-            errors: string[];
-        };
         /** FlowLink */
         FlowLink: {
             /** Source */
@@ -1384,8 +1264,6 @@ export interface components {
             ally_tag: string | null;
             /** Is Barbarian */
             is_barbarian: boolean;
-            /** Is Farm Target */
-            is_farm_target: boolean;
             /** Travel Minutes */
             travel_minutes: {
                 [key: string]: number;
@@ -2420,108 +2298,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Village"];
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_targets_api_v1_farm_targets_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FarmTarget"][];
-                };
-            };
-        };
-    };
-    add_target_api_v1_farm_targets_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FarmTargetCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FarmTarget"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    farm_tick_api_v1_farm_tick_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FarmTickResult"];
-                };
-            };
-        };
-    };
-    remove_target_api_v1_farm_targets__target_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                target_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {

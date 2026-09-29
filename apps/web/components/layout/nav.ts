@@ -12,7 +12,6 @@ export const NAV: NavGroup[] = [
       { href: "/aldeia", label: "Aldeia", icon: Castle },
       { href: "/arredores", label: "Arredores", icon: Map },
       { href: "/relatorios", label: "Relatórios", icon: ScrollText },
-      { href: "/farm", label: "Farm", icon: Swords },
     ],
   },
   {
