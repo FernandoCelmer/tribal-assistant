@@ -1,0 +1,34 @@
+{
+  "name": "tribal-assistant-web",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "api:types": "cd ../.. && poetry run python -c \"import json; from tribal_assistant.api.app import create_app; json.dump(create_app().openapi(), open('apps/web/openapi.json','w'))\" && cd apps/web && openapi-typescript openapi.json -o lib/api.d.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "check": "npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.45.0",
+    "next": "^15.3.0",
+    "openapi-fetch": "^0.17.0",
+    "postcss": "^8.5.28",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.8.0"
+  }
+}
