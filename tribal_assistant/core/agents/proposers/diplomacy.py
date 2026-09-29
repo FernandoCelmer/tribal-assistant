@@ -1,5 +1,7 @@
 """Diplomacy: tribe, mentor and the social side of the game, never with the other accounts run here."""
 
+from loguru import logger
+
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.proposers.base import Proposer
@@ -24,6 +26,7 @@ class DiplomacyProposer(Proposer):
                 items += await step(view)
             except Exception as exc:
                 view.note_error = str(exc)
+                logger.warning("Diplomacy step {} failed: {}", step.__name__, exc)
 
         return items
 

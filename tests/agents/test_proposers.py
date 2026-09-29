@@ -142,3 +142,13 @@ def test_scavenging_army_grows_with_the_farm():
 
     assert RecruitmentProposer.scavenge_target(854) == 341
     assert RecruitmentProposer.scavenge_target(24000) == 1000
+
+
+def test_unit_bonus_items_wait_for_an_incoming_attack():
+    from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
+
+    sword = {"key": "3040_0", "name": "Bônus de espadachim", "detail": "Espadachim: +5% poder de ataque e defesa", "usable": True}
+    stock = {"wood": 300, "clay": 400, "iron": 700}
+    assert UpkeepProposer.item_decision(sword, stock, 5222, False) is None
+    assert UpkeepProposer.item_decision(sword, stock, 5222, False, attacked=True, home={"sword": 40})
+    assert UpkeepProposer.item_decision(sword, stock, 5222, False, attacked=True, home={"sword": 5}) is None

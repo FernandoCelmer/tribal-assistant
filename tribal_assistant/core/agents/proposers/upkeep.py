@@ -3,11 +3,15 @@
 import re
 from typing import Any, ClassVar
 
+from loguru import logger
+
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.proposers.base import Proposer
 
 TRAINING_COST = {21: 100, 22: 200, 23: 400, 24: 700, 25: 1000}
+INVENTORY_HOURS = 0.5
+UNIT_BONUS = {"lanceiro": "spear", "espadachim": "sword", "machado": "axe", "arqueiro": "archer", "cavalaria leve": "light", "cavalaria pesada": "heavy"}
 
 
 class UpkeepProposer(Proposer):
@@ -31,6 +35,7 @@ class UpkeepProposer(Proposer):
                 items += await step(view)
             except Exception as exc:
                 view.note_error = str(exc)
+                logger.warning("Steward step {} failed: {}", step.__name__, exc)
 
         return items
 
@@ -137,23 +142,32 @@ class UpkeepProposer(Proposer):
 
     async def _items(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
-        if not await view.cooldown("items", 3):
+        if not await view.cooldown("items", INVENTORY_HOURS):
             return []
 
+        inventory = await view.actions.inventory(ctx.game_id)
+        await view.lessons.repo.observe("inventory", "inventory", "Inventário", f"{len(inventory)} item(ns)", {"items": inventory})
+        attacked = bool(view.estimator.incoming())
+        home = {u.name: u.home for u in ctx.village.units}
+
         items = []
-        for item in await view.actions.inventory(ctx.game_id):
-            decision = self.item_decision(item, ctx.stock, ctx.village.storage, bool(ctx.queue))
+        for item in inventory:
+            decision = self.item_decision(item, ctx.stock, ctx.village.storage, bool(ctx.queue), attacked, home)
             if decision:
                 items.append(self._free("use_item", {"key": item["key"]}, decision, str(item.get("name")), 0.5))
 
         return items
 
     @staticmethod
-    def item_decision(item: dict[str, Any], stock: dict[str, int], storage: int, building: bool) -> str | None:
+    def item_decision(item: dict[str, Any], stock: dict[str, int], storage: int, building: bool, attacked: bool = False, home: dict[str, int] | None = None) -> str | None:
         name = str(item.get("name") or "")
         detail = str(item.get("detail") or "")
         if not item.get("usable"):
             return None
+
+        unit = next((u for label, u in UNIT_BONUS.items() if label in name.lower()), None)
+        if unit:
+            return f"bônus de {unit} com ataque chegando" if attacked and (home or {}).get(unit, 0) >= 20 else None
 
         if "livro" in name.lower() or "livro de habilidade" in detail.lower():
             return "livro de habilidade libera habilidade do paladino"
