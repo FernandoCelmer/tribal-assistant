@@ -43,13 +43,15 @@ export type StreamEvent =
   | { kind: "run_started"; data: RunEvent }
   | { kind: "run_finished"; data: RunEvent }
   | { kind: "step"; data: StepEvent }
-  | { kind: "log"; data: LogEvent };
+  | { kind: "log"; data: LogEvent }
+  | { kind: "sync"; data: { villages: number; reports: number; account_id?: number | null } }
+  | { kind: "decision"; data: { action: string; ok: boolean; village_id: number; account_id?: number | null } };
 
 export type StreamState = "connecting" | "live" | "retrying";
 
 type Listener = { event: (e: StreamEvent) => void; state: (s: StreamState) => void };
 
-const KINDS = ["run_started", "step", "run_finished", "log"] as const;
+const KINDS = ["run_started", "step", "run_finished", "log", "sync", "decision"] as const;
 
 class Stream {
   private source: EventSource | null = null;

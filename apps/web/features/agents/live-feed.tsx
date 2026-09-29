@@ -14,7 +14,8 @@ import { AgentMark } from "./agent-mark";
 import { STREAM_LABEL, useEvents, type StreamEvent } from "./events";
 import { KIND_LABELS, TRIGGERS, agentLabel } from "./labels";
 
-type Item = { id: number; event: StreamEvent };
+type FeedEvent = Exclude<StreamEvent, { kind: "sync" } | { kind: "decision" }>;
+type Item = { id: number; event: FeedEvent };
 
 const LIMIT = 200;
 
@@ -25,7 +26,7 @@ export function levelTone(level: string): "neutral" | "success" | "warning" | "d
   return "neutral";
 }
 
-function Line({ event }: { event: StreamEvent }) {
+function Line({ event }: { event: FeedEvent }) {
   if (event.kind === "run_started" || event.kind === "run_finished") {
     const d = event.data;
     const failed = event.kind === "run_finished" && d.status === "failed";
@@ -71,6 +72,7 @@ export function LiveFeed() {
 
   const state = useEvents((event) => {
     if (event.kind === "log" && !logs) return;
+    if (event.kind === "sync" || event.kind === "decision") return;
     setItems((list) => [{ id: Date.now() + Math.random(), event }, ...list].slice(0, LIMIT));
   });
 

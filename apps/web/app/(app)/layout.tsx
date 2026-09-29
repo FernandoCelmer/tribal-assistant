@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { LiveRefresh } from "@/components/layout/live-refresh";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Sidebar } from "@/components/layout/sidebar";
 import { DialogHost } from "@/components/ui/dialog-host";
@@ -21,6 +22,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <BottomNav />
       <Toaster />
       <DialogHost />
+      <LiveRefresh />
     </div>
   );
 }
