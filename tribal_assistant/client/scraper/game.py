@@ -443,7 +443,7 @@ def parse_scavenge(rows: Sequence[Mapping[str, Any]]) -> tuple[ScavengeSnapshot,
 
 def _report_category(title: str) -> str:
     t = title.lower()
-    if "ataca" in t:
+    if "atac" in t:
         return "attack"
     if "apoi" in t:
         return "support"

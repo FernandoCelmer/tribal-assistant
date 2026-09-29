@@ -337,7 +337,7 @@ async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[di
         return rows
 
     pending = [
-        r for r in rows if r["id"] not in known and "ataca" in str(r.get("title", "")).lower()
+        r for r in rows if r["id"] not in known and "atac" in str(r.get("title", "")).lower()
     ][:REPORT_DETAILS_PER_SYNC]
     for row in pending:
         await _open(page, "report", village_id, mode="all", view=row["id"])

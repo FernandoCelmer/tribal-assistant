@@ -49,7 +49,7 @@ class RaiderAgent(VillageAgent):
         targets = [
             t
             for t in json.loads(listing.text)
-            if not t.get("recently_attacked") and t.get("last_result") not in ("red", "yellow")
+            if not t.get("recently_attacked") and t.get("last_result") != "red"
         ]
         targets.sort(key=lambda t: (-(t.get("avg_haul") or 0), t.get("distance") or 0))
         sent = []
