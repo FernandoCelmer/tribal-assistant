@@ -48,8 +48,6 @@ class Settings(BaseSettings):
     ai_max_steps: int = 10
     ai_max_tokens: int = 2048
 
-    telegram_token: str | None = None
-    telegram_chat_id: str | None = None
 
 
 settings = Settings()  # type: ignore[call-arg]

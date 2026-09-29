@@ -57,10 +57,6 @@ def current_world() -> str | None:
     return account.server if account else None
 
 
-def set_account(account: AccountContext | None) -> None:
-    _current.set(account)
-
-
 @contextmanager
 def use_account(account: AccountContext) -> Iterator[AccountContext]:
     token = _current.set(account)

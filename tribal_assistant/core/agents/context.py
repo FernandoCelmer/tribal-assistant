@@ -8,7 +8,6 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.coordination.policy import Policy
-from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.repositories.plans import PlanRepository
 from tribal_assistant.core.schemas.game import GameOverview, VillageOverview
@@ -65,58 +64,6 @@ class VillageContext:
         self.stock["clay"] -= clay
         self.stock["iron"] -= iron
         self.pop_free -= pop
-
-    def to_prompt(self, queue_slots: int) -> dict[str, Any]:
-        v = self.village
-        slots = max(0, queue_slots - len(self.queue))
-
-        return {
-            "village": {"id": v.id, "name": v.name, "coords": v.coords, "points": v.points},
-            "resources": {
-                **self.stock,
-                "storage": v.storage,
-                "production_per_hour": {"wood": v.wood_prod, "clay": v.clay_prod, "iron": v.iron_prod},
-                "population": {"used": v.pop_current, "max": v.pop_max, "free": self.pop_free},
-            },
-            "build_queue": self.queue,
-            "build_slots_free": slots,
-            "buildings": [
-                {
-                    "id": b.name,
-                    "label": b.label,
-                    "level": b.level,
-                    "max": b.max_level,
-                    "next_cost": {"wood": b.next_wood, "clay": b.next_clay, "iron": b.next_iron, "pop": b.next_pop},
-                    "build_seconds": b.build_time,
-                    "can_build": b.can_build,
-                    "blocker": b.blocker,
-                    "missing_requirements": GameKnowledge.missing_requirements(b.name, self.levels),
-                }
-                for b in v.buildings
-            ],
-            "units": [
-                {
-                    "id": u.name,
-                    "home": u.home,
-                    "away": u.away,
-                    "can_recruit": u.available,
-                    "max_recruit": u.max_recruit,
-                    "cost": {"wood": u.cost_wood, "clay": u.cost_clay, "iron": u.cost_iron, "pop": u.cost_pop},
-                    "blocker": u.blocker,
-                }
-                for u in v.units
-            ],
-            "recruiting": [r.model_dump(mode="json") for r in v.recruit_orders],
-            "commands": self.commands,
-            "scavenge": [s.model_dump(mode="json") for s in v.scavenge],
-            "advisor": [r.model_dump(mode="json") for r in v.recommendations],
-            "quests": self.quests,
-            "quest_rewards_pending": self.rewards_pending,
-            "player": self.player,
-            "goal": self.goal,
-            "recent_decisions": self.recent,
-        }
-
 
 class ContextLoader:
     """Builds one VillageContext per own village from the synced database state."""

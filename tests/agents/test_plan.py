@@ -70,9 +70,9 @@ def test_compact_view_is_small_and_role_specific() -> None:
     ctx = context(units=[unit("spear", 12)], scavenge_options=[scavenge(1)])
     ctx.plan = [PlanStep(kind="build", target="main", amount=4, status="pending")]
 
-    raider = ContextView(ctx, 2).render("raider")
-    economist = ContextView(ctx, 2).render("economist")
+    quests = ContextView(ctx, 2).render("quartermaster")
+    strategist = ContextView(ctx, 2).render("strategist")
 
-    assert "spear 12" in raider and "Edifícios" not in raider
-    assert "Plano:" in economist and "Tropas" not in economist
-    assert len(ContextView(ctx, 2).render("strategist")) < 2000
+    assert "spear 12" in strategist and "Plano:" in strategist
+    assert "Plano:" not in quests and "spear 12" not in quests
+    assert len(strategist) < 2000

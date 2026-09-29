@@ -121,7 +121,3 @@ class RoleSelector:
         await self.lessons.repo.observe(f"role_wish:{ctx.id}", "cooldown", wanted.value, "", {"role": wanted.value, "count": count})
 
         return wanted if count >= CONFIRM_ROUNDS else current
-
-    @staticmethod
-    def derive(ctx: VillageContext) -> tuple[Role, str]:
-        return RoleSelector.decide(ctx, {})

@@ -12,9 +12,6 @@ KIND = {"build": "construir", "recruit": "recrutar", "unlock_scavenge": "desbloq
 class ContextView:
     SECTIONS: ClassVar[dict[str, tuple[str, ...]]] = {
         "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "lessons", "coordination"),
-        "economist": ("resources", "queue", "economy_buildings", "scavenge", "plan"),
-        "commander": ("resources", "queue", "military_buildings", "troops", "plan", "commands"),
-        "raider": ("troops", "scavenge", "commands"),
         "quartermaster": ("quests",),
         "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "lessons", "coordination"),
     }
@@ -75,12 +72,6 @@ class ContextView:
 
     def buildings(self) -> str:
         return self._buildings(None)
-
-    def economy_buildings(self) -> str:
-        return self._buildings(("main", "wood", "stone", "iron", "farm", "storage", "hide", "market"))
-
-    def military_buildings(self) -> str:
-        return self._buildings(("barracks", "stable", "garage", "smith", "wall", "statue", "snob", "place"))
 
     def troops(self) -> str:
         units = self.ctx.village.units
