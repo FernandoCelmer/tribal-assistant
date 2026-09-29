@@ -21,6 +21,7 @@ class AgentSettings(BaseModel):
     llm_agents: list[str] = Field(default_factory=lambda: ["strategist"], description="Agents that may call the AI; the rest run on rules.")
     plan_refresh_minutes: int = Field(default=360, ge=5, le=10080, description="Minutes before the strategist rewrites the plan.")
     llm_max_steps: int = Field(default=6, ge=1, le=20, description="Tool rounds per AI conversation.")
+    approval_actions: list[str] = Field(default_factory=list, description="Actions the coordinator only proposes and waits for approval.")
 
     @model_validator(mode="before")
     @classmethod
@@ -49,3 +50,4 @@ class AgentSettingsUpdate(BaseModel):
     llm_agents: list[str] | None = None
     plan_refresh_minutes: int | None = Field(default=None, ge=5, le=10080)
     llm_max_steps: int | None = Field(default=None, ge=1, le=20)
+    approval_actions: list[str] | None = None
