@@ -15,3 +15,4 @@ playwright-state.json
 *.db
 /build/
 /dist/
+/docs/guides/raw/
