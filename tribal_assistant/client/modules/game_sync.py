@@ -17,11 +17,13 @@ from tribal_assistant.client.scraper.game import (
     parse_reports,
     parse_village,
 )
+from tribal_assistant.client.screens import ScreenCatalog
 from tribal_assistant.client.session import game_session
 from tribal_assistant.client.state import session_state
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.errors import UpstreamError
 from tribal_assistant.db.session import SessionFactory
+from tribal_assistant.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.repositories.game import GameRepository
 
 GAME_DATA_JS = "() => window.game_data || null"
@@ -135,7 +137,6 @@ EVALUATE_ATTEMPTS = 3
 REPORT_DETAILS_PER_SYNC = 5
 
 
-# Only plain navigation links: anything carrying an action or CSRF hash would change game state.
 FIND_LINK_JS = """(want) => {
   const current = String((window.game_data && game_data.village && game_data.village.id) || '');
   return [...document.querySelectorAll('a[href]')].findIndex(a => {
@@ -226,13 +227,19 @@ async def _own_village_ids(page: Page, game_data: dict[str, Any], count: int) ->
     return ids or [current]
 
 
-async def _read_village(page: Page, village_id: str) -> tuple[GameVillage, str]:
+async def _read_village(page: Page, village_id: str, finish_free: bool = False) -> tuple[GameVillage, str]:
     async def overview() -> dict[str, Any]:
         await _open(page, "overview", village_id)
         return {"overview": await _evaluate(page, OVERVIEW_JS)}
 
     async def main() -> dict[str, Any]:
         await _open(page, "main", village_id)
+
+        if finish_free:
+            from tribal_assistant.client.actions import GameActions
+
+            await GameActions().click_free_finish(page)
+
         return {
             "game_data": await _game_data(page),
             "upgrades": await _evaluate(page, UPGRADES_JS),
@@ -270,6 +277,15 @@ async def _read_village(page: Page, village_id: str) -> tuple[GameVillage, str]:
         command_rows=data["overview"]["commands"],
         scavenge_rows=data["scavenge"],
     )
+
+    catalog = ScreenCatalog()
+    missing = catalog.missing({b.name: b.level for b in village.buildings})
+    if missing:
+        try:
+            await catalog.capture(page, village_id, missing[0])
+        except PlaywrightError as exc:
+            logger.warning("Could not capture {} screen: {}", missing[0], exc)
+
     return village, data["overview"]["text"]
 
 
@@ -279,7 +295,6 @@ async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[di
     if not settings.sync_report_details:
         return rows
 
-    # Opening a report marks it as read in the game, so only open new attack reports.
     pending = [
         r for r in rows if r["id"] not in known and "ataca" in str(r.get("title", "")).lower()
     ][:REPORT_DETAILS_PER_SYNC]
@@ -289,7 +304,7 @@ async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[di
     return rows
 
 
-async def _read_game(known_reports: set[str]) -> GameSnapshot:
+async def _read_game(known_reports: set[str], finish_free: bool = False) -> GameSnapshot:
     page = await game_session.page()
     await _ensure_in_game(page)
 
@@ -300,7 +315,7 @@ async def _read_game(known_reports: set[str]) -> GameSnapshot:
     villages = []
     overview_text = ""
     for village_id in village_ids:
-        village, text = await _read_village(page, village_id)
+        village, text = await _read_village(page, village_id, finish_free)
         villages.append(village)
         overview_text = overview_text or text
 
@@ -324,7 +339,8 @@ async def sync_game() -> GameSnapshot:
         try:
             async with SessionFactory() as session:
                 known = await GameRepository(session).report_ids()
-            snapshot = await _read_game(known)
+                config = await AgentSettingsRepository(session).get()
+            snapshot = await _read_game(known, config.auto_finish_free)
             async with SessionFactory() as session:
                 await GameRepository(session).persist(snapshot)
         except Exception as exc:

@@ -29,7 +29,6 @@ class FarmRunner:
             logger.info("No farm targets to dispatch")
             return result
 
-        # TODO: open browser, go to /game.php?screen=am_farm and dispatch.
         for target in targets:
             logger.info("(stub) would farm {}", target.coords)
             result.skipped += 1
