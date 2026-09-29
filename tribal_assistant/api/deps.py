@@ -16,6 +16,7 @@ from tribal_assistant.core.services.challenges import ChallengeService
 from tribal_assistant.core.services.docs import DocsService
 from tribal_assistant.core.services.forecast import ForecastService
 from tribal_assistant.core.services.game import GameService
+from tribal_assistant.core.services.knobs import KnobService
 from tribal_assistant.core.services.live import LiveGameService
 from tribal_assistant.core.services.observability import ObservabilityService
 from tribal_assistant.core.services.reports import ReportService
@@ -72,3 +73,4 @@ WorldServiceDep = Annotated[WorldService, Depends(provide(WorldService))]
 ForecastServiceDep = Annotated[ForecastService, Depends(provide(ForecastService))]
 LiveGameServiceDep = Annotated[LiveGameService, Depends(provide(LiveGameService))]
 ReportServiceDep = Annotated[ReportService, Depends(provide(ReportService))]
+KnobServiceDep = Annotated[KnobService, Depends(provide(KnobService))]
