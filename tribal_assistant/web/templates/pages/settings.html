@@ -45,13 +45,9 @@
         <p class="field__help">Provedor, modelo e chave ficam no arquivo <code>.env</code> (<code>AI_PROVIDER</code>, <code>AI_MODEL</code>, <code>AI_API_KEY</code>) e não aparecem aqui por segurança.</p>
         <fieldset class="fieldset setting-agents">
           <legend>Agentes que usam IA</legend>
-          <p class="field__help">Os demais seguem o plano com regras, sem gastar tokens. O mais econômico é só o Estrategista.</p>
+          <p class="field__help">Só o Estrategista usa IA, para escrever o plano. Os especialistas do coordenador (Economia, Infraestrutura, Recrutamento, Defesa, Ataque, Expansão, Inteligência e Mordomo) decidem por regras, sem gastar tokens.</p>
           <div class="setting-agents__list">
-            <label class="check"><input type="checkbox" name="llm_agents" value="strategist"> Estrategista <small class="muted">escreve o plano</small></label>
-            <label class="check"><input type="checkbox" name="llm_agents" value="economist"> Economista</label>
-            <label class="check"><input type="checkbox" name="llm_agents" value="commander"> Comandante</label>
-            <label class="check"><input type="checkbox" name="llm_agents" value="raider"> Saqueador</label>
-            <label class="check"><input type="checkbox" name="llm_agents" value="quartermaster"> Missões</label>
+            <label class="check"><input type="checkbox" name="llm_agents" value="strategist"> Estrategista <small class="muted">escreve o plano da aldeia</small></label>
           </div>
         </fieldset>
         <div class="settings-grid">
@@ -62,6 +58,32 @@
             <input class="input" id="s-steps" name="llm_max_steps" type="number" min="1" max="20">
             <small class="field__help">Limite de chamadas de ferramenta por agente.</small></div>
         </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-set-coord">
+      <div class="panel__header"><h2 class="panel__title" id="h-set-coord"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-compass"/></svg>Coordenador</h2><span class="panel__meta">o papel de cada aldeia é escolhido em <a href="/estrategia">Estratégia</a></span></div>
+      <div class="panel__body panel__body--column">
+        <fieldset class="fieldset setting-agents">
+          <legend>Ações que precisam da sua aprovação</legend>
+          <p class="field__help">Marcadas: o coordenador só propõe e espera um clique em <b>Aprovar</b> na página Estratégia. Desmarcadas: ele decide sozinho, sempre dentro das travas.</p>
+          <div class="setting-agents__list">
+            <label class="check"><input type="checkbox" name="approval_actions" value="send_farm_attack"> Saques</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="send_scavenge"> Coleta</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="recruit_units"> Recrutar tropas</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="upgrade_building"> Construir</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="unlock_scavenge"> Desbloquear coleta</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="accept_market_offer"> Trocas no mercado</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="use_item"> Usar itens</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="train_knight"> Treinar paladino</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="recruit_knight"> Recrutar paladino</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="learn_knight_skill"> Habilidades do paladino</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="assign_flag"> Bandeiras</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="choose_relic"> Escolher relíquia</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="equip_relic"> Equipar relíquia</label>
+            <label class="check"><input type="checkbox" name="approval_actions" value="rename_village"> Renomear aldeia</label>
+          </div>
+        </fieldset>
       </div>
     </section>
 

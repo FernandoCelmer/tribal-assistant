@@ -3,9 +3,6 @@ export const API = "/api/v1";
 export const AGENTS = [
   { key: "quartermaster", label: "Missões", slot: 1, area: "missões e recompensas" },
   { key: "strategist", label: "Estrategista", slot: 2, area: "objetivo da aldeia" },
-  { key: "economist", label: "Economista", slot: 3, area: "recursos, armazém, fazenda, mercado, coleta" },
-  { key: "commander", label: "Comandante", slot: 4, area: "militar e recrutamento" },
-  { key: "raider", label: "Saqueador", slot: 5, area: "saque de bárbaras e coleta" },
   { key: "steward", label: "Mordomo", slot: 1, area: "relíquia, bandeira, paladino e itens" },
   { key: "economy", label: "Economia", slot: 3, area: "armazém, fazenda, reservas e mercado" },
   { key: "infrastructure", label: "Infraestrutura", slot: 3, area: "próxima obra e gargalo" },
@@ -16,6 +13,9 @@ export const AGENTS = [
   { key: "intelligence", label: "Inteligência", slot: 2, area: "relatórios e vizinhos" },
   { key: "coordinator", label: "Coordenador", slot: 2, area: "compara propostas e decide" },
   { key: "operator", label: "Operador", slot: 6, area: "ordens diretas (MCP)" },
+  { key: "economist", label: "Economista (antigo)", slot: 3, area: "substituído por Economia e Infraestrutura" },
+  { key: "commander", label: "Comandante (antigo)", slot: 4, area: "substituído por Recrutamento" },
+  { key: "raider", label: "Saqueador (antigo)", slot: 5, area: "substituído por Ataque" },
 ];
 
 export const UNIT_LABELS = {

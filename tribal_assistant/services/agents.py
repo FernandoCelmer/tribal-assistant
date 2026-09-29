@@ -165,6 +165,8 @@ class AgentService:
         return await self.settings_repository.update(patch)
 
     async def config(self) -> AgentConfigOut:
+        from tribal_assistant.agents.coordination.round import VillageRound
+
         runner = AgentRunner()
         llm = getattr(runner.brain, "llm", None)
 
@@ -173,8 +175,8 @@ class AgentService:
             provider=llm.provider if llm else "none",
             model=llm.model if llm else None,
             agents=[
-                {"key": a.key, "title": a.title, "tools": list(a.tools), "buildings": list(a.buildings)}
-                for a in runner.agents
+                *({"key": a.key, "title": a.title, "tools": list(a.tools), "buildings": list(a.buildings)} for a in runner.agents),
+                *({"key": p["key"], "title": p["title"], "tools": [], "buildings": [], "delivers": p["delivers"]} for p in VillageRound.describe()),
             ],
             settings=await self.settings_repository.get(),
             last_run_at=await self.settings_repository.last_run_at(),

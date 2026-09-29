@@ -46,9 +46,10 @@ class SettingsPage {
   }
 
   read() {
-    const body = { llm_agents: [...this.form.querySelectorAll('input[name="llm_agents"]:checked')].map((b) => b.value) };
+    const lists = ["llm_agents", "approval_actions"];
+    const body = Object.fromEntries(lists.map((name) => [name, [...this.form.querySelectorAll(`input[name="${name}"]:checked`)].map((b) => b.value)]));
     for (const input of this.form.querySelectorAll("input[name]")) {
-      if (input.name === "llm_agents") continue;
+      if (lists.includes(input.name)) continue;
       if (input.type === "checkbox") body[input.name] = input.checked;
       else if (input.value !== "") body[input.name] = input.hasAttribute("data-percent") ? Number(input.value) / 100 : Number(input.value);
     }
