@@ -5,6 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from tribal_assistant.schemas.agents import AgentDecisionOut
+from tribal_assistant.schemas.coordination import CoordinationOut
 from tribal_assistant.schemas.farm import FarmTarget
 from tribal_assistant.schemas.plan import VillagePlanOut
 from tribal_assistant.schemas.world import NearbyVillage
@@ -66,3 +67,7 @@ class ActionOutcome(BaseModel):
 class SyncOutcome(BaseModel):
     ok: bool
     message: str
+
+
+class Coordination(BaseModel):
+    villages: list[CoordinationOut] = Field(description="Latest coordinator round per village: role, mode, next action, executed, deferred with reasons, reservations, vetoes and insights.")

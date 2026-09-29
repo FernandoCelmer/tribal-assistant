@@ -8,11 +8,12 @@ from pydantic import Field
 from tribal_assistant.agents.knowledge import GameKnowledge
 from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.mcp.annotations import READ_ONLY, REPLACES_LOCAL, GuardedTool
-from tribal_assistant.mcp.schemas import Decisions, Knowledge, Plans, VillageState
+from tribal_assistant.mcp.schemas import Coordination, Decisions, Knowledge, Plans, VillageState
 from tribal_assistant.mcp.tools.base import ToolGroup
 from tribal_assistant.mcp.tools.bridge import ToolboxBridge
 from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
 from tribal_assistant.schemas.agents import AgentConfigOut, AgentDecisionOut, QuestsOut
+from tribal_assistant.schemas.coordination import RoleIn, RoleOut
 from tribal_assistant.schemas.game import GameOverview
 from tribal_assistant.services.agents import AgentService
 from tribal_assistant.services.game import GameService
@@ -83,6 +84,32 @@ class StateTools(ToolGroup):
             """
             rows = await self.with_session(lambda s: AgentService(s).plans())
             return Plans(plans=rows)
+
+        @GuardedTool(mcp, title="Coordinator decisions", annotations=READ_ONLY)
+        async def get_coordination() -> Coordination:
+            """What the coordinator decided in the last round for each village: role and mode (growth,
+            defense, offensive, support, expansion, emergency), next best action with reason, cost and
+            confidence, what was executed, what was deferred and why (reserved resources, vetoes,
+            missing resources with ETA, waiting approval), reservations, vetoes and labelled insights
+            (fact, estimate, hypothesis). Read this first to explain why something was or was not done.
+            """
+            rows = await self.with_session(lambda s: AgentService(s).coordination())
+            return Coordination(villages=rows)
+
+        @GuardedTool(mcp, title="Set village role", annotations=REPLACES_LOCAL)
+        async def set_village_role(
+            village_id: Annotated[int, Field(description="Own village id from get_overview.")],
+            role: Annotated[
+                Literal["growth", "defense", "offensive", "support", "expansion"] | None,
+                Field(description="Fixed role; null returns the choice to the coordinator."),
+            ] = None,
+            reason: Annotated[str, Field(max_length=200, description="Why, in a few words.")] = "",
+        ) -> RoleOut:
+            """Fix the strategic role of a village (the coordinator's priority weights follow it), or pass
+            null to let the coordinator choose again. An incoming attack still forces emergency mode.
+            Ask the user before changing it.
+            """
+            return await self.with_session(lambda s: AgentService(s).set_role(village_id, RoleIn(role=role, reason=reason)))
 
         @GuardedTool(mcp, title="Agent configuration", annotations=READ_ONLY)
         async def get_agents_config() -> AgentConfigOut:
