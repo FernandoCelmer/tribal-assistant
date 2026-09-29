@@ -4,6 +4,7 @@ import { Play, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { confirmDialog } from "@/components/ui/dialog-host";
 import { toast } from "@/components/ui/toast";
 import type { Schemas } from "@/lib/api";
 import { errorText } from "@/lib/errors";
@@ -15,7 +16,7 @@ export function RunButtons() {
   const [busy, setBusy] = useState<"sim" | "live" | null>(null);
 
   const run = async (dry: boolean) => {
-    if (!dry && !window.confirm("Rodar os agentes no jogo agora? Eles podem construir, recrutar, coletar e saquear bárbaras.")) return;
+    if (!dry && !(await confirmDialog({ title: "Rodar os agentes no jogo agora?", description: "Eles podem construir, recrutar, coletar e saquear bárbaras de verdade, sem simulação.", confirmLabel: "Rodar agora" }))) return;
     setBusy(dry ? "sim" : "live");
     toast(dry ? "Simulando rodada… acompanhe ao vivo" : "Rodada em andamento… acompanhe ao vivo");
     try {

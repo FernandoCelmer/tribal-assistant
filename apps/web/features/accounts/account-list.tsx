@@ -4,6 +4,7 @@ import { AppWindow, EyeOff, KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { confirmDialog } from "@/components/ui/dialog-host";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageFooter, PageScope, PageSlice } from "@/components/ui/pagination";
 import { Panel, PanelHeader } from "@/components/ui/panel";
@@ -23,6 +24,7 @@ export function AccountList({ accounts, current }: { accounts: Account[]; curren
   const playing = accounts.filter((a) => local[a.id] ?? a.enabled).length;
 
   const toggle = async (account: Account, enabled: boolean) => {
+    if (!enabled && !(await confirmDialog({ title: `Pausar ${account.name}?`, description: "A conta para de jogar até você religá-la.", confirmLabel: "Pausar", tone: "danger" }))) return;
     setBusy(account.id);
     setLocal((m) => ({ ...m, [account.id]: enabled }));
     try {

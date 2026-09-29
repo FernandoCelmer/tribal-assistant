@@ -4,13 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { ApiError, errorText } from "@/lib/errors";
+import { type ConfirmOptions, confirmDialog } from "@/components/ui/dialog-host";
 import { toast } from "@/components/ui/toast";
 
 type Props = Omit<ButtonProps, "onClick"> & {
   path: string;
   method?: "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
-  confirm?: string;
+  confirm?: string | ConfirmOptions;
   done?: (result: unknown) => string | null;
   success?: string;
   successField?: string;
@@ -22,7 +23,7 @@ export function ActionButton({ path, method = "POST", body, confirm, done, succe
   const [busy, setBusy] = useState(false);
 
   const run = async () => {
-    if (confirm && !window.confirm(confirm)) return;
+    if (confirm && !(await confirmDialog(confirm))) return;
     setBusy(true);
     try {
       const response = await fetch(path, {

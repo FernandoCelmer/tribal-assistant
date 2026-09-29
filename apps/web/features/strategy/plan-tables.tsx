@@ -36,7 +36,7 @@ function Approve({ villageId, entry }: { villageId: number; entry: Entry }) {
       size="sm"
       path="/api/v1/agents/act"
       body={{ village_id: villageId, tool: entry.action, arguments: { ...(entry.arguments ?? {}), reason: "aprovado no painel" }, dry_run: false, source: "web" }}
-      confirm={`Executar "${entry.title ?? entry.action}" agora no jogo?`}
+      confirm={{ title: "Aprovar esta ação?", description: `Executar "${entry.title ?? entry.action}" agora no jogo.`, confirmLabel: "Executar" }}
       success="Aprovado"
       successField="detail"
     >

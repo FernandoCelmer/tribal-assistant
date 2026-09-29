@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Sidebar } from "@/components/layout/sidebar";
+import { DialogHost } from "@/components/ui/dialog-host";
 import { Toaster } from "@/components/ui/toast";
 import { accounts, apiVersion } from "@/lib/session";
 
@@ -19,6 +20,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </main>
       <BottomNav />
       <Toaster />
+      <DialogHost />
     </div>
   );
 }

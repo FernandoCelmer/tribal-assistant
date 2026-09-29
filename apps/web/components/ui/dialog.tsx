@@ -16,6 +16,7 @@ export function Dialog({
   children,
   footer,
   className,
+  sheet,
 }: {
   open: boolean;
   onClose: () => void;
@@ -25,6 +26,7 @@ export function Dialog({
   children?: ReactNode;
   footer?: ReactNode;
   className?: string;
+  sheet?: boolean;
 }) {
   const id = useId();
   const descriptionId = useId();
@@ -43,7 +45,7 @@ export function Dialog({
           'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         ) ?? [],
       );
-    const wanted = box.current?.querySelector<HTMLElement>("[autofocus]");
+    const wanted = box.current?.querySelector<HTMLElement>("[autofocus], [data-autofocus]");
     const first = focusable().find(
       (el) => el.getAttribute("aria-label") !== "Close modal",
     );
@@ -83,7 +85,7 @@ export function Dialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 p-4"
+      className={cn("fixed inset-0 z-40 flex items-center justify-center bg-background/80 p-4", sheet && "items-end p-0 sm:items-center sm:p-4")}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -95,7 +97,7 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby={id}
         aria-describedby={description ? descriptionId : undefined}
-        className={cn("flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md flex-col rounded-[14px] border border-border bg-surface focus:outline-none sm:w-full sm:rounded-lg", className)}
+        className={cn("flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md flex-col rounded-[14px] border border-border bg-surface focus:outline-none sm:w-full sm:rounded-lg", sheet && "w-full max-w-none rounded-b-none border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] sm:max-w-md sm:rounded-lg sm:border-x sm:border-b sm:pb-0", className)}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 px-6 pt-5 sm:px-4 sm:pt-4">
           <div className="flex min-w-0 items-start gap-3">
@@ -143,9 +145,9 @@ export function ConfirmDialog({
   title,
   description,
   icon,
-  confirmLabel = "Confirm",
+  confirmLabel = "Confirmar",
   confirmIcon,
-  cancelLabel = "Cancel",
+  cancelLabel = "Cancelar",
   pending,
   danger,
   disabled,
@@ -208,7 +210,7 @@ export function ConfirmDialog({
             ) : (
               confirmIcon
             )}
-            {busy ? "Working…" : confirmLabel}
+            {busy ? "Processando…" : confirmLabel}
           </Button>
         </>
       }
@@ -238,7 +240,7 @@ export function PromptDialog({
   hint,
   placeholder,
   type = "text",
-  submitLabel = "Save",
+  submitLabel = "Salvar",
   pending,
   error,
 }: {
@@ -269,13 +271,13 @@ export function PromptDialog({
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={pending}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             onClick={() => onSubmit(value)}
             disabled={pending || !value.trim()}
           >
-            {pending ? "Working…" : submitLabel}
+            {pending ? "Processando…" : submitLabel}
           </Button>
         </>
       }
