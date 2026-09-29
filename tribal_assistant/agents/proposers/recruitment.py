@@ -7,6 +7,7 @@ from tribal_assistant.agents.plan import PlanTracker
 from tribal_assistant.agents.proposers.base import Proposer
 
 BATCH = 25
+MIN_BATCH = 5
 FARM_UNITS = ("light", "spear", "axe")
 
 
@@ -29,7 +30,7 @@ class RecruitmentProposer(Proposer):
             queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == step.target)
             count = min(BATCH, max(0, step.amount - unit.total - queued))
             plan = view.guard.plan_recruit(ctx, step.target, count)
-            if count <= 0 or plan.refusal:
+            if count <= 0 or plan.refusal or plan.count < min(MIN_BATCH, count):
                 continue
 
             items.append(self._recruit(view, step.target, plan.count, f"plano pede {step.amount} {step.target}", weight, purpose=f"plan:{step.target}"))

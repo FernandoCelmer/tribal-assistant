@@ -8,6 +8,7 @@ from tribal_assistant.agents.plan import PlanTracker
 from tribal_assistant.agents.proposers.base import Proposer
 
 PITS = ("wood", "stone", "iron")
+NON_ECONOMIC = ("wall", "market", "hide", "watchtower", "statue", "garage")
 SCAVENGE_UNLOCK = {2: (250, 300, 250), 3: (1000, 1200, 1000), 4: (10000, 12000, 10000)}
 PIT_RESOURCE = {"wood": "wood", "stone": "clay", "iron": "iron"}
 
@@ -26,11 +27,16 @@ class InfrastructureProposer(Proposer):
         items: list[Proposal] = []
         plan = PlanTracker.next_builds(ctx.plan)
 
+        quest_buildings = {b for b, _ in self._quests(view)}
         for index, building in enumerate(plan[:4]):
-            if self._ok(view, building):
-                items.append(
-                    self._build(view, building, f"passo {index + 1} do plano", impact=0.75 - index * 0.08, opportunity=0.3, purpose=f"plan:{building}")
-                )
+            if not self._ok(view, building):
+                continue
+
+            impact = 0.75 - index * 0.08
+            if view.role == Role.GROWTH and building in NON_ECONOMIC and building not in quest_buildings:
+                impact = 0.3
+
+            items.append(self._build(view, building, f"passo {index + 1} do plano", impact=impact, opportunity=0.3, purpose=f"plan:{building}"))
 
         for building, level in self._quests(view):
             if self._ok(view, building):
