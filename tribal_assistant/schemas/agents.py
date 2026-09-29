@@ -94,3 +94,23 @@ class AgentConfigOut(BaseModel):
     agents: list[dict[str, Any]]
     settings: AgentSettings
     last_run_at: datetime | None
+
+
+class LessonOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    key: str
+    topic: str
+    title: str
+    text: str
+    data: dict[str, Any]
+    seen: int
+    ok: int
+    failed: int
+    first_seen: datetime
+    last_seen: datetime
+
+    @field_validator("data", mode="before")
+    @classmethod
+    def _parse(cls, value: Any) -> Any:
+        return json.loads(value) if isinstance(value, str) else value

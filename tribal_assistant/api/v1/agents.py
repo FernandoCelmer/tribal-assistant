@@ -10,6 +10,7 @@ from tribal_assistant.schemas.agents import (
     AgentDecisionOut,
     AgentRunOut,
     AgentRunRequest,
+    LessonOut,
     QuestsOut,
 )
 from tribal_assistant.schemas.plan import VillagePlanOut
@@ -62,3 +63,12 @@ async def run(body: AgentRunRequest, service: AgentService = Depends(AgentServic
 @agents_router.post("/act", response_model=AgentActOut)
 async def act(body: AgentActRequest, service: AgentService = Depends(AgentService)) -> AgentActOut:
     return await service.act(body)
+
+
+@agents_router.get("/lessons", response_model=list[LessonOut])
+async def lessons(
+    topic: str | None = None,
+    limit: int = Query(default=100, ge=1, le=500),
+    service: AgentService = Depends(AgentService),
+) -> list[LessonOut]:
+    return await service.lessons(topic, limit)

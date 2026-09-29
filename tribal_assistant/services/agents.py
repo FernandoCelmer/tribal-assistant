@@ -15,6 +15,7 @@ from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.db.session import get_session
 from tribal_assistant.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.repositories.agents import AgentRepository
+from tribal_assistant.repositories.lessons import LessonRepository
 from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
 from tribal_assistant.schemas.agents import (
     AgentActOut,
@@ -22,6 +23,7 @@ from tribal_assistant.schemas.agents import (
     AgentConfigOut,
     AgentDecisionOut,
     AgentRunOut,
+    LessonOut,
     QuestOut,
     QuestRewardOut,
     QuestsOut,
@@ -55,6 +57,10 @@ class AgentService:
         outcome = await box.invoke(request.tool, request.arguments)
 
         return AgentActOut(ok=outcome.ok, dry_run=request.dry_run, detail=outcome.text, data=outcome.data)
+
+    async def lessons(self, topic: str | None = None, limit: int = 100) -> list[LessonOut]:
+        rows = await LessonRepository(self.session).list(topic, limit)
+        return [LessonOut.model_validate(row) for row in rows]
 
     async def decisions(self, village_id: int | None = None, limit: int = 50) -> list[AgentDecisionOut]:
         rows = await self.repository.decisions(village_id=village_id, limit=limit)
