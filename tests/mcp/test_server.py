@@ -23,6 +23,7 @@ READ_ONLY_TOOLS = {
     "get_market",
     "get_knight",
     "get_inventory",
+    "get_knobs",
 }
 READS_GAME_TOOLS = {"get_market", "get_knight", "get_inventory"}
 GAME_ACTIONS = {
@@ -59,7 +60,7 @@ async def test_tool_surface(server) -> None:
     tools = await _tools(server)
 
     assert set(tools) == READ_ONLY_TOOLS | GAME_ACTIONS | LOCAL_WRITES | {"sync_account", "sync_world"}
-    assert len(tools) == 34
+    assert len(tools) == 35
     for tool in tools.values():
         assert tool.description
         assert tool.title
@@ -155,3 +156,11 @@ async def test_insight_tools_read_through_the_api(server) -> None:
     assert reports.structured_content["total"] == 0
     assert forecast.structured_content == {"villages": []}
     assert scavenge.structured_content == {"villages": []}
+
+
+async def test_knobs_tool_reads_through_the_api(server) -> None:
+    result = await server.call_tool("get_knobs", {})
+    knobs = result.structured_content["knobs"]
+
+    assert knobs
+    assert {"name", "value", "default", "reason", "self_tuning"} <= set(knobs[0])

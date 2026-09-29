@@ -60,3 +60,7 @@ class SyncOutcome(BaseModel):
 
 class Coordination(BaseModel):
     villages: list[dict[str, Any]] = Field(description="Latest coordinator round per village: role, mode, next action, executed, deferred with reasons, reservations, vetoes and insights.")
+
+
+class TuningKnobs(BaseModel):
+    knobs: list[dict[str, Any]] = Field(description="Every decision parameter: name, description, value, default, whether it tunes itself, the last reason and when.")

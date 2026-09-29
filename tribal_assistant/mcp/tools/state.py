@@ -6,7 +6,14 @@ from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
 from tribal_assistant.mcp.annotations import READ_ONLY, REPLACES_LOCAL, GuardedTool
-from tribal_assistant.mcp.schemas import Coordination, Decisions, Knowledge, Plans, VillageState
+from tribal_assistant.mcp.schemas import (
+    Coordination,
+    Decisions,
+    Knowledge,
+    Plans,
+    TuningKnobs,
+    VillageState,
+)
 from tribal_assistant.mcp.tools.base import ToolGroup
 
 
@@ -81,6 +88,16 @@ class StateTools(ToolGroup):
             (fact, estimate, hypothesis). Read this first to explain why something was or was not done.
             """
             return Coordination(villages=await self.api.get("/agents/coordination"))
+
+        @GuardedTool(mcp, title="Tuning parameters", annotations=READ_ONLY)
+        async def get_knobs() -> TuningKnobs:
+            """The numbers that gate the agents' decisions (reserve share, filler wait, scavenging
+            share...): current value, default, whether it adjusts itself every hour from the last
+            rounds, and the reason and time of the last change (self-tuning or manual). Read it to
+            explain why the agents hold resources or troops back.
+            """
+            keep = ("name", "description", "value", "default", "self_tuning", "reason", "updated_at")
+            return TuningKnobs(knobs=[{k: item.get(k) for k in keep} for item in await self.api.get("/knobs")])
 
         @GuardedTool(mcp, title="Set village role", annotations=REPLACES_LOCAL)
         async def set_village_role(
