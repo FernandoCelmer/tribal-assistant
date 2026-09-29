@@ -3,7 +3,7 @@
 import asyncio
 import json
 from collections.abc import Awaitable, Callable
-from typing import Annotated, Any, Literal, TypeVar
+from typing import Annotated, Any, Literal
 
 import typer
 from pydantic import BaseModel
@@ -13,8 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant import __version__
 from tribal_assistant.core.config import settings
-
-T = TypeVar("T")
 
 console = Console()
 app = typer.Typer(
@@ -31,11 +29,11 @@ app.add_typer(world_app, name="world")
 JsonOption = Annotated[bool, typer.Option("--json", help="Print raw JSON instead of a table.")]
 
 
-def _run(coro: Awaitable[T]) -> T:
+def _run[T](coro: Awaitable[T]) -> T:
     return asyncio.run(coro)  # type: ignore[arg-type]
 
 
-async def _with_session(fn: Callable[[AsyncSession], Awaitable[T]]) -> T:
+async def _with_session[T](fn: Callable[[AsyncSession], Awaitable[T]]) -> T:
     from tribal_assistant.db.session import SessionFactory, init_db
 
     await init_db()
@@ -43,7 +41,7 @@ async def _with_session(fn: Callable[[AsyncSession], Awaitable[T]]) -> T:
         return await fn(session)
 
 
-async def _with_game(fn: Callable[[], Awaitable[T]]) -> T:
+async def _with_game[T](fn: Callable[[], Awaitable[T]]) -> T:
     """Run a browser-backed action and always release the Playwright session."""
     from tribal_assistant.client.session import game_session
     from tribal_assistant.db.session import init_db
