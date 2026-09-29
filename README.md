@@ -13,6 +13,14 @@ Use it three ways: as a **CLI** (`tribal-assistant`), as a **Python library** (`
 |-------|------|
 | ![Tribal Assistant dashboard, light theme](docs/screenshots/dashboard-light.png) | ![Tribal Assistant dashboard, dark theme](docs/screenshots/dashboard-dark.png) |
 
+| Agents | Settings |
+|--------|----------|
+| ![Agents page](docs/screenshots/agents.png) | ![Settings page](docs/screenshots/settings.png) |
+
+| Decision graph | Charts |
+|----------------|--------|
+| ![Decision graph](docs/screenshots/graph.png) | ![Charts](docs/screenshots/charts.png) |
+
 ## Features
 
 - **Account sync** — player, points, ranking, villages, resources and production, storage, population, troops, recruitment queue, buildings, incoming and outgoing commands, battle reports.
@@ -22,7 +30,7 @@ Use it three ways: as a **CLI** (`tribal-assistant`), as a **Python library** (`
 - **Scavenging** — shows each scavenge option, its return time and unlock state.
 - **Incoming attack alerts** — highlights attacks and nobles heading to your villages.
 - **Scheduler** — APScheduler jobs with jitter and configurable quiet hours.
-- **Dashboard** — responsive web UI, keyboard accessible, light/dark theme, component docs at `/design`.
+- **Dashboard** — responsive web UI, keyboard accessible, light theme and graphite dark theme, component docs at `/componentes`.
 - **REST API** — FastAPI with OpenAPI docs at `/docs`.
 
 ## Install
@@ -55,6 +63,8 @@ Settings come from environment variables or `.env`:
 | `HEADLESS` | `false` | Run Chromium without a window |
 | `SYNC_INTERVAL_SECONDS` | `120` | Account sync interval |
 | `QUIET_HOURS` | empty | Pause syncing, e.g. `23:30-07:00` |
+| `AI_PROVIDER` / `AI_MODEL` / `AI_API_KEY` / `AI_BASE_URL` | `none` | AI provider for the agents |
+| `AI_MAX_TOKENS` | `2048` | Max tokens per AI answer |
 | `FARM_ENABLED` | `true` | Enable farm ticks |
 
 See [.env.example](.env.example) for the full list.
@@ -107,40 +117,122 @@ asyncio.run(main())
 
 The FastAPI app is `tribal_assistant.server:app`; build your own with `tribal_assistant.server.create_app()`.
 
+## Village agents
+
+Every round, five specialists run on each of your villages, in this order:
+
+| Agent | Area | Tools |
+|-------|------|-------|
+| Quartermaster | Quests | collect rewards, hand in finished quests |
+| Strategist | Village goal | read state and quests, set the goal the others follow |
+| Economist | Headquarters, resources, farm, storage, hiding place, market | queue upgrades |
+| Commander | Barracks, stable, workshop, smithy, wall, statue, academy | queue upgrades, recruit |
+| Raider | Rally point | loot nearby barbarian villages |
+
+New villages are picked up automatically after the next sync.
+
+**AI plans, rules execute.** Only the Strategist calls the model: it writes a **village plan** (up to 12 ordered steps — build X to level N, recruit, unlock scavenging) with `set_village_plan`. The other agents execute the plan with rules, at zero token cost. The plan is rewritten only when it is missing, older than `plan_refresh_hours`, finished or stuck, so the model runs a few times a day instead of five times per round. Without an AI key the same plan comes from a built-in rule planner (quests, advisor, balanced production, path to the first nobleman).
+
+Plan progress is measured from the real village state every round (pending, queued, done, blocked) and shown on `/agentes`. Builds in the plan may take any free queue slot, so a Smithy step is no longer starved by economy builds; when storage is almost full, the Economist and Commander spend the surplus on buildings and troops.
+
+Token savings: role-sliced compact text context instead of full JSON, no duplicate state reads, short answers (`AI_MAX_TOKENS`, default 2048), a cap on tool loops (`llm_max_steps`), and `llm_agents` to choose which agents may call the model (default: only the Strategist).
+
+Every action passes the same **guardrails**, enforced in code.
+
+The guardrails and the schedule are **runtime settings** stored in the database, not `.env`. Change them from the **Configurações** page (`/configuracoes`), the API (`PATCH /api/v1/agents/settings`), the CLI (`tribal-assistant agents set …`) or MCP (`update_agent_settings`). A running server picks up changes within a minute, with no restart.
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `enabled` | `false` | run on a schedule inside `tribal-assistant serve` |
+| `interval_minutes` | `10` | minutes between scheduled rounds |
+| `dry_run` | `false` | simulate and log without touching the game |
+| `resource_reserve` | `0.1` | share of storage recruiting never spends |
+| `recruit_budget` | `0.5` | share of spare resources recruiting may use per round |
+| `max_attacks_per_hour` | `12` | attacks per village per hour |
+| `attack_radius` | `12` | max distance to a barbarian target (players are never targeted) |
+| `retarget_minutes` | `30` | wait before hitting the same village again |
+| `build_queue_slots` | `2` | build orders agents may keep queued |
+| `auto_finish_free` | `true` | click the free "finish now" button on short builds (never paid ones) |
+| `llm_agents` | `["strategist"]` | agents allowed to call the AI |
+| `plan_refresh_hours` | `6` | hours before the plan is rewritten with AI |
+| `llm_max_steps` | `6` | tool rounds per AI conversation |
+
+Every decision, including refusals, is stored with its reason and shown in the dashboard.
+
+```bash
+tribal-assistant agents run --dry-run                   # simulate a round
+tribal-assistant agents run --live                      # act in the game
+tribal-assistant agents log                             # what they did and why
+tribal-assistant agents config                          # brain + current settings
+tribal-assistant agents set enabled=true interval_minutes=15
+tribal-assistant quests                                 # quests and pending rewards
+```
+
+## AI providers
+
+| `AI_PROVIDER` | Key variable | Default model | Endpoint |
+|---------------|--------------|---------------|----------|
+| `anthropic` | `ANTHROPIC_API_KEY` | `claude-opus-5` | Anthropic SDK |
+| `openai` | `OPENAI_API_KEY` | `gpt-5` | OpenAI SDK |
+| `grok` | `XAI_API_KEY` | `grok-4.20-0309-non-reasoning` | `https://api.x.ai/v1` |
+| `gemini` | `GEMINI_API_KEY` | `gemini-2.5-pro` | Gemini OpenAI-compatible endpoint |
+| `ollama` | none | `llama3.1` | `http://localhost:11434/v1` |
+| `openai-compatible` | `OPENAI_API_KEY` | set `AI_MODEL` | set `AI_BASE_URL` |
+
+`AI_API_KEY`, `AI_MODEL` and `AI_BASE_URL` override the defaults. New providers implement the `LLM` and `Conversation` abstract classes in `tribal_assistant/ai/abc/llm.py`.
+
+## MCP server
+
+```bash
+pip install "tribal-assistant[mcp]"
+tribal-assistant mcp            # stdio, for Claude Code / Claude Desktop / Codex
+tribal-assistant mcp --http     # streamable HTTP on 127.0.0.1:8765
+```
+
+The repository ships a `.mcp.json`, so Claude Code picks the server up when opened in this folder. It exposes 21 tools and 4 prompts (`grow_village`, `farm_round`, `first_noble_plan`, `agent_round`):
+
+- **read-only:** `get_overview`, `get_quests`, `get_plans`, `get_agent_decisions`, `get_agents_config`, `lookup_knowledge`, `get_world_status`, `list_nearby`, `list_farm_targets`
+- **game actions:** `upgrade_building`, `recruit_units`, `send_farm_attack`, `claim_quest_rewards`, `complete_quest` and `run_agents`. They pass the guardrails and default to `dry_run=true`.
+- **other:** `sync_account`, `sync_world`, `add_farm_target`, `remove_farm_target`, `set_village_goal`, `update_agent_settings`
+
 ## Web dashboard and API
 
 ```bash
 tribal-assistant serve
 ```
 
-- Dashboard: <http://localhost:8000/>
-- Component docs: <http://localhost:8000/design>
-- OpenAPI docs: <http://localhost:8000/docs>
+Each topic is its own page, reached from the sidebar (a drawer on phones):
 
-| Method | Route | Purpose |
-|--------|-------|---------|
-| GET | `/health` | Health check |
-| GET | `/api/v1/assistant/status` | Scheduler and login state |
-| POST | `/api/v1/assistant/start` · `/stop` · `/sync` | Control the assistant |
-| GET | `/api/v1/game/overview` | Player, villages, troops, commands, reports, recommendations |
-| GET | `/api/v1/world/status` | Stored world data |
-| GET | `/api/v1/world/nearby` | Nearby barbarian or player villages |
-| GET · POST | `/api/v1/farm/targets` | List or add farm targets |
-| POST | `/api/v1/farm/tick` | Run one farm round |
-| GET · POST · PATCH | `/api/v1/villages` | Village records |
+| Page | What it shows |
+|------|---------------|
+| `/` Visão geral | assistant status, account, village resources, what to upgrade, scavenging, quests, troop movements |
+| `/aldeia` | troops and buildings |
+| `/arredores` | nearby villages, add farm targets |
+| `/relatorios` | battle reports with loot |
+| `/farm` | farm targets |
+| `/agentes` | live status of the agents, village plan, rounds, the full reasoning of each round, live feed |
+| `/graficos` | agent metrics (actions per hour, refusals, tokens) and village evolution |
+| `/grafos` | decision graph: agents → tools → results |
+| `/logs` | application logs with live tail |
+| `/configuracoes` | runtime settings, AI status (provider, model, key present, never the key) and system info |
+
+Everything shown there is stored in the database: rounds (`agent_runs`), every reasoning step and tool call (`agent_steps`), decisions (`agent_decisions`), village snapshots at every sync (`village_snapshots`) and application logs (`app_logs`). Live updates arrive over Server-Sent Events at `/api/v1/events`. OpenAPI docs are at `/docs`.
 
 ## Architecture
 
 ```
 tribal_assistant/
 ├── cli.py            Typer CLI
+├── agents/           village agents: roles, brains, tools, toolbox, guardrails, knowledge
+├── ai/               provider-neutral LLM layer (abstract classes + providers)
+├── mcp/              MCP server, tool groups, prompts
 ├── server.py         FastAPI factory, lifespan, dashboard routes
 ├── api/              HTTP routers (v1)
 ├── services/         domain logic: game, world, farm, advisor, assistant
 ├── repositories/     SQLAlchemy async data access
 ├── models/           ORM models
 ├── schemas/          Pydantic input/output
-├── client/           Playwright session, login, scrapers, sync modules
+├── client/           Playwright session, login, game actions, scrapers, sync
 ├── scheduler/        APScheduler runtime and jobs
 ├── db/               engine, session factory, init_db
 └── web/              dashboard (HTML, CSS design system, icons)
