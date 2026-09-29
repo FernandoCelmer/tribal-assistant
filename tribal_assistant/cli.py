@@ -27,6 +27,12 @@ app.add_typer(farm_app, name="farm")
 agents_app = typer.Typer(help="Village agents: run a round, read decisions and configuration.", no_args_is_help=True)
 app.add_typer(world_app, name="world")
 app.add_typer(agents_app, name="agents")
+accounts_app = typer.Typer(help="Game accounts: list, add, enable or remove.", no_args_is_help=True)
+db_app = typer.Typer(help="Database: copy the old single-account data into PostgreSQL or a new file.", no_args_is_help=True)
+app.add_typer(accounts_app, name="accounts")
+app.add_typer(db_app, name="db")
+
+SELECTED_ACCOUNT: dict[str, int | None] = {"id": None}
 
 JsonOption = Annotated[bool, typer.Option("--json", help="Print raw JSON instead of a table.")]
 
@@ -40,19 +46,40 @@ async def _with_session[T](fn: Callable[[AsyncSession], Awaitable[T]]) -> T:
 
     await init_db()
     async with SessionFactory() as session:
-        return await fn(session)
+        account = await _account(session)
+        if account is None:
+            return await fn(session)
+
+        from tribal_assistant.accounts.context import use_account
+
+        with use_account(account):
+            return await fn(session)
+
+
+async def _account(session: AsyncSession):
+    from tribal_assistant.accounts.registry import AccountRegistry
+
+    return await AccountRegistry(session).find(SELECTED_ACCOUNT["id"])
 
 
 async def _with_game[T](fn: Callable[[], Awaitable[T]]) -> T:
     """Run a browser-backed action and always release the Playwright session."""
+    from tribal_assistant.accounts.context import use_account
     from tribal_assistant.client.session import game_session
-    from tribal_assistant.db.session import init_db
+    from tribal_assistant.db.session import SessionFactory, init_db
 
     await init_db()
-    try:
-        return await fn()
-    finally:
-        await game_session.close()
+    async with SessionFactory() as session:
+        account = await _account(session)
+
+    if account is None:
+        raise typer.BadParameter("nenhuma conta cadastrada: use `tribal-assistant accounts add`")
+
+    with use_account(account):
+        try:
+            return await fn()
+        finally:
+            await game_session.close()
 
 
 def _print_json(data: Any) -> None:
@@ -74,7 +101,9 @@ def main_callback(
     version: Annotated[
         bool, typer.Option("--version", callback=_version, is_eager=True, help="Show version and exit.")
     ] = False,
+    account: Annotated[int | None, typer.Option("--account", "-a", help="Account id (default: the first enabled).")] = None,
 ) -> None:
+    SELECTED_ACCOUNT["id"] = account
     from tribal_assistant.core.logging import configure_logging
 
     configure_logging(settings.log_level)
@@ -426,3 +455,82 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+@accounts_app.command("list")
+def accounts_list() -> None:
+    """Every account with world, login and whether it plays."""
+    from tribal_assistant.db.session import SessionFactory, init_db
+    from tribal_assistant.repositories.accounts import AccountRepository
+
+    async def run():
+        await init_db()
+        async with SessionFactory() as session:
+            return await AccountRepository(session).list()
+
+    table = Table("id", "nome", "mundo", "usuário", "ativa")
+    for a in _run(run()):
+        table.add_row(str(a.id), a.name, a.server, a.username, "sim" if a.enabled else "não")
+    console.print(table)
+
+
+@accounts_app.command("add")
+def accounts_add(
+    world_url: Annotated[str, typer.Option(help="World URL, e.g. https://br145.tribalwars.com.br")],
+    username: Annotated[str, typer.Option(help="Game login.")],
+    password: Annotated[str, typer.Option(prompt=True, hide_input=True, help="Game password (stored encrypted).")],
+    name: Annotated[str | None, typer.Option(help="Label shown in the dashboard.")] = None,
+    headless: Annotated[bool, typer.Option(help="Run this account's browser without a window.")] = False,
+) -> None:
+    """Add a game account; its password is encrypted with APP_SECRET or storage/secret.key."""
+    from tribal_assistant.accounts.registry import AccountRegistry
+    from tribal_assistant.db.session import SessionFactory, init_db
+
+    server = world_url.split("//", 1)[-1].split(".", 1)[0]
+
+    async def run():
+        await init_db()
+        async with SessionFactory() as session:
+            return await AccountRegistry(session).create(name or f"{username} ({server})", server, world_url, username, password, headless)
+
+    account = _run(run())
+    console.print(f"conta {account.id} criada: {account.name}")
+
+
+@accounts_app.command("enable")
+def accounts_enable(account_id: int, enabled: Annotated[bool, typer.Option("--on/--off")] = True) -> None:
+    """Turn an account's automatic play on or off."""
+    from tribal_assistant.db.session import SessionFactory, init_db
+    from tribal_assistant.repositories.accounts import AccountRepository
+
+    async def run():
+        await init_db()
+        async with SessionFactory() as session:
+            repo = AccountRepository(session)
+            account = await repo.get(account_id)
+            if account is None:
+                raise typer.BadParameter(f"conta {account_id} não existe")
+            account.enabled = enabled
+            await repo.save(account)
+
+    _run(run())
+    console.print(f"conta {account_id} {'ativada' if enabled else 'desativada'}")
+
+
+@db_app.command("copy")
+def db_copy(
+    target: Annotated[str, typer.Option(help="Target URL, e.g. postgresql+asyncpg://user:pass@host:5432/tribal")],
+    source: Annotated[str, typer.Option(help="Source URL (default: the old SQLite file).")] = "sqlite+aiosqlite:///./storage/tw.db",
+    wipe: Annotated[bool, typer.Option(help="Drop and recreate every table on the target first.")] = False,
+) -> None:
+    """Copy all data into the multi-account schema; old rows go to account 1 (created from .env)."""
+    from tribal_assistant.db.migrate import DatabaseCopier
+
+    report = DatabaseCopier(source, target).run(wipe=wipe)
+    table = Table("tabela", "linhas")
+    for name, count in report.tables.items():
+        table.add_row(name, str(count))
+    console.print(table)
+    if report.skipped:
+        console.print(f"sem dados na origem: {', '.join(report.skipped)}")
+    console.print("Pronto. Coloque DATABASE_URL com o destino no .env e suba o servidor.")
