@@ -46,6 +46,26 @@ async def _farm_tick_job() -> None:
             logger.exception("farm tick failed")
 
 
+async def _build_slot_free(session, now: datetime, slots: int) -> bool:
+    from sqlalchemy import func, select
+
+    from tribal_assistant.models.building import Building
+    from tribal_assistant.models.village import Village
+
+    rows = await session.execute(
+        select(Village.id, func.count(Building.id))
+        .outerjoin(
+            Building,
+            (Building.village_id == Village.id)
+            & Building.target_level.is_not(None)
+            & (Building.queued_until.is_(None) | (Building.queued_until > now)),
+        )
+        .where(Village.is_own.is_(True))
+        .group_by(Village.id)
+    )
+    return any(queued < slots for _, queued in rows.all())
+
+
 async def _agents_job() -> None:
     from datetime import UTC
 
@@ -63,7 +83,11 @@ async def _agents_job() -> None:
             return
 
         now = datetime.now(UTC).replace(tzinfo=None)
-        if last and now - last < timedelta(minutes=config.interval_minutes):
+        waited = now - last if last else None
+        slot_free = await _build_slot_free(session, now, config.build_queue_slots)
+        early = slot_free and (waited is None or waited >= timedelta(seconds=90))
+
+        if waited is not None and waited < timedelta(minutes=config.interval_minutes) and not early:
             return
 
         await repo.mark_run()
@@ -75,6 +99,19 @@ async def _agents_job() -> None:
         return
 
     logger.info("Village agents run {} ({}): {}", report.run_id, report.brain, report.error or "ok")
+
+
+async def _free_finish_job() -> None:
+    from tribal_assistant.client.human import in_quiet_hours
+    from tribal_assistant.client.modules.free_finish import FreeFinishWatcher
+
+    if in_quiet_hours():
+        return
+
+    try:
+        await FreeFinishWatcher().run()
+    except Exception:
+        logger.exception("free finish watcher failed")
 
 
 async def _retention_job() -> None:
@@ -122,6 +159,15 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         trigger=IntervalTrigger(minutes=1, jitter=20),
         id="village_agents",
         next_run_time=datetime.now() + timedelta(seconds=90),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _free_finish_job,
+        trigger=IntervalTrigger(minutes=1, jitter=10),
+        id="free_finish",
+        next_run_time=datetime.now() + timedelta(seconds=60),
         max_instances=1,
         coalesce=True,
         replace_existing=True,
