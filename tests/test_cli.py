@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
-from tribal_assistant import __version__
 from tribal_assistant.cli import app
+from tribal_assistant.version import __version__
 
 runner = CliRunner()
 

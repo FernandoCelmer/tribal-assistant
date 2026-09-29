@@ -1,0 +1,736 @@
+<!DOCTYPE html><html class=" js flexbox history draganddrop borderimage textshadow cssanimations localstorage sessionstorage filereader json performance"><head>
+	<title>Player de aldeia (482|754) - Tribal Wars - Mundo 144</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	
+
+	<link rel="stylesheet" type="text/css" href="https://dsbr.innogamescdn.com/assets/br144/merged/game.4781a2.css">
+
+			<link rel="stylesheet" type="text/css" href="https://dsbr.innogamescdn.com/assets/br144/css/game/village_place.64643d.css">
+
+	
+    <script async="" type="text/javascript" src="https://www.googletagservices.com/tag/js/gpt.js"></script><script src="https://dsbr.innogamescdn.com/assets/br144/js/lang.pt_BR.ae4378.js"></script>
+
+	<script type="text/javascript" src="https://dsbr.innogamescdn.com/assets/br144/js/game/Modules/config_prepared.3fc766.js"></script>
+
+	<script type="text/javascript" src="https://dsbr.innogamescdn.com/assets/br144/merged/game.c4c8bc.js"></script>
+
+	<script type="text/javascript" src="https://dsbr.innogamescdn.com/assets/br144/merged/game.pt_BR.88e778.js"></script>
+
+			<script type="text/javascript" src="https://dsbr.innogamescdn.com/assets/br144/js/game/TroopTemplates.42e0b1.js_"></script>
+
+	
+	
+	
+	<script type="text/javascript">
+        var sds = false;
+		var image_base = "https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/";
+		var mobile = false;
+		var mobile_on_normal = false;
+        var mobiledevice = false;
+		var premium = false;
+		var server_utc_diff = -10800;
+
+		TribalWars.updateGameData({"player":{"id":1000001,"name":"Player","ally":"0","ally_level":null,"ally_member_count":null,"sitter":"0","sleep_start":"0","sitter_type":"normal","sleep_end":"0","sleep_last":"0","email_valid":"1","villages":"1","incomings":"0","supports":0,"knight_location":null,"knight_unit":null,"rank":46914,"points":"82","date_started":"1790638701","is_guest":"0","confirmation_skipping_hash":"","quest_progress":"0","points_formatted":"82","rank_formatted":"46<span class=\"grey\">.<\/span>914","pp":"0","new_ally_application":0,"new_ally_invite":"0","new_buddy_request":"0","new_daily_bonus":"0","new_forum_post":0,"new_post_notification":0,"new_igm":"0","new_items":"2","new_report":"0","new_quest":"1"},"quest":{"use_questlines":true},"features":{"Premium":{"possible":true,"active":false},"AccountManager":{"possible":false,"active":false},"FarmAssistent":{"possible":true,"active":false}},"village":{"id":105765,"name":"Player de aldeia","display_name":"Player de aldeia (482|754) K74","wood":417,"wood_prod":0.030503095953819,"wood_float":416.6405650150302,"stone":715,"stone_prod":0.030503095953819,"stone_float":714.6405650150302,"iron":656,"iron_prod":0.019385300716667,"iron_float":656.40709131505,"pop":92,"pop_max":281,"x":482,"y":754,"trader_away":0,"storage_max":1229,"bonus_id":null,"bonus":null,"buildings":{"main":"3","barracks":"2","stable":"0","garage":"0","watchtower":"0","snob":"0","smith":"0","place":"1","statue":"0","market":"0","wood":"5","stone":"5","iron":"2","farm":"2","storage":"2","hide":"1","wall":"0"},"player_id":1000001,"modifications":0,"points":82,"last_res_tick":1790646335000,"coord":"482|754","is_farm_upgradable":true},"nav":{"parent":2},"link_base":"\/game.php?village=105765&amp;screen=","link_base_pure":"\/game.php?village=105765&screen=","csrf":"CSRF","world":"br144","market":"br","RTL":false,"version":"e94cf8a0 release_8.436\n","majorVersion":"8.436","screen":"place","mode":null,"device":"desktop","pregame":false,"units":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob","militia"],"locale":"pt_BR","group_id":0,"time_generated":1790646335227});
+		var csrf_token = 'CSRF';
+			
+		UI.AutoComplete.url = '/game.php?village=105765&screen=api&ajaxaction=autocomplete&h=CSRF';
+		ScriptAPI.url = '/game.php?village=105765&screen=api&ajax=save_script';
+		ScriptAPI.version = parseFloat(game_data.majorVersion);
+
+		
+				VillageContext._urls.overview = '/game.php?village=__village__&screen=overview';
+		VillageContext._urls.info = '/game.php?village=105765&screen=info_village&id=__village__';
+		VillageContext._urls.fav = '/game.php?village=105765&screen=info_village&id=__village__&ajaxaction=add_target&json=1&h=CSRF';
+		VillageContext._urls.unfav = '/game.php?village=105765&screen=info_village&id=__village__&ajaxaction=del_target&json=1&h=CSRF';
+		VillageContext._urls.claim = '/game.php?village=105765&screen=info_village&id=__village__&ajaxaction=toggle_reserve_village&json=1&h=CSRF';
+		VillageContext._urls.market = '/game.php?village=105765&screen=market&mode=send&target=__village__';
+		VillageContext._urls.place = '/game.php?village=105765&screen=place&target=__village__';
+		VillageContext._urls.recruit = '/game.php?village=105765&screen=train&village=__village__';
+		VillageContext._urls.map = '/game.php?village=105765&screen=map&beacon=1&id=__village__';
+		VillageContext._urls.unclaim = VillageContext._urls.claim;
+        VillageContext.claim_enabled = false;
+        VillageContext.igm_enabled = true;
+        VillageContext.send_troops_enabled = true;
+        VillageContext.send_attack_disabled = false;
+				
+
+		
+		TribalWars._settings = {"sound":0,"map_casual_hide":1,"map_show_watchtower":0,"inline_notification_building":1,"chat_enabled":1,"chat_sound_enabled":1,"pn_suppress_prompt":1,"disable_quest_arrows":0,"disable_forum_notifications":0,"topo_show_relics":0,"topo_relic_options":{"enabled":false,"current_village":false,"all":false,"possible":false,"qualities":[]}};
+
+		$(document).ready( function() {
+			VillageContext.init();
+            UnitPopup.initLinks();
+			Quests.setQuestData({"1040":{"id":1040,"questline":1,"goals":{"buildings":[{"building":"wood","level":5},{"building":"stone","level":5},{"building":"iron","level":3}]},"goals_html":[{"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/big_buildings\/wood1.webp","summary":"Melhore Bosque","description":"Expanda Bosque ao n\u00edvel 5.","completed":true},{"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/big_buildings\/stone1.webp","summary":"Melhore Po\u00e7o de argila","description":"Expanda Po\u00e7o de argila ao n\u00edvel 5.","completed":true},{"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/big_buildings\/iron1.webp","summary":"Melhore Mina de ferro","description":"Expanda Mina de ferro ao n\u00edvel 3.","completed":false}],"objective":"Se voc\u00ea tem recursos - use-os! Voc\u00ea deve sempre evoluir seus edif\u00edcios e recrutar tropas. Se voc\u00ea estiver com poucos recursos, evolua suas minas de recursos.","goals_completed":3,"goals_total":7,"rewards":[],"rewards_html":[],"opened":true,"finished":false,"hide":false,"can_be_skipped":false,"title":"Aumentar produ\u00e7\u00e3o","icon":"m\/ios\/o_hq.png","state":"active","goal_state":"new","quest_system":5},"1210":{"id":1210,"questline":2,"goals":{"buildings":[{"building":"barracks","level":3}]},"goals_html":[{"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/big_buildings\/barracks1.webp","summary":"Melhore Quartel","description":"Expanda Quartel ao n\u00edvel 3.","completed":false}],"objective":"Como voc\u00ea pode ver, o recrutamento de unidades leva tempo. Evoluir seu quartel reduz o tempo de recrutamento.","goals_completed":0,"goals_total":1,"rewards":[],"rewards_html":[],"opened":true,"finished":false,"hide":false,"can_be_skipped":false,"title":"Construa um ex\u00e9rcito","icon":"m\/ios\/o_fa.png","state":"active","goal_state":"new","quest_system":5},"1500":{"id":1500,"questline":8,"goals":{},"goals_html":[{"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/quests\/forum.webp","summary":"Junte-se a uma tribo","description":"Seja membro de uma tribo promissora de sua \u00e1rea.","completed":false}],"objective":"Um floco de neve \u00e9 fraco, mas uma avalanche pode destruir florestas inteiras. Se voc\u00ea pretende estender sua influ\u00eancia, precisar\u00e1 de um pouco de ajuda. Olhe ao redor no mapa para ver que tipo de tribo voc\u00ea tem em sua \u00e1rea e junte-se \u00e0 que parecer mais forte.","goals_completed":0,"goals_total":1,"rewards":[],"rewards_html":[],"opened":true,"finished":false,"hide":false,"can_be_skipped":false,"title":"Poder das tribos","icon":"m\/ios\/o_ally_forum.png","state":"active","goal_state":"new","quest_system":5},"1925":{"id":1925,"questline":13,"goals":{},"goals_html":[{"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/relic_system\/relic_logo.webp","summary":"Escolha uma rel\u00edquia de in\u00edcio","description":"Acesse o tesouro para escolher uma rel\u00edquia inicial. Voc\u00ea pode encontr\u00e1-lo ao lado do seu invent\u00e1rio e do bot\u00e3o de bandeira no navegador ou pelo menu no celular.","completed":false}],"objective":"Rel\u00edquias s\u00e3o itens poderosos que concedem b\u00f4nus \u00e0s suas aldeias em um raio. Voc\u00ea pode equipar diferentes rel\u00edquias \u00e0 sua aldeia ou fundi-las para criar uma rel\u00edquia mais poderosa.","goals_completed":0,"goals_total":1,"rewards":[{"small_image":false,"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/flags\/medium\/1_1.webp","text":"+4% na produ\u00e7\u00e3o de recursos","flag":{"description":"N\u00edvel 1 Bandeira","level":1,"type":1}}],"rewards_html":[{"small_image":false,"image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/flags\/medium\/1_1.webp","text":"+4% na produ\u00e7\u00e3o de recursos","html":"<img src=\"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/flags\/small\/1.webp\" alt=\"\" \/> +4% na produ\u00e7\u00e3o de recursos"}],"opened":true,"finished":false,"hide":false,"can_be_skipped":false,"title":"Registre seu tesouro","icon":"m\/ios\/o_relic.png","state":"active","goal_state":"new","quest_system":5}});
+		});
+	</script>
+			<script type="text/javascript">
+    var googletag = googletag || {};
+    googletag.cmd = googletag.cmd || [];
+    (function() {
+        var gads = document.createElement('script');
+        gads.async = true;
+        gads.type = 'text/javascript';
+        var useSSL = 'https:' == document.location.protocol;
+        gads.src = (useSSL ? 'https:' : 'http:') +
+            '//www.googletagservices.com/tag/js/gpt.js';
+        var node = document.getElementsByTagName('script')[0];
+        node.parentNode.insertBefore(gads, node);
+    })();
+</script>	<meta http-equiv="origin-trial" content="AlK2UR5SkAlj8jjdEc9p3F3xuFYlF6LYjAML3EOqw1g26eCwWPjdmecULvBH5MVPoqKYrOfPhYVL71xAXI1IBQoAAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="Amm8/NmvvQfhwCib6I7ZsmUxiSCfOxWxHayJwyU1r3gRIItzr7bNQid6O8ZYaE1GSQTa69WwhPC9flq/oYkRBwsAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A9nrunKdU5m96PSN1XsSGr3qOP0lvPFUB2AiAylCDlN5DTl17uDFkpQuHj1AFtgWLxpLaiBZuhrtb2WOu7ofHwEAAACKeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A93bovR+QVXNx2/38qDbmeYYf1wdte9EO37K9eMq3r+541qo0byhYU899BhPB7Cv9QqD7wIbR1B6OAc9kEfYCA4AAACQeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A1S5fojrAunSDrFbD8OfGmFHdRFZymSM/1ss3G+NEttCLfHkXvlcF6LGLH8Mo5PakLO1sCASXU1/gQf6XGuTBgwAAACQeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><script src="https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202609220101/pubads_impl.js" async="" fetchpriority="high"></script><link href="https://securepubads.g.doubleclick.net/pagead/managed/dict/m202609240101/gpt" rel="compression-dictionary"><link id="favicon" rel="shortcut icon" href="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/favicon-32x32.webp"></head><body id="ds_body" class="desktop   " dir="ltr">
+
+	<div class="top_bar">
+		<div class="bg_left"> </div>
+		<div class="bg_right"> </div>
+	</div>
+	<div class="top_shadow"> </div>
+	<div class="top_background"> </div>
+
+        <div class="questlog_placeholder">&nbsp;</div>
+
+	<table id="main_layout" cellspacing="0">
+		<tbody><tr style="height: 48px;">
+			<td class="topbar left fixed"></td>
+			<td class="topbar center fixed">
+				<div id="topContainer">
+					<table id="topTable" style="text-align: center;" cellspacing="0" class="menu-village-standard">
+						<tbody><tr>
+							<td style="text-align: center;">
+								<table class="menu nowrap menu-village-standard" style="white-space: nowrap; ">
+									<tbody><tr id="menu_row">
+										<td class="menu-side"></td>
+																				<td class="menu-item">
+											<a href="/game.php?village=105765&amp;screen=overview">
+												<span class="icon header overview"></span>
+												Visualização geral
+											</a>
+											
+										</td>
+
+										<td id="header_menu_link_map" class="menu-item tooltip-delayed" data-title="Mapa&lt;br/&gt; :: Atalho de teclado: &lt;b&gt;m&lt;/b&gt;">
+											<a href="/game.php?village=105765&amp;screen=map">
+												<span class="icon header map2"></span>
+												Mapa
+											</a>
+										</td>
+
+										<td class="menu-item">
+											<a href="/game.php?village=105765&amp;screen=report">
+												<span id="new_report" class="icon header new_report_faded"></span>
+												Relatórios
+												<span id="menu_report_count" class="badge badge-report"></span>
+											</a>
+											<table cellspacing="0" class="menu_column"><tbody><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=all">Todos<span class="badge badge-report"> </span></a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=attack">Ataques</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=defense">Defesas</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=support">Suporte</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=trade">Comércio</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=event">Eventos</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=other">Diversos</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=forwarded">Encaminhados</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=public">Público</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=report&amp;mode=filter">Filtros</a></td></tr><tr><td class="bottom"><div class="corner"></div><div class="decoration"></div></td></tr></tbody></table>
+										</td>
+
+                                        <!-- mail -->
+                                                                                    <td class="menu-item">
+                                                <a href="/game.php?village=105765&amp;screen=mail">
+                                                    <span id="new_mail" class="icon header new_mail_faded"></span>
+                                                    Mensagens
+                                                    <span id="menu_mail_count" class="badge badge-mail"></span>
+                                                </a>
+                                                <table cellspacing="0" class="menu_column"><tbody><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=mail&amp;mode=in">Mensagens<span class="badge badge-mail"> </span></a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=mail&amp;mode=mass_out">Mensagens coletivas</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=mail&amp;mode=new">Escrever mensagem</a></td></tr><tr><td class="bottom"><div class="corner"></div><div class="decoration"></div></td></tr></tbody></table>
+                                            </td>
+                                        
+																					<td>
+																									<a id="manager_icon_farm" class="manager_icon tooltip-delayed" style="background-image:url('https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/icons/farm_assistent.webp')" href="/game.php?village=105765&amp;screen=am_farm" data-title="Assistente de saque">&nbsp;</a>
+																																					<a class="manager_icon tooltip-delayed" style="background-image:url('https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/icons/account_manager.webp')" href="/game.php?village=105765&amp;screen=accountmanager" data-title="Gerente de conta">&nbsp;</a>
+																							</td>
+										
+										<!-- ranking -->
+										<td class="menu-item lpad"> </td>
+																				<td class="menu-item" id="topdisplay">
+											<div class="bg">
+												<a href="/game.php?village=105765&amp;screen=ranking">Classificação</a>
+												<div class="rank">(<span id="rank_rank">46<span class="grey">.</span>914</span>.|<span id="rank_points">82</span> P)</div>
+												<table cellspacing="0" class="menu_column"><tbody><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=ally">Tribos</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=player">Jogadores</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=dominance">Dominância do mundo</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=con_ally">Tribos do continente</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=con_player">Jogadores do continente</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=kill_ally">Oponentes derrotados (tribo)</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=kill_player">Oponentes derrotados</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=awards">Realizações</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=in_a_day">Em um dia</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=ranking&amp;mode=wars">Guerras da tribo</a></td></tr><tr><td class="bottom"><div class="corner"></div><div class="decoration"></div></td></tr></tbody></table>
+											</div>
+										</td>
+																				<td class="menu-item rpad"> </td>
+
+                                        <!-- tribe -->
+                                                                                    <td class="menu-item">
+                                                <a href="/game.php?village=105765&amp;screen=ally">
+                                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                                    Tribo
+                                                    <span id="menu_counter_ally" class="badge badge-ally-forum"></span>
+                                                </a>
+                                                <div class="buttonicon">
+                                                    <a href="/game.php?village=105765&amp;screen=ally" style="display:inline"><span id="tribe_forum_indicator" class="icon header no_new_post"></span></a>
+                                                </div>
+                                                                                            </td>
+                                        
+										<!-- profile -->
+										<td class="menu-item">
+											<a href="/game.php?village=105765&amp;screen=info_player">
+												<span class="icon header profile"></span>
+												Perfil
+												<span id="menu_counter_profile" class="badge">(2)</span>
+											</a>
+											<table cellspacing="0" class="menu_column"><tbody><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=info_player">Player</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=relic_system">Tesouraria</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=inventory">Inventário<span class="badge badge-inventory"> (2)</span></a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=info_player&amp;mode=awards">Realizações</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=info_player&amp;mode=stats_own">Estatísticas</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=buddies">Amigos<span class="badge badge-buddy"> </span></a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=info_player&amp;mode=daily_bonus">Bônus diário<span class="badge badge-daily-bonus"> </span></a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=mentor">Mentor</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=info_player&amp;mode=block">Lista de bloqueados</a></td></tr><tr><td class="bottom"><div class="corner"></div><div class="decoration"></div></td></tr></tbody></table>
+										</td>
+
+										<!-- premium -->
+										<td class="menu-item">
+											<a href="/game.php?village=105765&amp;screen=premium">
+												<span class="coinbag coinbag-header"></span>&nbsp;<span id="premium_points">0</span>
+												<span id="premium_points_buy"></span>
+											</a>
+											<table cellspacing="0" class="menu_column"><tbody><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=premium&amp;mode=use">Subscrições</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=premium&amp;mode=premium" class="premium-buy">Compra</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=premium&amp;mode=cosmetics">Cosméticos</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=premium&amp;mode=transfer">Transferir</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=premium&amp;mode=log">Histórico de pontos</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=premium&amp;mode=feature_log">Histórico de funcionalidades</a></td></tr><tr><td class="bottom"><div class="corner"></div><div class="decoration"></div></td></tr></tbody></table>
+										</td>
+
+										<!-- settings -->
+										<td class="menu-item">
+											<a href="/game.php?village=105765&amp;screen=settings">
+												<span class="icon header settings"></span>
+												Configurações
+											</a>
+											<table cellspacing="0" class="menu_column"><tbody><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=settings">Opções do jogo</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=account">Conta</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=linked">Contas vinculadas</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=move">Recomeçar</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=transfer">Transferir para o casual</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=quickbar">Barra de acesso rápido:</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=workshop">Biblioteca de scripts</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=workshop_author">Autor de scripts da comunidade</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=share">Compartilhamento de conexão</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=vacation">Modo de férias</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=logins">Logins</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=poll">Enquetes</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=push">Enviar notificações</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=notify">Notificações por e-mail</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=command_sharing">Compartilhamento de comandos</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=village_notes_sharing">Compartilhamento de Notas da Aldeia</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=ticket" target="_blank">Solicitação de Suporte</a></td></tr><tr><td class="menu-column-item"><a href="/game.php?village=105765&amp;screen=settings&amp;mode=ticket&amp;data_usage=1" target="_blank">Opções de uso de dados</a></td></tr><tr><td class="bottom"><div class="corner"></div><div class="decoration"></div></td></tr></tbody></table>
+										</td>
+										
+										<td class="menu-side"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/loading.gif" id="loading_content" style="display: none" alt="" class=""></td>
+									</tr>
+								</tbody></table>
+							</td>
+						</tr>
+					</tbody></table>
+
+                    				</div>
+			</td>
+			<td class="topbar right fixed"> </td>
+
+		</tr>
+		<tr class="shadedBG">
+
+			<td class="bg_left">
+				<div class="bg_left"> </div>
+			</td>
+
+			<td class="maincell" style="width: 850px;">
+				<div style="position:fixed;">
+					<div class="questlog" id="questlog_new">
+													<div class="quest" id="new_quest" onclick="Questlines.showDialog(0, 'main-tab')"><div class="icon header resources quest-storage-label"></div></div>
+																							</div>
+				</div>
+
+			
+			
+			<br class="newStyleOnly">
+	        	        				<table id="quickbar_outer" align="center" width="100%" cellspacing="0">
+					<tbody><tr>
+						<td>
+							<table id="quickbar_inner" style="border-collapse: collapse;" width="100%">
+								<tbody><tr class="topborder">
+									<td class="left"> </td>
+									<td class="main"> </td>
+									<td class="right"> </td>
+								</tr>
+								<tr>
+									<td class="left"> </td>
+									<td id="quickbar_contents" class="main">
+										<ul class="menu quickbar">
+																						
+																																				 													<li class="quickbar_item" data-hotkey="1">
+														<span>
+															<a class="quickbar_link" data-hash="7843128499689e43baba42bab06dc4fa" href="/game.php?village=105765&amp;screen=main">
+																<img class="quickbar_image" data-src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/main.png" alt="" src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/main.png">Edifício principal
+															</a>
+														</span>
+													</li>
+																																																													 													<li class="quickbar_item" data-hotkey="2">
+														<span>
+															<a class="quickbar_link" data-hash="d19a9592b32578e63c1cb2dffa78cbe2" href="/game.php?village=105765&amp;screen=train">
+																<img class="quickbar_image" data-src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/barracks.png" alt="" src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/barracks.png">Recrutar
+															</a>
+														</span>
+													</li>
+																																																													 													<li class="quickbar_item" data-hotkey="3">
+														<span>
+															<a class="quickbar_link" data-hash="8708802b51699a4f36571e77aedce6e2" href="/game.php?village=105765&amp;screen=snob">
+																<img class="quickbar_image" data-src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/snob.png" alt="" src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/snob.png">Academia
+															</a>
+														</span>
+													</li>
+																																																													 													<li class="quickbar_item" data-hotkey="4">
+														<span>
+															<a class="quickbar_link" data-hash="3f69e37073fa8329448b02773dadd5ef" href="/game.php?village=105765&amp;screen=smith">
+																<img class="quickbar_image" data-src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/smith.png" alt="" src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/smith.png">Ferreiro
+															</a>
+														</span>
+													</li>
+																																																													 													<li class="quickbar_item" data-hotkey="5">
+														<span>
+															<a class="quickbar_link" data-hash="cc5ffd9297792b3360ffc14dba7edf5f" href="/game.php?village=105765&amp;screen=place">
+																<img class="quickbar_image" data-src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/place.png" alt="" src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/place.png">Praça de reunião
+															</a>
+														</span>
+													</li>
+																																																													 													<li class="quickbar_item" data-hotkey="6">
+														<span>
+															<a class="quickbar_link" data-hash="7d6f4d2c6f77d1637b4c3578dffa4b47" href="/game.php?village=105765&amp;screen=market">
+																<img class="quickbar_image" data-src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/market.png" alt="" src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic//buildings/market.png">Mercado
+															</a>
+														</span>
+													</li>
+																																														</ul>
+									</td>
+									<td class="right"> </td>
+								</tr>
+								<tr class="bottomborder">
+									<td class="left"> </td>
+									<td class="main"> </td>
+									<td class="right"> </td>
+								</tr>
+								<tr>
+									<td class="shadow" colspan="3">
+										<div class="leftshadow"> </div>
+										<div class="rightshadow"> </div>
+									</td>
+								</tr>
+							</tbody></table>
+						</td>
+					</tr>
+				</tbody></table>
+
+				<script>
+					setTimeout(function() {
+						$('#quickbar_contents').find('.quickbar_image').each(function() {
+							this.src = $(this).data('src');
+						});
+						RewardSystem.setUnlockableRewardsCount(1);
+					}, 1);
+				</script>
+	        
+			<hr class="oldStyleOnly">
+
+			<table id="header_info" align="center" width="100%" cellspacing="0">
+				<colgroup>
+					<col width="1%">
+					<col width="96%">
+					<col width="1%">
+					<col width="1%">
+					<col width="1%">
+				</colgroup>
+				<tbody><tr>
+					<td class="topAlign">
+						<table class="header-border">
+	                        <tbody><tr>
+	                            <td>
+									<table class="box menu nowrap">
+	                                    <tbody><tr id="menu_row2">
+																																																							<td style="white-space:nowrap;" id="menu_row2_village" class="firstcell box-item icon-box nowrap">
+																									<a class="nowrap tooltip-delayed" href="/game.php?village=105765&amp;screen=overview" data-title="Visualização geral da aldeia&lt;br/&gt; :: Atalho de teclado: &lt;b&gt;v&lt;/b&gt;"><span class="icon header village"></span>Player de aldeia</a>
+																							</td>
+																						<td class="box-item" style="padding-right: 6px"><b class="nowrap">(482|754) K74</b></td>
+												                                    </tr>
+	                                </tbody></table>
+	                            </td>
+	                        </tr>
+							<tr class="newStyleOnly">
+								<td class="shadow">
+									<div class="leftshadow"> </div>
+									<div class="rightshadow"> </div>
+								</td>
+							</tr>
+	                    </tbody></table>
+                	</td>
+
+				<td align="right" class="topAlign"> </td><!-- flexible gap -->
+
+				<td align="right" class="topAlign">
+                    
+                </td>
+
+                                <td align="right" class="topAlign">
+					<table align="right" class="header-border menu_block_right">
+						<tbody><tr>
+							<td>
+								<table class="box smallPadding" cellspacing="0" style="empty-cells:show;">
+									<tbody><tr style="height: 20px;">
+										<td class="box-item icon-box firstcell">
+											<a href="/game.php?village=105765&amp;screen=wood" data-title="Madeira - 110 por hora"><span class="icon header wood"> </span></a>
+										</td>
+                                        <td class="box-item" style="position: relative">
+                                        	<span id="wood" class="res" data-title="Madeira - 110 por hora">416</span>
+                                        </td>
+                                        <td class="box-item icon-box">
+                                        	<a href="/game.php?village=105765&amp;screen=stone" data-title="Argila - 110 por hora"><span class="icon header stone"> </span></a>
+                                        </td>
+                                        <td class="box-item">
+                                        	<span id="stone" class="res" data-title="Argila - 110 por hora">714</span>
+                                        </td>
+                                        <td class="box-item icon-box">
+                                        	<a href="/game.php?village=105765&amp;screen=iron" data-title="Ferro - 70 por hora"><span class="icon header iron"> </span></a>
+                                        </td>
+										<td class="box-item">
+											<span id="iron" class="res" data-title="Ferro - 70 por hora">656</span>
+										</td>
+                                        <td class="box-item icon-box">
+                                        	<a href="/game.php?village=105765&amp;screen=storage" data-title="Capacidade de armazenamento"><span class="icon header resources"> </span></a>
+                                        </td>
+                                        <td class="box-item">
+                                        	<span id="storage" data-title="Capacidade de armazenamento">1229</span>
+                                        </td>
+																					<td class="box-item icon-box"><a href="/game.php?village=105765&amp;screen=farm" data-title="Fazenda"><span class="icon header population"> </span></a></td>
+											<td class="box-item" align="center" style="margin:0;padding:0;" data-title="Fazenda">
+												<span id="pop_current_label" class="">92</span>/<span id="pop_max_label">281</span>
+											</td>
+										                                    </tr>
+								</tbody></table>
+							</td>
+						</tr>
+						<tr class="newStyleOnly">
+							<td class="shadow">
+								<div class="leftshadow"> </div>
+								<div class="rightshadow"> </div>
+							</td>
+						</tr>
+					</tbody></table>
+				</td>
+
+                								<td align="right" class="topAlign">
+											<table class="header-border menu_block_right" style="border-collapse: collapse;">
+							<tbody><tr>
+								<td>
+									<table class="box" cellspacing="0">
+										<tbody><tr>
+											<!-- inventory -->
+																							<td class="box-item icon-box firstcell" style="white-space:nowrap; text-align:center;">
+													<a href="/game.php?village=105765&amp;screen=inventory" style="vertical-align:middle;" data-title="Inventário">
+														<span class="icon header inventory" style="margin:0;"></span>
+													</a>
+												</td>
+											
+																							<td class="box-item icon-box" style="white-space:nowrap;">
+													<a href="/game.php?village=105765&amp;screen=flags" style="vertical-align:middle;" data-title="Bandeiras">
+														<span class="icon header flags_new"></span><span>1</span>													</a>
+												</td>
+																																		<td class="box-item icon-box">
+													<a href="/game.php?village=105765&amp;screen=statue" data-title="Paladino"><span class="icon header knight"></span></a></td>
+																																		<td class="box-item icon-box">
+													<a href="/game.php?village=105765&amp;screen=relic_system" data-title="Relíquias"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/relic_system/relic_icon.webp" class="" data-title=""></a>
+												</td>
+																																</tr>
+									</tbody></table>
+								</td>
+							</tr>
+							<tr class="newStyleOnly">
+								<td class="shadow">
+									<div class="leftshadow"> </div>
+									<div class="rightshadow"> </div>
+								</td>
+							</tr>
+						</tbody></table>
+					                </td>
+
+                				<td class="topAlign  " id="header_commands">
+					<table class="header-border menu_block_right">
+						<tbody><tr>
+							<td>
+								<table class="box smallPadding no-gap" cellspacing="0">
+									<tbody><tr>
+
+										<td id="incomings_cell" style="text-align: center; padding: 0 4px" class="box-item firstcell nowrap">
+																						<img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/att.webp" style="vertical-align: -2px" class="" data-title="Ataques a chegar">
+											<span id="incomings_amount">0</span>
+																					</td>
+
+										<td id="supports_cell" style="text-align: center; padding: 0 4px" class="box-item separate nowrap">
+											<a href="">
+												<img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/command/support.webp" style="vertical-align: -2px" class="" data-title="Apoio chegando">
+												<span id="supports_amount"></span>
+											</a>
+										</td>
+									</tr>
+								</tbody></table>
+							</td>
+						</tr>
+						<tr class="newStyleOnly">
+							<td class="shadow">
+								<div class="leftshadow"> </div>
+								<div class="rightshadow"> </div>
+							</td>
+						</tr>
+					</tbody></table>
+				</td>
+							</tr>
+		</tbody></table>
+
+		
+		
+		<div id="script_warning" class="info_box" style="display: none;">
+            <div class="content">
+                O script ativado pode não ser compatível com a atual versão do jogo.<br>
+                Se os problemas persistirem, por favor, desativar ou atualizar os scripts.<br>
+                Se ocorrerem problemas, por favor contate o autor do script. <ul id="script_list"></ul>
+            </div>
+		</div>
+
+
+	    							<div class="info_box">
+					<div class="content">
+						O bônus noturno está ativo neste mundo e você pode alterar o período nas <a href="/game.php?village=105765&amp;screen=settings&amp;mode=settings">opções do jogo</a>.
+					</div>
+				</div>
+		    	    
+        
+		<!-- *********************** CONTENT BELOW ************************** -->
+		<table align="center" id="contentContainer" width="100%">
+	        <tbody><tr>
+	            <td>
+					<table class="content-border" width="100%" cellspacing="0">
+	                    <tbody><tr>
+	                        <td id="inner-border">
+								<table class="main" align="left">
+	                                <tbody><tr>
+										<td id="content_value">
+                                            
+                                            <form id="command-data-form" action="/game.php?village=105765&amp;screen=place&amp;action=command" method="post" onsubmit="this.submit.disabled=true;" style="min-width: 800px">
+    <h2>Confirmar ataque em Aldeia de bárbaros</h2>
+
+    <input type="hidden" name="attack" value="true">
+
+    <input type="hidden" name="ch" value="9d335fc63fdbea505745090349868b6b:69452866a4086e720f074384a681747b78131f0525c32fded41337eea5123ac8">
+    <input type="hidden" name="cb">
+    <input type="hidden" name="x" value="474">
+    <input type="hidden" name="y" value="751">
+    <input type="hidden" name="source_village" value="105765">
+    <input type="hidden" name="village" value="105765">
+    <div>
+        <table class="vis" width="360">
+            <tbody><tr>
+                <th colspan="2">
+                                            Comando
+                                    </th>
+                            </tr>
+            <tr><td>Destino:</td><td><span class="village_anchor contexted" data-player="0" data-id="104603"><a href="/game.php?village=105765&amp;screen=info_village&amp;id=104603">Aldeia de bárbaros (474|751) K74</a><a class="ctx" href="#"></a></span></td></tr>
+                        <tr><td>Duração:</td><td>2:33:48</td></tr>
+            <tr>
+                <td>Chegada:</td>
+                <td id="date_arrival">
+                <span class="relative_time" data-duration="9228">amanhã às 01:19:24</span>
+                </td>
+            </tr>
+                            <tr><td>Moral:</td><td><b>100%</b></td></tr>
+                                    <tr><td colspan="2"><span class="icon header resources" data-title="Capacidade de transporte"></span>125</td></tr>                    </tbody></table>
+    </div>
+
+    <a href="#" id="troop_confirm_train" class="place-confirm-new-attack" style="">
+        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/plus.webp" class="" data-title=""> Adicionar ataque adicional
+    </a>
+
+            <div class="info_box train-ui">
+            <div class="content">
+                <span class="delete-icon-large hint-toggle float_right" data-hint="1"></span>
+                Enviar vários ataques de uma só vez de uma aldeia é útil para situações específicas, como enviar vários Nobres para reduzir a lealdade em rápida sucessão. Isso dá ao seu inimigo menos tempo para reforçar sua aldeia entre cada ataque.
+                Na maioria dos casos, é sempre melhor enviar todas as suas tropas em um único ataque para causar o maior dano.
+            </div>
+        </div>
+    
+    <table class="vis" id="place_confirm_units" style="width: 100%">
+        <tbody><tr>
+            <th class="train-ui" style="display: none">
+                <div class="attacks-templates">
+                    <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/questionmark.webp" class="template-help-icon" data-title="Escolher um modelo para obter mais informações.">
+                    <span>
+                        <a href="/game.php?village=105765&amp;screen=place&amp;mode=templates">Modelo:</a>
+                    </span>
+                    <select id="attack_template_selector">
+                        <option value="">Escolher o modelo</option>
+                                                    <option value="all" data-title="Todas as tropas: Enviar todas as unidades presentes desta aldeia.">Todas as tropas</option>
+                                                    <option value="fake" data-title="Fake: Adiciona um espião e a quantidade mínima de catapultas necessárias para atingir o Limite de ataques falsos.">Fake</option>
+                                                    <option value="snob" data-title="Nobre: Cada ataque contém um nobre e as unidades ofensivas são equilibradas automaticamente.">Nobre</option>
+                                            </select>
+                </div>
+            </th>
+            <th width="50"><div class=""><a href="#" class="unit_link" data-unit="spear"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_spear.webp" class="" data-title="Lanceiro"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="sword"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_sword.webp" class="faded" data-title="Espadachim"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="axe"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_axe.webp" class="faded" data-title="Bárbaro"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="archer"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_archer.webp" class="faded" data-title="Arqueiro"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="spy"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_spy.webp" class="faded" data-title="Explorador"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="light"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_light.webp" class="faded" data-title="Cavalaria leve"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="marcher"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_marcher.webp" class="faded" data-title="Arqueiro a cavalo"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="heavy"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_heavy.webp" class="faded" data-title="Cavalaria pesada"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="ram"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_ram.webp" class="faded" data-title="Aríete"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="catapult"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_catapult.webp" class="faded" data-title="Catapulta"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="knight"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_knight.webp" class="faded" data-title="Paladino"></a></div></th><th width="50"><div class=""><a href="#" class="unit_link" data-unit="snob"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_snob.webp" class="faded" data-title="Nobre"></a></div></th>
+                    </tr>
+        <tr class="train-ui" style="display: none">
+            <th>Unidades da aldeia</th>
+            <td data-unit-count="6" class="unit-item unit-item-spear">6</td><td data-unit-count="0" class="unit-item unit-item-sword hidden">0</td><td data-unit-count="0" class="unit-item unit-item-axe hidden">0</td><td data-unit-count="0" class="unit-item unit-item-archer hidden">0</td><td data-unit-count="0" class="unit-item unit-item-spy hidden">0</td><td data-unit-count="0" class="unit-item unit-item-light hidden">0</td><td data-unit-count="0" class="unit-item unit-item-marcher hidden">0</td><td data-unit-count="0" class="unit-item unit-item-heavy hidden">0</td><td data-unit-count="0" class="unit-item unit-item-ram hidden">0</td><td data-unit-count="0" class="unit-item unit-item-catapult hidden">0</td><td data-unit-count="0" class="unit-item unit-item-knight hidden">0</td><td data-unit-count="0" class="unit-item unit-item-snob hidden">0</td>
+        </tr>
+        <tr class="units-row">
+            <th class="train-ui train-name" style="display: none"><span>Ataque #1</span></th>
+            <td data-unit-count="5" class="unit-item unit-item-spear">5</td><td data-unit-count="0" class="unit-item unit-item-sword hidden">0</td><td data-unit-count="0" class="unit-item unit-item-axe hidden">0</td><td data-unit-count="0" class="unit-item unit-item-archer hidden">0</td><td data-unit-count="0" class="unit-item unit-item-spy hidden">0</td><td data-unit-count="0" class="unit-item unit-item-light hidden">0</td><td data-unit-count="0" class="unit-item unit-item-marcher hidden">0</td><td data-unit-count="0" class="unit-item unit-item-heavy hidden">0</td><td data-unit-count="0" class="unit-item unit-item-ram hidden">0</td><td data-unit-count="0" class="unit-item unit-item-catapult hidden">0</td><td data-unit-count="0" class="unit-item unit-item-knight hidden">0</td><td data-unit-count="0" class="unit-item unit-item-snob hidden">0</td>
+                    </tr>
+        <tr class="train-ui units-sum" style="display: none">
+            <th>Total</th>
+            <td data-unit-count="5" class="unit-item unit-item-spear">5</td><td data-unit-count="0" class="unit-item unit-item-sword hidden">0</td><td data-unit-count="0" class="unit-item unit-item-axe hidden">0</td><td data-unit-count="0" class="unit-item unit-item-archer hidden">0</td><td data-unit-count="0" class="unit-item unit-item-spy hidden">0</td><td data-unit-count="0" class="unit-item unit-item-light hidden">0</td><td data-unit-count="0" class="unit-item unit-item-marcher hidden">0</td><td data-unit-count="0" class="unit-item unit-item-heavy hidden">0</td><td data-unit-count="0" class="unit-item unit-item-ram hidden">0</td><td data-unit-count="0" class="unit-item unit-item-catapult hidden">0</td><td data-unit-count="0" class="unit-item unit-item-knight hidden">0</td><td data-unit-count="0" class="unit-item unit-item-snob hidden">0</td>
+        </tr>
+    </tbody></table>
+
+    <br>
+
+            <input type="hidden" name="spear" value="5">
+            <input type="hidden" name="sword" value="0">
+            <input type="hidden" name="axe" value="0">
+            <input type="hidden" name="archer" value="0">
+            <input type="hidden" name="spy" value="0">
+            <input type="hidden" name="light" value="0">
+            <input type="hidden" name="marcher" value="0">
+            <input type="hidden" name="heavy" value="0">
+            <input type="hidden" name="ram" value="0">
+            <input type="hidden" name="catapult" value="0">
+            <input type="hidden" name="knight" value="0">
+            <input type="hidden" name="snob" value="0">
+    
+                <div id="place_confirm_catapult_target" style="display:none;">
+            <table>
+                <tbody><tr>
+                    <th>Atacar edifício:</th>
+                    <td>
+                        <select name="building" size="1">
+                            <option value="main">Edifício principal</option>
+<option value="barracks">Quartel</option>
+<option value="stable">Estábulo</option>
+<option value="garage">Oficina</option>
+<option value="watchtower">Torre de vigia</option>
+<option value="snob">Academia</option>
+<option value="smith">Ferreiro</option>
+<option value="place">Praça de reunião</option>
+<option value="statue">Estátua</option>
+<option value="market">Mercado</option>
+<option value="wood">Bosque</option>
+<option value="stone">Poço de argila</option>
+<option value="iron">Mina de ferro</option>
+<option value="farm">Fazenda</option>
+<option value="storage">Armazém</option>
+<option value="wall">Muralha</option>
+
+                        </select>
+                    </td>
+                                    </tr>
+            </tbody></table><br>
+        </div>
+    
+                
+    <div id="train-unit-overflow-warning"></div>
+    <div id="train-fake-limit-warning"></div>
+
+                
+    <div id="train-unprotected-snob-warning"></div>
+
+                        <div class="info_box"><div class="content">Aldeias abandonadas possuem uma defesa básica e por isso sugerimos que envie mais tropas para evitar perdas desnecessárias.</div></div>
+            
+    <div id="train-defensive-only-warning"></div>
+
+    <input id="troop_confirm_submit" style="margin-bottom: 5px" class="troop_confirm_go btn btn-attack" name="submit_confirm" type="submit" onload="this.disabled=false;" value="Enviar ataque">
+
+    <input type="hidden" name="h" value="CSRF"></form>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        TroopTemplates.current = {"all":{"id":"all","name":"Todas as tropas","spear":0,"sword":0,"axe":0,"archer":0,"spy":0,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":0,"knight":0,"snob":0,"militia":0,"use_all":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"],"used":0,"help_text":"Todas as tropas: Enviar todas as unidades presentes desta aldeia."},"fake":{"id":"fake","name":"Fake","spear":0,"sword":0,"axe":0,"archer":0,"spy":1,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":1,"knight":0,"snob":0,"militia":0,"use_all":[],"used":0,"help_text":"Fake: Adiciona um espi\u00e3o e a quantidade m\u00ednima de catapultas necess\u00e1rias para atingir o Limite de ataques falsos."},"snob":{"id":"snob","name":"Nobre","spear":0,"sword":0,"axe":0,"archer":0,"spy":0,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":0,"knight":0,"snob":1,"militia":0,"use_all":["axe","light","marcher"],"used":0,"help_text":"Nobre: Cada ataque cont\u00e9m um nobre e as unidades ofensivas s\u00e3o equilibradas automaticamente."}};
+        $('#troop_confirm_submit').focus();
+        Place.confirmScreen.init({"type":"attack","units":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"],"send_units":{"spear":5,"sword":0,"axe":0,"archer":0,"spy":0,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":0,"knight":0,"snob":0},"available_units":{"spear":6,"sword":0,"axe":0,"archer":0,"spy":0,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":0,"knight":0,"snob":0,"militia":0},"selected_template_id":null,"village_points":82,"fake_limit":1,"unit_pop":{"spear":1,"sword":1,"axe":1,"archer":1,"spy":2,"light":4,"marcher":5,"heavy":6,"ram":5,"catapult":8,"knight":10,"snob":100}});
+    });
+</script>
+	                               		</td>
+									</tr>
+								</tbody></table>
+							</td>
+						</tr>
+					</tbody></table>
+				</td>
+			</tr>
+		</tbody></table>
+
+		<p class="server_info">
+			Hora do servidor: <span id="serverTime" title="Latency: 381ms">22:45:36</span> <span id="serverDate">28/09/2026</span>
+			<span id="dev_console" style="display: none"><b>|</b> <a href="?screen=74:72:69:62:61:6c:77:61:72:73">developer console</a></span>
+					</p>
+
+	</td>
+	<td class="bg_right">
+	</td>
+</tr>
+
+    <tr>
+        <td class="bg_leftborder"></td>
+        <td></td>
+        <td class="bg_rightborder"></td>
+    </tr>
+    <tr class="newStyleOnly">
+        <td class="bg_bottomleft">&nbsp;</td>
+        <td class="bg_bottomcenter">&nbsp;</td>
+        <td class="bg_bottomright">&nbsp;</td>
+    </tr>
+                </tbody></table><!-- .main_layout -->
+
+
+
+            <div id="world_selection_clicktrap" class="evt-world-selection-toggle"></div>
+        <div id="world_selection_popup">
+            <div class="servers-list-top"></div>
+            <div id="servers-list-block"></div>
+            <div class="servers-list-bottom"></div>
+        </div>
+        <div class="chat-open-buffer" style="display: none;"></div>
+    <div id="bottom">
+        <div id="chat-wrapper" class="chat-sound-enabled">
+        <div class="chat-block chat-mini-block"><div class="chat-window chat-contacts chat-window-minimized"><div class="chat-header"><h4 class="chat-title">Chat <span class="chat-total-unread"></span></h4><div class="chat-buttons"><a href="#" class="chat-button chat-button-close" title="Fechado"></a><a href="#" class="chat-button chat-button-minimize" title="Minimizar"></a><a href="#" class="chat-button chat-button-maximize" title="Abrir"></a><a href="#" class="chat-button chat-button-sound-off" title="Desativar som"></a><a href="#" class="chat-button chat-button-sound-on" title="Ativar som"></a><a href="#" class="chat-button chat-button-group-chat" title="Criar chat em grupo"></a></div></div><div class="chat-body"><div class="chat-no-contacts"><p>Você ainda não têm nenhuma conversa. Comece uma ao entrar em uma tribo, ou envie uma mensagem para um jogador por perto e diga oi!</p><p>Clique <a href="/game.php?village=105765&amp;screen=ally">aqui</a> para visualizar as tribos ao seu redor!</p></div></div><div class="chat-footer"><input class="chat-input chat-search" type="text" placeholder="Insira o nome do jogador"></div></div></div></div>
+
+        <div id="footer">
+            <a href="#" id="unsupported-browser">
+                <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/error.webp" class="" data-title=""> Navegador não suportado
+            </a>
+            <div id="linkContainer">
+                                    <a href="#" class="world_button_active evt-world-selection-toggle">Mundo 144</a>
+                                <a href="/page/settings" class="footer-link" target="_blank">Configurações do mundo</a>
+                &nbsp;-&nbsp;
+                <a href="/game.php?village=105765&amp;screen=extforum" class="footer-link" target="_blank">Comunidade do Fórum</a>
+                &nbsp;-&nbsp;
+                <a href="https://help.tribalwars.com.br" class="footer-link" target="_blank">Ajuda</a>
+                                                    &nbsp;-&nbsp;
+                    <a href="/game.php?village=105765&amp;screen=settings&amp;mode=ticket" class="footer-link" target="_blank">Enviar ticket de suporte</a>
+                                                                    &nbsp;-&nbsp;
+                    <a href="/game.php?village=105765&amp;screen=memo" class="footer-link">Bloco de notas</a>
+                                                    &nbsp;-&nbsp;
+                    <a href="/game.php?village=105765&amp;screen=&amp;action=logout&amp;h=CSRF" target="_top" class="footer-link">Sair</a>
+                                &nbsp;-&nbsp;
+                <a href="https://www.instagram.com/tribalwars" class="footer-link" target="_blank">Instagram</a>
+                &nbsp;-&nbsp;
+                <a href="https://www.facebook.com/TribalWars" class="footer-link" target="_blank">Facebook</a>
+                &nbsp;-&nbsp;
+                <a href="https://innogam.es/DS-Discord" class="footer-link" target="_blank">Discord</a>
+            </div>
+        </div>
+    </div>
+
+<script>
+    $(document).ready(function() {
+        Timing.init(1790646335.2834);
+        TribalWars.initTab('c3e264997d');
+
+                WorldSwitch.init();
+        WorldSwitch.worldsURL = '/game.php?village=105765&screen=api&ajax=world_switch';
+        
+                HotKeys.init();
+        
+                Connection.connect('br144.tribalwars.com.br', 8083, true);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        DialogQueue.consume();
+
+        $('#gift-calendar-dialog-icon, .gift-calendar-open-popup').on('click', function() {
+            GiftCalendar.showDialog();
+        });
+
+                GiftCalendar.setNewLabel(true);
+        
+        const cosmeticNameExecutor = new CosmeticNameExecutionContainer();
+        cosmeticNameExecutor.start();
+    });
+</script>
+
+<div id="side-notification-container" class="chat-closed"></div>
+<!-- emoji images by Twitter Twemoji -->
+
+
+<div id="tooltip" style="display: none;"><h3></h3><div class="body"></div><div class="url"></div></div></body></html>

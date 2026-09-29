@@ -1,0 +1,240 @@
+<td id="content_value">
+                                            
+                                            <table width="100%">
+	<tbody><tr>
+		<td valign="top"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/big_buildings/place1.webp" class="" data-title="Praça de reunião"></td>
+		<td valign="top" width="100%">
+			<h2>Praça de reunião (Nível 1) </h2>
+			Na Praça de Reuniões encontram-se seus guerreiros antes da batalha. Aqui você poderá comandar ataques e mover suas tropas.
+		</td>
+	</tr>
+</tbody></table>
+
+<table class="vis modemenu">
+	<tbody><tr>
+		<td class="selected" style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=place&amp;mode=command">Comandos </a></td>
+		<td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=place&amp;mode=units">Tropas </a></td>
+		<td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=place&amp;mode=scavenge">Coletando </a></td>
+		<td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=place&amp;mode=scavenge_mass">Coleta em Massa </a></td>
+		<td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=place&amp;mode=sim">Simulador </a></td>
+		<td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=place&amp;mode=templates">Modelos de tropas </a></td>
+		</tr>
+</tbody></table>
+
+<h3>Distribuir ordens</h3>
+
+<div id="command-form-warning"></div>
+    <script type="text/javascript">
+        // this will be attached to the target widget
+        var onCommandTargetChoice = function(village) {
+            $('#command_actions .btn').eq(0).focus(); //this references the attack/support button container, which is separate from the target selection.
+
+            // Handle special village data such as for event village
+            // disabled support
+            if (village.hasOwnProperty('disallow_support')) {
+                $('#target_support').attr('disabled', 'disabled');
+            }
+            else {
+                $('#target_support').removeAttr('disabled');
+            }
+
+            // disabled units
+            $('.unitsInput').removeAttr('disabled');
+            if (village.hasOwnProperty('disallow_units')) {
+                $.each(village.disallow_units, function (k, unit_id) {
+                    $('#unit_input_' + unit_id).attr('disabled', 'disabled');
+                });
+            }
+
+            // warning message
+            if (village.hasOwnProperty('warning')) {
+                $('#command-form-warning').html('<p>' + village.warning + '</p>');
+            }
+            else {
+                $('#command-form-warning').text('');
+            }
+        };
+
+        $(function() {
+            TroopTemplates.current = {"all":{"id":"all","name":"Todas as tropas","spear":0,"sword":0,"axe":0,"archer":0,"spy":0,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":0,"knight":0,"snob":0,"militia":0,"use_all":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"],"used":0,"help_text":"Todas as tropas: Enviar todas as unidades presentes desta aldeia."},"fake":{"id":"fake","name":"Fake","spear":0,"sword":0,"axe":0,"archer":0,"spy":1,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":1,"knight":0,"snob":0,"militia":0,"use_all":[],"used":0,"help_text":"Fake: Adiciona um espi\u00e3o e a quantidade m\u00ednima de catapultas necess\u00e1rias para atingir o Limite de ataques falsos."},"snob":{"id":"snob","name":"Nobre","spear":0,"sword":0,"axe":0,"archer":0,"spy":0,"light":0,"marcher":0,"heavy":0,"ram":0,"catapult":0,"knight":0,"snob":1,"militia":0,"use_all":["axe","light","marcher"],"used":0,"help_text":"Nobre: Cada ataque cont\u00e9m um nobre e as unidades ofensivas s\u00e3o equilibradas automaticamente."}};
+            TroopTemplates.bindTemplateSelectorLinks();
+
+            var target_widget = new TargetSelection($('#command_target')[0]);
+            target_widget.initScriptCompatibility();
+
+            
+                        target_widget.setLastAttacked({"id":"102073","x":"490","y":"749","name":"Aldeia-bonus","player_id":"0","bonus_id":"2","tile_id":null,"village_type":"standard","player_name":null,"points":"34","distance":"89","event_special":"0","image":"https:\/\/dsbr.innogamescdn.com\/asset\/e94cf8a0\/graphic\/map\/icon\/v1_left_icon.webp"});
+            
+            
+            if (typeof CommandPopup !== 'undefined') {
+                CommandPopup.target_widget = target_widget;
+            }
+
+            Place.commandScreen.init(77, 1, {"spear":1,"sword":1,"axe":1,"archer":1,"spy":2,"light":4,"marcher":5,"heavy":6,"ram":5,"catapult":8,"knight":10,"snob":100}, true);
+        });
+    </script>
+
+    <form id="command-data-form" name="units" action="/game.php?village=105765&amp;screen=place&amp;try=confirm" method="post" class="float_left">
+        <input type="hidden" name="FORMHASH" value="FORMHASH">
+        <input type="hidden" id="template_id" name="template_id" value="">
+        <input type="hidden" name="source_village" value="105765">
+
+        
+        <table>
+            <tbody><tr><td valign="top"><table class="vis" width="100%"><tbody><tr><th>Infantaria</th></tr><tr><td class="nowrap "><a href="#" class="unit_link" data-unit="spear"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_spear.webp" class="" data-title="Lanceiro"></a> <input id="unit_input_spear" name="spear" type="text" tabindex="1" value="" class="unitsInput" data-all-count="1"> <a href="#" class="units-entry-all" data-unit="spear" id="units_entry_all_spear">(1)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="sword"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_sword.webp" class="" data-title="Espadachim"></a> <input id="unit_input_sword" name="sword" type="text" tabindex="2" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="sword" id="units_entry_all_sword">(0)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="axe"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_axe.webp" class="" data-title="Bárbaro"></a> <input id="unit_input_axe" name="axe" type="text" tabindex="3" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="axe" id="units_entry_all_axe">(0)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="archer"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_archer.webp" class="" data-title="Arqueiro"></a> <input id="unit_input_archer" name="archer" type="text" tabindex="4" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="archer" id="units_entry_all_archer">(0)</a>
+</td></tr></tbody></table></td>
+<td valign="top"><table class="vis" width="100%"><tbody><tr><th>Cavalaria</th></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="spy"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_spy.webp" class="" data-title="Explorador"></a> <input id="unit_input_spy" name="spy" type="text" tabindex="5" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="spy" id="units_entry_all_spy">(0)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="light"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_light.webp" class="" data-title="Cavalaria leve"></a> <input id="unit_input_light" name="light" type="text" tabindex="6" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="light" id="units_entry_all_light">(0)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="marcher"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_marcher.webp" class="" data-title="Arqueiro a cavalo"></a> <input id="unit_input_marcher" name="marcher" type="text" tabindex="7" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="marcher" id="units_entry_all_marcher">(0)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="heavy"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_heavy.webp" class="" data-title="Cavalaria pesada"></a> <input id="unit_input_heavy" name="heavy" type="text" tabindex="8" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="heavy" id="units_entry_all_heavy">(0)</a>
+</td></tr></tbody></table></td>
+<td valign="top"><table class="vis" width="100%"><tbody><tr><th>Armas de cerco</th></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="ram"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_ram.webp" class="" data-title="Aríete"></a> <input id="unit_input_ram" name="ram" type="text" tabindex="9" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="ram" id="units_entry_all_ram">(0)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="catapult"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_catapult.webp" class="" data-title="Catapulta"></a> <input id="unit_input_catapult" name="catapult" type="text" tabindex="10" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="catapult" id="units_entry_all_catapult">(0)</a>
+</td></tr></tbody></table></td>
+<td valign="top"><table class="vis" width="100%"><tbody><tr><th>Outros</th></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="knight"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_knight.webp" class="" data-title="Paladino"></a> <input id="unit_input_knight" name="knight" type="text" tabindex="11" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="knight" id="units_entry_all_knight">(0)</a>
+</td></tr><tr><td class="nowrap unit-input-faded"><a href="#" class="unit_link" data-unit="snob"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/unit/unit_snob.webp" class="" data-title="Nobre"></a> <input id="unit_input_snob" name="snob" type="text" tabindex="12" value="" class="unitsInput" data-all-count="0"> <a href="#" class="units-entry-all" data-unit="snob" id="units_entry_all_snob">(0)</a>
+</td></tr></tbody></table></td>
+
+        </tr></tbody></table>
+
+        
+        <input type="text" name="x" id="inputx" value="" style="display: none">
+        <input type="text" name="y" id="inputy" value="" style="display: none">
+
+        <br>
+
+                    <div id="command_target" class="target-select clearfix vis float_left" data-on-choice="onCommandTargetChoice">
+                <h4>Destino:</h4>
+
+                <table class="vis" style="width: 100%">
+                    <tbody><tr>
+                        <td>
+                            <div class="target-types">
+                                <label><input type="radio" name="target_type" value="coord" checked="checked"> Coordenada</label>
+                                <label><input type="radio" name="target_type" value="village_name"> Nome da aldeia</label>
+                                <label><input type="radio" name="target_type" value="player_name"> Nome do jogador</label>
+                            </div>
+
+                            <div id="place_target" class="target-input float_left">
+                                <input type="text" name="input" class="target-input-field target-input-autocomplete ui-autocomplete-input" data-type="player" value="" autocomplete="off" tabindex="14" data-ignore-single-exact-match="1" placeholder="123|456">
+                            </div>
+                            <a href="#" class="target-quickbutton target-last-attacked" data-title="Anterior" style="display: inline;"></a>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="target-select-links">
+                                                                                                    <span></span>
+                                                                    <span></span>
+                                                                    <span></span>
+                                                            </div>
+                        </td>
+                    </tr>
+                </tbody></table>
+            </div>
+
+            <div id="command_actions" class="target-select clearfix vis float_left">
+                <h4>Comando:</h4>
+
+
+                <table class="vis" style="width: 100%">
+                    <tbody><tr>
+                        <td>
+                            <input id="target_attack" tabindex="15" class="attack btn btn-attack btn-target-action" name="attack" type="submit" value="Ataque">                            <input id="target_support" tabindex="16" class="support btn btn-support btn-target-action" name="support" type="submit" value="Apoio">                        </td>
+                    </tr>
+                </tbody></table>
+            </div>
+            </form>
+
+    <div class="vis float_left" style="margin: 4px 0 0 10px; min-width: 125px;">
+	<h4>
+					<a href="/game.php?village=105765&amp;screen=place&amp;mode=templates">Modelos de tropas</a>
+			</h4>
+	<table class="vis" style="width: 100%">
+					<tbody><tr class="row_a">
+				<td class="place-troop-templates">
+					<a class="troop_template_selector" href="#" data-template-id="all">
+						Todas as tropas
+					</a>
+																	<img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/questionmark.webp" class="" data-title="Todas as tropas: Enviar todas as unidades presentes desta aldeia.">
+									</td>
+			</tr>
+					<tr class="row_b">
+				<td class="place-troop-templates">
+					<a class="troop_template_selector" href="#" data-template-id="fake">
+						Fake
+					</a>
+																	<img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/questionmark.webp" class="" data-title="Fake: Adiciona um espião e a quantidade mínima de catapultas necessárias para atingir o Limite de ataques falsos.">
+									</td>
+			</tr>
+					<tr class="row_a">
+				<td class="place-troop-templates">
+					<a class="troop_template_selector" href="#" data-template-id="snob">
+						Nobre
+					</a>
+																	<img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/questionmark.webp" class="" data-title="Nobre: Cada ataque contém um nobre e as unidades ofensivas são equilibradas automaticamente.">
+									</td>
+			</tr>
+			</tbody></table>
+</div>
+<div class="commands-container-outer">
+    <h3 style="clear: both">Movimento de tropas</h3>
+
+<div id="commands_outgoings" class="commands-container" data-type="outgoing" data-village="105765" data-commands="1">
+
+    <table class="vis" style="width:100%">
+        <tbody><tr>
+            <th width="52%">
+                Próprios comandos
+                <span class="commands-command-count">
+               (1)
+            </span>
+            </th>
+            <th width="33%">Chegada</th>
+            <th width="15%">Chega em</th>
+        </tr>
+
+                                                    <tr class="command-row">
+                <td>
+                    <span class="quickedit-out" data-id="1662088834" data-ignore-icons="1">
+                    <span class="quickedit-content">
+                        <a href="/game.php?village=105765&amp;screen=info_command&amp;id=1662088834&amp;type=own">
+                            <span class="icon-container">
+                                <span class="command_hover_details" data-command-id="1662088834" data-icon-hint="Ataque pequeno (1-1000 tropas)" data-command-type="attack" data-title="">
+	<img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/command/attack_small.webp" alt="">
+</span>
+                            </span>
+                            <span class="quickedit-label">
+                                 Ataque a Aldeia-bonus (490|749) K74
+                            </span>
+                        </a>
+
+                                            </span>
+                </span>
+                </td>
+
+                                                        <td>amanhã às 01:40:35:<span class="grey small">311</span></td>
+                
+                <td style="min-width:90px;vertical-align:middle;position: relative">
+                    <span class="" data-endtime="1790656835">3:20:34</span>
+                                            <a class="command-cancel" data-id="1662088834" data-home="105765" href="/game.php?village=105765&amp;screen=place&amp;action=cancel&amp;redirect=0&amp;id=1662088834&amp;h=CSRF" data-title="Cancelar">
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/delete.webp" alt="" class="cancel_link_icon">
+                        </a>
+                                    </td>
+            </tr>
+            </tbody></table>
+
+    <script>
+        
+        $(function () {
+            $('.quickedit-out').QuickEdit({show_icons: false, url: TribalWars.buildURL('POST', 'info_command', {ajaxaction: 'edit_own_comment', id: '__ID__'})});
+            Command.init();
+        });
+        
+    </script>
+</div></div>
+	                               		</td>

@@ -6,9 +6,9 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from tribal_assistant.server import app as fastapi_app
 from tribal_assistant.db.base import Base
 from tribal_assistant.db.session import get_session
+from tribal_assistant.server import app as fastapi_app
 
 
 @pytest.fixture

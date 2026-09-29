@@ -1,0 +1,551 @@
+<td id="content_value">
+                                            
+                                            <script type="text/javascript">
+//<![CDATA[
+	$(document).ready(function() {
+		BuildingMain.upgrade_building_link = '/game.php?village=105765&screen=main&ajaxaction=upgrade_building&type=main&h=CSRF';
+		BuildingMain.downgrade_building_link = '/game.php?village=105765&screen=main&ajaxaction=downgrade_building&type=main&h=CSRF';
+		BuildingMain.confirm_queue = false;
+		BuildingMain.mode = 0;
+	});
+//]]>
+</script>
+
+<table width="100%"><tbody><tr>
+		<td><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/big_buildings/main1.webp" alt="Edifício principal" class=""></td>
+		<td width="100%"><h2>	Edifício principal (Nível 3)</h2>
+Você pode construir ou melhorar edifícios no edifício principal. Quanto maior o nível, mais rápida será a construção de edifícios. Você poderá demolir edifícios nessa aldeia quando o nível do edifício principal for igual ou superior a 15 (requer lealdade em 100%).</td>
+		<td align="right" valign="top" style="white-space:nowrap;"><a href="https://help.tribalwars.com.br/wiki/Edifícios" target="_blank">
+				Ajuda - Edifícios
+			</a></td>
+	</tr></tbody></table><br>
+
+
+
+<script>
+	$(document).ready(function() {
+		BuildingMain.init_res_schedule(1790644732849, {"schedules":{"wood":{"1790643666":"0.026225279658755"},"stone":{"1790643666":"0.026225279658755"},"iron":{"1790643666":"0.016666666666667"}},"items_count":{"wood":1,"stone":1,"iron":1},"timestamps":{"wood":[1790643666],"stone":[1790643666],"iron":[1790643666]}}, {"schedules":{"wood":{"1790643656":"909.40842736336"},"stone":{"1790643656":"1009.4084273634"},"iron":{"1790643656":"760.16666666667"}},"items_count":{"wood":1,"stone":1,"iron":1},"timestamps":{"wood":[1790643656],"stone":[1790643656],"iron":[1790643656]},"values":{"wood":["909.40842736336"],"stone":["1009.4084273634"],"iron":["760.16666666667"]},"next_timestamps":{"wood":[],"stone":[],"iron":[]},"schedules_flipped":{"wood":{"909.40842736336":1790643656},"stone":{"1009.4084273634":1790643656},"iron":{"760.16666666667":1790643656}}});
+	});
+</script>
+
+
+<script>
+    BuildingMain.buildings = {"main":{"id":"main","image":"buildings\/main.png","max_level":30,"min_level":1,"image_levels":[5,15],"req":[],"require":[],"wood":180,"stone":166,"iron":140,"pop":1,"wood_factor":1.26,"stone_factor":1.275,"iron_factor":1.26,"pop_factor":1.17,"build_time":194,"build_time_factor":1.2,"build_time_min":10,"points":10,"wood_cheap":144,"stone_cheap":132,"iron_cheap":112,"order":null,"level":"3","level_next":4,"error":null,"forecast":null,"can_build":true,"big_image":"main1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Edif\u00edcio principal","text":"Voc\u00ea pode construir ou melhorar edif\u00edcios no edif\u00edcio principal. Quanto maior o n\u00edvel, mais r\u00e1pida ser\u00e1 a constru\u00e7\u00e3o de edif\u00edcios. Voc\u00ea poder\u00e1 demolir edif\u00edcios nessa aldeia quando o n\u00edvel do edif\u00edcio principal for igual ou superior a 15 (requer lealdade em 100%)."},"barracks":{"id":"barracks","image":"buildings\/barracks.png","max_level":25,"min_level":0,"image_levels":[5,20],"req":{"main":3},"require":{"main":{"level":3,"name":"Edif\u00edcio principal","image":"buildings\/main.png","big_image":"main1","met":true}},"wood":318,"stone":279,"iron":143,"pop":2,"wood_factor":1.26,"stone_factor":1.28,"iron_factor":1.26,"pop_factor":1.17,"build_time":126,"build_time_factor":1.2,"build_time_min":10,"points":16,"wood_cheap":254,"stone_cheap":223,"iron_cheap":114,"order":null,"level":"2","level_next":3,"error":null,"forecast":null,"can_build":true,"big_image":"barracks1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Quartel","text":"No Quartel voc\u00ea pode recrutar sua infantaria. Quanto maior o seu n\u00edvel, mais rapidamente poder\u00e3o ser recrutadas novas tropas."},"place":{"id":"place","image":"buildings\/place.png","max_level":1,"min_level":0,"image_levels":[],"req":[],"require":[],"wood":13,"stone":51,"iron":38,"pop":0,"wood_factor":1.26,"stone_factor":1.275,"iron_factor":1.26,"pop_factor":1.17,"build_time":35,"build_time_factor":1.2,"build_time_min":10,"points":0,"wood_cheap":10,"stone_cheap":40,"iron_cheap":30,"order":null,"level":"1","level_next":2,"error":null,"forecast":null,"can_build":true,"big_image":"place1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Pra\u00e7a de reuni\u00e3o","text":"Na Pra\u00e7a de Reuni\u00f5es encontram-se seus guerreiros antes da batalha. Aqui voc\u00ea poder\u00e1 comandar ataques e mover suas tropas."},"statue":{"id":"statue","image":"buildings\/statue.png","max_level":1,"min_level":0,"image_levels":[],"req":[],"require":[],"wood":220,"stone":220,"iron":220,"pop":10,"wood_factor":1.26,"stone_factor":1.275,"iron_factor":1.26,"pop_factor":1.17,"build_time":5,"build_time_factor":1.2,"build_time_min":10,"points":24,"wood_cheap":176,"stone_cheap":176,"iron_cheap":176,"order":null,"level":"0","level_next":1,"error":null,"forecast":null,"can_build":true,"big_image":"statue1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Est\u00e1tua","text":"Voc\u00ea pode recrutar um paladino na est\u00e1tua caso voc\u00ea ainda n\u00e3o tenha um nesta aldeia e possua slots dispon\u00edveis. Conquiste mais aldeias para obter novos slots de paladinos."},"market":{"id":"market","image":"buildings\/market.png","max_level":25,"min_level":0,"image_levels":[5,20],"req":{"main":3,"storage":2},"require":{"main":{"level":3,"name":"Edif\u00edcio principal","image":"buildings\/main.png","big_image":"main1","met":true},"storage":{"level":2,"name":"Armaz\u00e9m","image":"buildings\/storage.png","big_image":"storage1","met":true}},"wood":100,"stone":100,"iron":100,"pop":20,"wood_factor":1.26,"stone_factor":1.275,"iron_factor":1.26,"pop_factor":1.17,"build_time":9,"build_time_factor":1.2,"build_time_min":10,"points":10,"wood_cheap":80,"stone_cheap":80,"iron_cheap":80,"order":null,"level":"0","level_next":1,"error":null,"forecast":null,"can_build":true,"big_image":"market1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Mercado","text":"No mercado, voc\u00ea pode trocar recursos com outros jogadores."},"wood":{"id":"wood","image":"buildings\/wood.png","max_level":30,"min_level":0,"image_levels":[10,20],"req":[],"require":[],"wood":122,"stone":159,"iron":96,"pop":1,"wood_factor":1.25,"stone_factor":1.275,"iron_factor":1.245,"pop_factor":1.155,"build_time":372,"build_time_factor":1.2,"build_time_min":10,"points":6,"wood_cheap":97,"stone_cheap":127,"iron_cheap":76,"order":null,"level":"4","level_next":5,"error":null,"forecast":null,"can_build":true,"big_image":"wood1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Bosque","text":"Os lenhadores cortam madeira dos bosques que rodeiam as aldeias. Tal madeira \u00e9 necess\u00e1ria para o desenvolvimento da pr\u00f3pria aldeia, assim como para o fortalecimento do ex\u00e9rcito. Quanto mais alto o n\u00edvel dos lenhadores, mais madeira ser\u00e1 produzida."},"stone":{"id":"stone","image":"buildings\/stone.png","max_level":30,"min_level":0,"image_levels":[10,20],"req":[],"require":[],"wood":169,"stone":128,"iron":95,"pop":2,"wood_factor":1.27,"stone_factor":1.265,"iron_factor":1.24,"pop_factor":1.14,"build_time":372,"build_time_factor":1.2,"build_time_min":10,"points":6,"wood_cheap":135,"stone_cheap":102,"iron_cheap":76,"order":null,"level":"4","level_next":5,"error":null,"forecast":null,"can_build":true,"big_image":"stone1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Po\u00e7o de argila","text":"No po\u00e7o de argila trabalham muitos de seus homens afim de prover sua aldeia com a importante argila. Quanto maior for o seu n\u00edvel, maior ser\u00e1 sua capacidade de produ\u00e7\u00e3o."},"iron":{"id":"iron","image":"buildings\/iron.png","max_level":30,"min_level":0,"image_levels":[10,20],"req":[],"require":[],"wood":94,"stone":83,"iron":87,"pop":2,"wood_factor":1.252,"stone_factor":1.275,"iron_factor":1.24,"pop_factor":1.17,"build_time":5,"build_time_factor":1.2,"build_time_min":10,"points":6,"wood_cheap":75,"stone_cheap":66,"iron_cheap":69,"order":null,"level":"1","level_next":2,"error":null,"forecast":null,"can_build":true,"big_image":"iron1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Mina de ferro","text":"Da mina de ferro \u00e9 extra\u00eddo o material chave para as batalhas. Quanto maior for o seu n\u00edvel, maior ser\u00e1 sua capacidade de produ\u00e7\u00e3o."},"farm":{"id":"farm","image":"buildings\/farm.png","max_level":30,"min_level":1,"image_levels":[10,20],"req":[],"require":[],"wood":76,"stone":70,"iron":50,"pop":0,"wood_factor":1.3,"stone_factor":1.32,"iron_factor":1.29,"pop_factor":1,"build_time":84,"build_time_factor":1.2,"build_time_min":10,"points":5,"wood_cheap":60,"stone_cheap":56,"iron_cheap":40,"order":null,"level":"2","level_next":3,"error":null,"forecast":null,"can_build":true,"big_image":"farm1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Fazenda","text":"A Fazenda prov\u00ea sustento \u00e0 seus trabalhadores e tropas. Sem o desenvolvimento da Fazenda a sua aldeia n\u00e3o crescer\u00e1. Quanto maior o n\u00edvel da Fazenda, mais habitantes estar\u00e3o \u00e0 sua disposi\u00e7\u00e3o."},"storage":{"id":"storage","image":"buildings\/storage.png","max_level":30,"min_level":1,"image_levels":[10,20],"req":[],"require":[],"wood":96,"stone":81,"iron":62,"pop":0,"wood_factor":1.265,"stone_factor":1.27,"iron_factor":1.245,"pop_factor":1.15,"build_time":71,"build_time_factor":1.2,"build_time_min":10,"points":6,"wood_cheap":76,"stone_cheap":64,"iron_cheap":49,"order":null,"level":"2","level_next":3,"error":null,"forecast":null,"can_build":true,"big_image":"storage1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Armaz\u00e9m","text":"No Armaz\u00e9m s\u00e3o estocados os recursos produzidos pela aldeia. Quanto maior for o n\u00edvel do Armaz\u00e9m, maior ser\u00e1 a sua capacidade de armazenamento."},"hide":{"id":"hide","image":"buildings\/hide.png","max_level":10,"min_level":0,"image_levels":[],"req":[],"require":[],"wood":63,"stone":75,"iron":63,"pop":0,"wood_factor":1.25,"stone_factor":1.25,"iron_factor":1.25,"pop_factor":1.17,"build_time":6,"build_time_factor":1.2,"build_time_min":10,"points":5,"wood_cheap":50,"stone_cheap":60,"iron_cheap":50,"order":null,"level":"1","level_next":2,"error":null,"forecast":null,"can_build":true,"big_image":"hide1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Esconderijo","text":"Os recursos no esconderijo n\u00e3o podem ser saqueados. Quanto maior for o n\u00edvel, mais recursos podem ser escondidos. Os exploradores inimigos tamb\u00e9m n\u00e3o podem descobrir quantos recursos est\u00e3o guardados no esconderijo."},"wall":{"id":"wall","image":"buildings\/wall.png","max_level":20,"min_level":0,"image_levels":[5,15],"req":{"barracks":1},"require":{"barracks":{"level":1,"name":"Quartel","image":"buildings\/barracks.png","big_image":"barracks1","met":true}},"wood":50,"stone":100,"iron":20,"pop":5,"wood_factor":1.26,"stone_factor":1.275,"iron_factor":1.26,"pop_factor":1.17,"build_time":120,"build_time_factor":1.2,"build_time_min":240,"points":8,"wood_cheap":40,"stone_cheap":80,"iron_cheap":16,"order":null,"level":"0","level_next":1,"error":null,"forecast":null,"can_build":true,"big_image":"wall1","cheap":true,"cheap_possible":true,"destroy_time":null,"name":"Muralha","text":"A muralha defende a sua aldeia contra as tropas dos seus inimigos. Quanto maior o n\u00edvel, melhor a defesa b\u00e1sica da sua aldeia. Tamb\u00e9m aumenta a for\u00e7a defensiva das tropas estacionadas na aldeia."}};
+</script>
+
+<div id="building_wrapper">
+
+    
+    <table id="buildings" class="vis nowrap" style="width: 100%;">
+        <tbody><tr>
+            <th style="width: 23%">Edifícios</th>
+            <th colspan="5">Requerimentos</th>
+            <th style="width: 30%">Construir</th>
+        </tr>
+                <tr id="main_buildrow_main">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=main"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/main1.webp" class="bmain_list_img" data-title="Edifício principal"></a>
+                <a href="/game.php?village=105765&amp;screen=main">Edifício principal</a><br>
+                <span style="font-size: 0.9em">Nível 3</span>
+            </td>
+                            <td data-cost="180" class="cost_wood"><span class="icon header wood"> </span>180</td>
+                <td data-cost="166" class="cost_stone"><span class="icon header stone"> </span>166</td>
+                <td data-cost="140" class="cost_iron"><span class="icon header iron"> </span>140</td>
+                <td><span class="icon header time"></span>0:03:14</td>
+                <td><span class="icon header population"> </span>1</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_main_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=main&amp;type=main&amp;h=CSRF&amp;cheap" data-building="main" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;180&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;144&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;166&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;132&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;140&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;112&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build" id="main_buildlink_main_4" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=main&amp;type=main&amp;h=CSRF" data-building="main" data-level-next="4">Nível 4</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_barracks">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=barracks"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/barracks1.webp" class="bmain_list_img" data-title="Quartel"></a>
+                <a href="/game.php?village=105765&amp;screen=barracks">Quartel</a><br>
+                <span style="font-size: 0.9em">Nível 2</span>
+            </td>
+                            <td data-cost="318" class="cost_wood"><span class="icon header wood"> </span>318</td>
+                <td data-cost="279" class="cost_stone"><span class="icon header stone"> </span>279</td>
+                <td data-cost="143" class="cost_iron"><span class="icon header iron"> </span>143</td>
+                <td><span class="icon header time"></span>0:02:06</td>
+                <td><span class="icon header population"> </span>2</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_barracks_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=barracks&amp;type=main&amp;h=CSRF&amp;cheap" data-building="barracks" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;318&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;254&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;279&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;223&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;143&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;114&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build current-quest" id="main_buildlink_barracks_3" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=barracks&amp;type=main&amp;h=CSRF" data-building="barracks" data-level-next="3" data-title="Construa um exército">Nível 3</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_place">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=place"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/place1.webp" class="bmain_list_img" data-title="Praça de reunião"></a>
+                <a href="/game.php?village=105765&amp;screen=place">Praça de reunião</a><br>
+                <span style="font-size: 0.9em">Nível 1</span>
+            </td>
+                            <td colspan="6" class="inactive center">Edifício totalmente construído</td>
+                    </tr>
+            <tr id="main_buildrow_statue">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=statue"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/statue1.webp" class="bmain_list_img" data-title="Estátua"></a>
+                <a href="/game.php?village=105765&amp;screen=statue">Estátua</a><br>
+                <span style="font-size: 0.9em">não construído</span>
+            </td>
+                            <td data-cost="220" class="cost_wood"><span class="icon header wood"> </span>220</td>
+                <td data-cost="220" class="cost_stone"><span class="icon header stone"> </span>220</td>
+                <td data-cost="220" class="cost_iron"><span class="icon header iron"> </span>220</td>
+                <td><span class="icon header time"></span>0:00:05</td>
+                <td><span class="icon header population"> </span>10</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_statue_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=statue&amp;type=main&amp;h=CSRF&amp;cheap" data-building="statue" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;220&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;176&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;220&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;176&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;220&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;176&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build" id="main_buildlink_statue_1" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=statue&amp;type=main&amp;h=CSRF" data-building="statue" data-level-next="1">Construir</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_market">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=market"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/market1.webp" class="bmain_list_img" data-title="Mercado"></a>
+                <a href="/game.php?village=105765&amp;screen=market">Mercado</a><br>
+                <span style="font-size: 0.9em">não construído</span>
+            </td>
+                            <td data-cost="100" class="cost_wood"><span class="icon header wood"> </span>100</td>
+                <td data-cost="100" class="cost_stone"><span class="icon header stone"> </span>100</td>
+                <td data-cost="100" class="cost_iron"><span class="icon header iron"> </span>100</td>
+                <td><span class="icon header time"></span>0:00:09</td>
+                <td><span class="icon header population"> </span>20</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_market_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=market&amp;type=main&amp;h=CSRF&amp;cheap" data-building="market" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;100&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;80&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;100&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;80&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;100&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;80&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build" id="main_buildlink_market_1" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=market&amp;type=main&amp;h=CSRF" data-building="market" data-level-next="1">Construir</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_wood">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=wood"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/wood1.webp" class="bmain_list_img" data-title="Bosque"></a>
+                <a href="/game.php?village=105765&amp;screen=wood">Bosque</a><br>
+                <span style="font-size: 0.9em">Nível 4</span>
+            </td>
+                            <td data-cost="122" class="cost_wood"><span class="icon header wood"> </span>122</td>
+                <td data-cost="159" class="cost_stone"><span class="icon header stone"> </span>159</td>
+                <td data-cost="96" class="cost_iron"><span class="icon header iron"> </span>96</td>
+                <td><span class="icon header time"></span>0:06:12</td>
+                <td><span class="icon header population"> </span>1</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_wood_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=wood&amp;type=main&amp;h=CSRF&amp;cheap" data-building="wood" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;122&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;97&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;159&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;127&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;96&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;76&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build current-quest" id="main_buildlink_wood_5" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=wood&amp;type=main&amp;h=CSRF" data-building="wood" data-level-next="5" data-title="Aumentar produção">Nível 5</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_stone">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=stone"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/stone1.webp" class="bmain_list_img" data-title="Poço de argila"></a>
+                <a href="/game.php?village=105765&amp;screen=stone">Poço de argila</a><br>
+                <span style="font-size: 0.9em">Nível 4</span>
+            </td>
+                            <td data-cost="169" class="cost_wood"><span class="icon header wood"> </span>169</td>
+                <td data-cost="128" class="cost_stone"><span class="icon header stone"> </span>128</td>
+                <td data-cost="95" class="cost_iron"><span class="icon header iron"> </span>95</td>
+                <td><span class="icon header time"></span>0:06:12</td>
+                <td><span class="icon header population"> </span>2</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_stone_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=stone&amp;type=main&amp;h=CSRF&amp;cheap" data-building="stone" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;169&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;135&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;128&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;102&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;95&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;76&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build current-quest" id="main_buildlink_stone_5" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=stone&amp;type=main&amp;h=CSRF" data-building="stone" data-level-next="5" data-title="Aumentar produção">Nível 5</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_iron">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=iron"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/iron1.webp" class="bmain_list_img" data-title="Mina de ferro"></a>
+                <a href="/game.php?village=105765&amp;screen=iron">Mina de ferro</a><br>
+                <span style="font-size: 0.9em">Nível 1</span>
+            </td>
+                            <td data-cost="94" class="cost_wood"><span class="icon header wood"> </span>94</td>
+                <td data-cost="83" class="cost_stone"><span class="icon header stone"> </span>83</td>
+                <td data-cost="87" class="cost_iron"><span class="icon header iron"> </span>87</td>
+                <td><span class="icon header time"></span>0:00:05</td>
+                <td><span class="icon header population"> </span>2</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_iron_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=iron&amp;type=main&amp;h=CSRF&amp;cheap" data-building="iron" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;94&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;75&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;83&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;66&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;87&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;69&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build current-quest" id="main_buildlink_iron_2" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=iron&amp;type=main&amp;h=CSRF" data-building="iron" data-level-next="2" data-title="Aumentar produção">Nível 2</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_farm">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=farm"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/farm1.webp" class="bmain_list_img" data-title="Fazenda"></a>
+                <a href="/game.php?village=105765&amp;screen=farm">Fazenda</a><br>
+                <span style="font-size: 0.9em">Nível 2</span>
+            </td>
+                            <td data-cost="76" class="cost_wood"><span class="icon header wood"> </span>76</td>
+                <td data-cost="70" class="cost_stone"><span class="icon header stone"> </span>70</td>
+                <td data-cost="50" class="cost_iron"><span class="icon header iron"> </span>50</td>
+                <td><span class="icon header time"></span>0:01:24</td>
+                <td></td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_farm_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=farm&amp;type=main&amp;h=CSRF&amp;cheap" data-building="farm" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;76&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;60&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;70&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;56&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;50&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;40&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build" id="main_buildlink_farm_3" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=farm&amp;type=main&amp;h=CSRF" data-building="farm" data-level-next="3">Nível 3</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_storage">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=storage"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/storage1.webp" class="bmain_list_img" data-title="Armazém"></a>
+                <a href="/game.php?village=105765&amp;screen=storage">Armazém</a><br>
+                <span style="font-size: 0.9em">Nível 2</span>
+            </td>
+                            <td data-cost="96" class="cost_wood"><span class="icon header wood"> </span>96</td>
+                <td data-cost="81" class="cost_stone"><span class="icon header stone"> </span>81</td>
+                <td data-cost="62" class="cost_iron"><span class="icon header iron"> </span>62</td>
+                <td><span class="icon header time"></span>0:01:11</td>
+                <td></td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_storage_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=storage&amp;type=main&amp;h=CSRF&amp;cheap" data-building="storage" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;96&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;76&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;81&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;64&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;62&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;49&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build" id="main_buildlink_storage_3" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=storage&amp;type=main&amp;h=CSRF" data-building="storage" data-level-next="3">Nível 3</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_hide">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=hide"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/hide1.webp" class="bmain_list_img" data-title="Esconderijo"></a>
+                <a href="/game.php?village=105765&amp;screen=hide">Esconderijo</a><br>
+                <span style="font-size: 0.9em">Nível 1</span>
+            </td>
+                            <td data-cost="63" class="cost_wood"><span class="icon header wood"> </span>63</td>
+                <td data-cost="75" class="cost_stone"><span class="icon header stone"> </span>75</td>
+                <td data-cost="63" class="cost_iron"><span class="icon header iron"> </span>63</td>
+                <td><span class="icon header time"></span>0:00:06</td>
+                <td></td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_hide_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=hide&amp;type=main&amp;h=CSRF&amp;cheap" data-building="hide" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;63&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;50&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;75&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;60&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;63&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;50&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build" id="main_buildlink_hide_2" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=hide&amp;type=main&amp;h=CSRF" data-building="hide" data-level-next="2">Nível 2</a>
+
+                                                                    </td>
+                    </tr>
+            <tr id="main_buildrow_wall">
+            <td>
+                <a href="/game.php?village=105765&amp;screen=wall"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/wall1.webp" class="bmain_list_img" data-title="Muralha"></a>
+                <a href="/game.php?village=105765&amp;screen=wall">Muralha</a><br>
+                <span style="font-size: 0.9em">não construído</span>
+            </td>
+                            <td data-cost="50" class="cost_wood"><span class="icon header wood"> </span>50</td>
+                <td data-cost="100" class="cost_stone"><span class="icon header stone"> </span>100</td>
+                <td data-cost="20" class="cost_iron"><span class="icon header iron"> </span>20</td>
+                <td><span class="icon header time"></span>0:02:00</td>
+                <td><span class="icon header population"> </span>5</td>
+                <td class="build_options">
+
+                                    <a id="main_buildlink_wall_cheap" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=wall&amp;type=main&amp;h=CSRF&amp;cheap" data-building="wall" data-cost="30" class="btn btn-bcr float_right" data-title="20% de custos reduzidos:&lt;br /&gt;
+
+
+&lt;strike&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;50&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header wood&quot;&gt; &lt;/span&gt;40&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;100&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header stone&quot;&gt; &lt;/span&gt;80&lt;/span&gt;&lt;br/&gt;
+&lt;strike&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;20&lt;/strike&gt;
+&lt;span&gt;&lt;span class=&quot;icon header iron&quot; &gt; &lt;/span&gt;16&lt;/span&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Custos: &lt;/strong&gt; &lt;span class=&quot;icon header premium&quot;&gt;&lt;/span&gt;30
+
+">-20%</a>
+                
+
+                                <a class="btn btn-build" id="main_buildlink_wall_1" href="/game.php?village=105765&amp;screen=main&amp;action=upgrade_building&amp;id=wall&amp;type=main&amp;h=CSRF" data-building="wall" data-level-next="1">Construir</a>
+
+                                                                    </td>
+                    </tr>
+        </tbody></table>
+
+    <br>
+
+        <table id="buildings_unmet" class="vis nowrap tall" style="width: 100%">
+        <tbody><tr>
+            <th style="width: 23%">Ainda não disponível</th>
+            <th>Requerimentos</th>
+        </tr>
+                <tr>
+            <td>
+                <a href="/game.php?village=105765&amp;screen=stable"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/stable1.webp" class="bmain_list_img" data-title="Estábulo"></a>
+                <a href="/game.php?village=105765&amp;screen=stable">Estábulo</a>
+            </td>
+            <td>
+                <div class="unmet_req">
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/main2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Edifício principal (10)</span>
+                    </span>
+                                        </span>
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/barracks2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Quartel (5)</span>
+                    </span>
+                                        </span>
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/smith2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Ferreiro (5)</span>
+                    </span>
+                                        </span>
+                                                </div>
+            </td>
+        </tr>
+                <tr>
+            <td>
+                <a href="/game.php?village=105765&amp;screen=garage"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/garage1.webp" class="bmain_list_img" data-title="Oficina"></a>
+                <a href="/game.php?village=105765&amp;screen=garage">Oficina</a>
+            </td>
+            <td>
+                <div class="unmet_req">
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/main2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Edifício principal (10)</span>
+                    </span>
+                                        </span>
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/smith2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Ferreiro (10)</span>
+                    </span>
+                                        </span>
+                                                <span></span>
+                                </div>
+            </td>
+        </tr>
+                <tr>
+            <td>
+                <a href="/game.php?village=105765&amp;screen=watchtower"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/watchtower1.webp" class="bmain_list_img" data-title="Torre de vigia"></a>
+                <a href="/game.php?village=105765&amp;screen=watchtower">Torre de vigia</a>
+            </td>
+            <td>
+                <div class="unmet_req">
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/main2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Edifício principal (5)</span>
+                    </span>
+                                        </span>
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/farm1.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Fazenda (5)</span>
+                    </span>
+                                        </span>
+                                                <span></span>
+                                </div>
+            </td>
+        </tr>
+                <tr>
+            <td>
+                <a href="/game.php?village=105765&amp;screen=snob"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/snob1.webp" class="bmain_list_img" data-title="Academia"></a>
+                <a href="/game.php?village=105765&amp;screen=snob">Academia</a>
+            </td>
+            <td>
+                <div class="unmet_req">
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/main3.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Edifício principal (20)</span>
+                    </span>
+                                        </span>
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/smith3.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Ferreiro (20)</span>
+                    </span>
+                                        </span>
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/market2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Mercado (10)</span>
+                    </span>
+                                        </span>
+                                                </div>
+            </td>
+        </tr>
+                <tr>
+            <td>
+                <a href="/game.php?village=105765&amp;screen=smith"><img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/smith1.webp" class="bmain_list_img" data-title="Ferreiro"></a>
+                <a href="/game.php?village=105765&amp;screen=smith">Ferreiro</a>
+            </td>
+            <td>
+                <div class="unmet_req">
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/grey/main2.webp" style="vertical-align: middle" alt="" class="">
+                        <span class="inactive">Edifício principal (5)</span>
+                    </span>
+                                        </span>
+                                    <span>
+                                        <span>
+                        <img src="https://dsbr.innogamescdn.com/asset/e94cf8a0/graphic/buildings/mid/barracks1.webp" style="vertical-align: middle" alt="" class="">
+                        <span>Quartel (1)</span>
+                    </span>
+                                        </span>
+                                                <span></span>
+                                </div>
+            </td>
+        </tr>
+            </tbody></table>
+    <br>
+    </div>
+<script>
+    BuildingMain.init();
+</script>
+<form action="/game.php?village=105765&amp;screen=main&amp;action=change_name" method="post">
+<table class="vis">
+<tbody><tr><th colspan="3">Mudar nome da aldeia:</th></tr>
+<tr><td><input type="text" name="name" value="Player de aldeia" maxlength="32" size="32"></td><td><input type="submit" class="btn" value="Alterar"></td></tr>
+</tbody></table>
+<input type="hidden" name="h" value="CSRF"></form>
+	                               		</td>
