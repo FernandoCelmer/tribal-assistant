@@ -11,6 +11,8 @@ MIN_BATCH = 5
 FARM_UNITS = ("light", "spear", "axe")
 SCAVENGE_SHARE = 0.4
 SCAVENGE_CAP = 1000
+MIN_SPIES = 5
+SPIES_PER_LIGHT = 5
 
 
 class RecruitmentProposer(Proposer):
@@ -41,6 +43,10 @@ class RecruitmentProposer(Proposer):
         if research:
             items.append(research)
 
+        spies = self._spies(view, weight)
+        if spies:
+            items.append(spies)
+
         scavenge = self._scavenge_army(view, weight)
         if scavenge:
             items.append(scavenge)
@@ -59,6 +65,30 @@ class RecruitmentProposer(Proposer):
     def scavenge_target(pop_max: int) -> int:
         """Spears worth keeping for scavenging: they pay back in hours, so the army grows with the farm."""
         return min(SCAVENGE_CAP, int(pop_max * SCAVENGE_SHARE))
+
+    @staticmethod
+    def spy_target(light: int) -> int:
+        """Scouts to keep: enough to probe every raid target, growing with the light cavalry."""
+        return max(MIN_SPIES, light // SPIES_PER_LIGHT)
+
+    def _spies(self, view: CoordinationView, weight: float) -> Proposal | None:
+        ctx = view.ctx
+        spy = ctx.unit("spy")
+        if ctx.levels.get("stable", 0) < 1 or spy is None or not spy.available:
+            return None
+
+        light = ctx.unit("light")
+        want = self.spy_target(light.total if light else 0)
+        queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == "spy")
+        missing = want - spy.total - queued
+        if missing <= 0:
+            return None
+
+        plan = view.guard.plan_recruit(ctx, "spy", missing)
+        if plan.refusal or plan.count <= 0:
+            return None
+
+        return self._recruit(view, "spy", plan.count, f"exploradores para sondar alvos ({spy.total}/{want})", weight, opportunity=0.5, purpose="spy")
 
     def _scavenge_army(self, view: CoordinationView, weight: float) -> Proposal | None:
         ctx = view.ctx

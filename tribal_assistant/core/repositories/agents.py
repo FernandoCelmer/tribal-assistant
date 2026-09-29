@@ -66,7 +66,7 @@ class AgentRepository:
     async def attacks_since(self, village_id: int, since: datetime) -> int:
         stmt = select(func.count(AgentDecision.id)).where(
             AgentDecision.village_id == village_id,
-            AgentDecision.action == "send_farm_attack",
+            AgentDecision.action.in_(("send_farm_attack", "send_spy")),
             AgentDecision.ok.is_(True),
             AgentDecision.dry_run.is_(False),
             AgentDecision.created_at >= since,

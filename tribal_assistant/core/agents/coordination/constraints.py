@@ -6,7 +6,7 @@ from typing import Any
 
 from tribal_assistant.core.agents.coordination.proposal import Proposal
 
-TROOP_ACTIONS = ("send_farm_attack", "send_scavenge")
+TROOP_ACTIONS = ("send_farm_attack", "send_scavenge", "send_spy")
 
 
 @dataclass

@@ -7,6 +7,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.agents.target_intel import TargetIntel
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
 CHALLENGES = "challenges"
@@ -109,7 +110,9 @@ class LessonBook:
             commit=False,
         )
 
-    async def reports(self, reports: Any, known: set[str]) -> None:
+    async def reports(self, reports: Any, known: set[str], intel: dict[str, dict[str, Any]] | None = None) -> None:
+        intel = intel or {}
+
         for report in reports:
             if report.game_id in known:
                 continue
@@ -133,28 +136,15 @@ class LessonBook:
             key = f"target:{report.target_coords}"
             row = await self.repo.get(key)
             past = json.loads(row.data) if row else {}
-            haul = (
-                report.haul_total
-                if report.haul_total is not None
-                else (report.loot_wood + report.loot_clay + report.loot_iron)
-            )
-            attacks = int(past.get("attacks", 0)) + 1
-            streak = int(past.get("yellow_streak", 0)) + 1 if report.result in ("yellow", "red") else 0
-            total = int(past.get("total_haul", 0)) + haul
+            detail = intel.get(report.game_id, {})
+            data = TargetIntel.merge(past, report, detail)
             await self.repo.observe(
                 key,
                 "target",
                 f"alvo {report.target_coords}",
-                f"último resultado {report.result or '?'}, saque {haul}, média {total // attacks}",
-                {
-                    "last_result": report.result,
-                    "last_haul": haul,
-                    "attacks": attacks,
-                    "total_haul": total,
-                    "avg_haul": total // attacks,
-                    "yellow_streak": streak,
-                },
-                ok=report.result == "green",
+                TargetIntel.describe(data),
+                data,
+                ok=None if TargetIntel.probe(detail) else report.result == "green",
                 commit=False,
             )
 

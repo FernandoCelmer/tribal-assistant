@@ -21,6 +21,7 @@ from tribal_assistant.core.game.scraper.game import (
     parse_reports,
     parse_village,
 )
+from tribal_assistant.core.game.scraper.spy_report import SpyReportParser
 from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
 from tribal_assistant.core.game.state import session_state
@@ -90,13 +91,28 @@ OVERVIEW_JS = """() => {
     .filter(tr => tr.querySelector('[data-endtime]'))
     .map(tr => {
       const img = tr.querySelector('img[src*="command/"]');
-      const idEl = tr.querySelector('.quickedit[data-id]');
-      return {direction, id: idEl ? idEl.dataset.id : null, icon: img ? img.getAttribute('src') : '',
+      const idEl = tr.querySelector('[data-command-id], .quickedit[data-id], .quickedit-in[data-id], .quickedit-out[data-id]');
+      const hintEl = tr.querySelector('[data-icon-hint]');
+      const village = tr.querySelector('a[href*="info_village"]');
+      const player = tr.querySelector('a[href*="info_player"]');
+      return {direction, id: idEl ? (idEl.dataset.commandId || idEl.dataset.id) : null, icon: img ? img.getAttribute('src') : '',
+        hint: hintEl ? hintEl.dataset.iconHint : '', type: hintEl ? (hintEl.dataset.commandType || '') : '',
+        origin: village ? village.innerText : '', player: player ? player.innerText : '',
+        watchtower: /watchtower/i.test(tr.innerHTML),
         text: (tr.cells[0] || tr).innerText, end: tr.querySelector('[data-endtime]').dataset.endtime};
     });
   const banner = document.querySelector('#show_newbie') || document.querySelector('#content_value');
   return {commands: [...read('#show_incoming_units', 'in'), ...read('#show_outgoing_units', 'out')],
     text: banner ? banner.innerText : ''};
+}"""
+
+INFO_COMMAND_JS = """() => {
+  const root = document.querySelector('#content_value') || document.body;
+  const village = root.querySelector('a[href*="info_village"]');
+  const player = root.querySelector('a[href*="info_player"]');
+  const hint = root.querySelector('[data-icon-hint]');
+  return {origin: village ? village.innerText : '', player: player ? player.innerText : '',
+    hint: hint ? hint.dataset.iconHint : '', watchtower: /watchtower/i.test(root.innerHTML)};
 }"""
 
 SCAVENGE_JS = """() => {
@@ -122,6 +138,7 @@ REPORTS_JS = r"""() => [...document.querySelectorAll('#report_list tr')]
 
 REPORT_DETAIL_JS = r"""() => {
   const text = s => { const e = document.querySelector(s); return e ? e.innerText : ''; };
+  const html = s => [...document.querySelectorAll(s)].map(e => e.outerHTML).join('');
   const results = document.querySelector('#attack_results');
   let loot = [], haul = '';
   if (results) {
@@ -131,7 +148,8 @@ REPORT_DETAIL_JS = r"""() => {
       haul = (row.innerText.match(/\d+\s*\/\s*\d+/) || [''])[0];
     }
   }
-  return {attacker: text('#attack_info_att'), defender: text('#attack_info_def'), loot, haul};
+  return {attacker: text('#attack_info_att'), defender: text('#attack_info_def'), loot, haul,
+    sections: html('#attack_spy_resources, #attack_spy_building_data, [id^="attack_spy_buildings"], #attack_info_att_units, #attack_info_def_units')};
 }"""
 
 EVALUATE_ATTEMPTS = 3
@@ -253,7 +271,9 @@ async def _own_village_ids(page: Page, game_data: dict[str, Any], count: int) ->
 async def _read_village(page: Page, village_id: str, finish_free: bool = False) -> tuple[GameVillage, str]:
     async def overview() -> dict[str, Any]:
         await _open(page, "overview", village_id)
-        return {"overview": await _evaluate(page, OVERVIEW_JS)}
+        data = await _evaluate(page, OVERVIEW_JS)
+        await IncomingDetails.enrich(page, village_id, data.get("commands") or [])
+        return {"overview": data}
 
     async def main() -> dict[str, Any]:
         await _open(page, "main", village_id)
@@ -333,6 +353,55 @@ class Findings:
         cls.learned.pop(current_account_id(), None)
 
 
+class ReportIntel:
+    """Scouting and troop details read from report pages, per account, until they reach the target lessons."""
+
+    found: ClassVar[dict[int | None, dict[str, dict[str, Any]]]] = {}
+
+    @classmethod
+    def keep(cls, report_id: str, detail: dict[str, Any]) -> None:
+        intel = SpyReportParser.parse(str(detail.pop("sections", "") or ""))
+        if intel:
+            cls.found.setdefault(current_account_id(), {})[report_id] = intel
+
+    @classmethod
+    def take(cls) -> dict[str, dict[str, Any]]:
+        return cls.found.pop(current_account_id(), {})
+
+
+class IncomingDetails:
+    """Origin and attacker of incoming attacks, read once per command from its info page."""
+
+    PER_SYNC = 3
+    FIELDS = ("origin", "player", "hint", "watchtower")
+    known: ClassVar[dict[str, dict[str, Any]]] = {}
+
+    @classmethod
+    def merge(cls, row: dict[str, Any], detail: dict[str, Any]) -> None:
+        for key in cls.FIELDS:
+            if detail.get(key) and not row.get(key):
+                row[key] = detail[key]
+
+    @classmethod
+    async def enrich(cls, page: Page, village_id: str, rows: list[dict[str, Any]]) -> None:
+        budget = cls.PER_SYNC
+        for row in rows:
+            if row.get("direction") != "in" or not row.get("id") or row.get("origin"):
+                continue
+
+            key = f"{current_account_id()}:{row['id']}"
+            if key not in cls.known and budget > 0:
+                budget -= 1
+                try:
+                    await _open(page, "info_command", village_id, id=str(row["id"]), type="other")
+                    cls.known[key] = await _evaluate(page, INFO_COMMAND_JS) or {}
+                except PlaywrightError as exc:
+                    logger.debug("Could not read incoming command {}: {}", row["id"], exc)
+                    continue
+
+            cls.merge(row, cls.known.get(key, {}))
+
+
 class ReportClock:
     """Reads the report list at least every few minutes, even when the game shows no new ones."""
 
@@ -356,11 +425,13 @@ async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[di
         return rows
 
     pending = [
-        r for r in rows if r["id"] not in known and "atac" in str(r.get("title", "")).lower()
+        r for r in rows if r["id"] not in known and any(word in str(r.get("title", "")).lower() for word in ("atac", "espi"))
     ][:REPORT_DETAILS_PER_SYNC]
     for row in pending:
         await _open(page, "report", village_id, mode="all", view=row["id"])
         row["detail"] = await _evaluate(page, REPORT_DETAIL_JS)
+        if isinstance(row["detail"], dict):
+            ReportIntel.keep(row["id"], row["detail"])
     return rows
 
 
@@ -456,7 +527,7 @@ async def sync_game() -> GameSnapshot:
                 from tribal_assistant.core.agents.learning import LessonBook
 
                 book = LessonBook(session)
-                await book.reports(snapshot.reports, known)
+                await book.reports(snapshot.reports, known, ReportIntel.take())
                 await book.screens(ScreenCatalog(), Findings.screens())
                 await book.texts(Findings.texts())
                 Findings.clear()

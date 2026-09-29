@@ -1,6 +1,7 @@
 """Attack: barbarian raids ranked by what the reports taught, and idle troops sent scavenging."""
 
 import json
+import statistics
 
 from tribal_assistant.core.agents.coordination.constraints import Constraint
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
@@ -10,10 +11,10 @@ from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.guardrails import SCAVENGE_MIN_POP
 from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
+from tribal_assistant.core.agents.proposers.raid import RaidPlan, RaidPlanner
 
-RAIDERS = ("light", "knight", "spear", "axe", "marcher")
-UNKNOWN_HAUL = 300
-MAX_RAIDS = 3
+LISTING = 30
+MAX_PROBES = 3
 SCAVENGERS = ("spear", "sword", "axe", "archer", "light", "marcher", "heavy")
 MIN_CONFIDENCE = 0.35
 
@@ -42,50 +43,82 @@ class AttackProposer(Proposer):
         return items
 
     async def _raids(self, view: CoordinationView) -> list[Proposal]:
-        listing = await view.read("list_barbarians")
+        ctx = view.ctx
+        listing = await view.read("list_barbarians", {"limit": LISTING})
         if not listing.ok or not listing.text.startswith("["):
             return []
 
-        ctx = view.ctx
+        targets = json.loads(listing.text)
         home = {u.name: u.home for u in ctx.village.units}
-        weight = 0.7 if view.role == Role.OFFENSIVE else 0.5
-        items = []
+        light = ctx.unit("light")
+        ram = ctx.unit("ram")
+        has_ram = bool(ram and ram.total)
+        budget = RaidPlanner.max_raids(light.total if light else 0, ctx.policy.max_attacks_per_hour, await view.guard.attacks_last_hour(ctx))
+        median = statistics.median([int(t.get("points") or 0) for t in targets]) if targets else 0
+        intel = {t["coords"]: await view.lessons.target(t["coords"]) for t in targets}
 
-        for target in json.loads(listing.text):
-            if len(items) >= MAX_RAIDS:
+        ranked = [RaidPlanner.plan(t, intel[t["coords"]], home, median, has_ram) for t in targets]
+        order = {"probe": 0, "raid": 1, "skip": 2}
+        ranked.sort(key=lambda p: (order[p.kind], -p.rate))
+        by_coords = {t["coords"]: t for t in targets}
+
+        weight = 0.7 if view.role == Role.OFFENSIVE else 0.5
+        items: list[Proposal] = []
+        probes = 0
+
+        for first in ranked:
+            if len(items) >= budget or first.kind == "skip":
                 break
 
-            if target.get("recently_attacked") or target.get("yellow_streak", 0) >= 2:
+            target = by_coords[first.coords]
+            plan = RaidPlanner.plan(target, intel[first.coords], home, median, has_ram)
+            if plan.kind == "probe":
+                if probes >= MAX_PROBES or await view.guard.spied_recently(plan.coords, ctx.policy.retarget_minutes):
+                    continue
+
+                probes += 1
+                items.append(self._probe(plan, target))
+            elif plan.kind == "raid":
+                items.append(await self._raid(view, plan, target, weight))
+            else:
                 continue
 
-            want = int((target.get("avg_haul") or UNKNOWN_HAUL) * 1.15)
-            squad = self.squad(home, want)
-            if squad is None:
-                break
-
-            confidence, why = await self._confidence(view, target)
-            carry = self.carry(squad)
-            haul = target.get("avg_haul") or carry * 0.5
-            for unit, count in squad.items():
-                home[unit] -= count
-
-            items.append(
-                Proposal(
-                    self.key,
-                    "send_farm_attack",
-                    {"target": target["coords"], "units": squad, "reason": "saque de bárbara próxima"},
-                    f"bárbara a {target.get('distance')} campos; {why}",
-                    f"~{int(haul)} recursos",
-                    troops=squad,
-                    factors=Factors(urgency=0.3, impact=weight, opportunity=clamp(haul / max(carry, 1))),
-                    horizon=Horizon.IMMEDIATE,
-                    confidence=confidence,
-                    risks=["perdas se a bárbara tiver muralha ou tropas"],
-                    key=f"send_farm_attack:{target['coords']}",
-                )
-            )
+            for unit, count in plan.squad.items():
+                home[unit] = home.get(unit, 0) - count
 
         return items
+
+    def _probe(self, plan: RaidPlan, target: dict) -> Proposal:
+        return Proposal(
+            self.key,
+            "send_spy",
+            {"target": plan.coords, "count": plan.squad["spy"], "reason": "sondar bárbara antes do saque"},
+            f"bárbara a {target.get('distance')} campos; {plan.why}",
+            "muralha, recursos e tropas do alvo",
+            troops=plan.squad,
+            factors=Factors(urgency=0.3, impact=0.4, opportunity=0.6),
+            horizon=Horizon.IMMEDIATE,
+            confidence=0.9,
+            risks=["perde o explorador se a bárbara tiver exploradores"],
+            key=f"send_spy:{plan.coords}",
+        )
+
+    async def _raid(self, view: CoordinationView, plan: RaidPlan, target: dict, weight: float) -> Proposal:
+        confidence, why = await self._confidence(view, target)
+        carry = self.carry(plan.squad)
+        return Proposal(
+            self.key,
+            "send_farm_attack",
+            {"target": plan.coords, "units": plan.squad, "reason": "saque de bárbara próxima"},
+            f"bárbara a {target.get('distance')} campos; {plan.why}; {why}",
+            f"~{int(plan.haul)} recursos ({int(plan.rate)}/h)",
+            troops=plan.squad,
+            factors=Factors(urgency=0.3, impact=weight, opportunity=clamp(plan.haul / max(carry, 1))),
+            horizon=Horizon.IMMEDIATE,
+            confidence=confidence,
+            risks=["perdas se a bárbara tiver muralha ou tropas"],
+            key=f"send_farm_attack:{plan.coords}",
+        )
 
     @staticmethod
     async def _confidence(view: CoordinationView, target: dict) -> tuple[float, str]:
@@ -108,26 +141,12 @@ class AttackProposer(Proposer):
 
     @staticmethod
     def carry(squad: dict[str, int]) -> int:
-        return sum(UNITS[u].carry * n for u, n in squad.items() if u in UNITS)
+        return RaidPlanner.carry(squad)
 
-    @classmethod
-    def squad(cls, home: dict[str, int], want: int) -> dict[str, int] | None:
+    @staticmethod
+    def squad(home: dict[str, int], want: int) -> dict[str, int] | None:
         """Smallest group of raiders, fastest carriers first, that can take `want` resources."""
-        squad: dict[str, int] = {}
-        carried = 0
-        for unit in RAIDERS:
-            capacity = UNITS[unit].carry if unit in UNITS else 0
-            if not capacity or home.get(unit, 0) <= 0 or carried >= want:
-                continue
-
-            count = min(home[unit], -(-(want - carried) // capacity))
-            squad[unit] = count
-            carried += count * capacity
-
-        if not squad or carried < min(want, UNKNOWN_HAUL) * 0.5:
-            return None
-
-        return squad
+        return RaidPlanner.squad(home, want)
 
     @staticmethod
     def scavenge_seconds(haul: float) -> float:
