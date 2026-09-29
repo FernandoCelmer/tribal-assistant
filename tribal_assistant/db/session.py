@@ -22,7 +22,6 @@ SessionFactory = async_sessionmaker(engine, expire_on_commit=False, class_=Async
 
 
 async def init_db() -> None:
-    # Import models so they register on Base.metadata before create_all.
     from tribal_assistant import models  # noqa: F401
 
     async with engine.begin() as conn:

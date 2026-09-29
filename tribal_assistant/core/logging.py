@@ -1,19 +1,38 @@
-"""Loguru bootstrap."""
+"""Loguru bootstrap: stderr plus the database log store."""
 
+import atexit
 import sys
 
 from loguru import logger
 
+from tribal_assistant.core.config import settings
+from tribal_assistant.core.log_store import LogStore
 
-def configure_logging(level: str = "INFO") -> None:
-    logger.remove()
-    logger.add(
-        sys.stderr,
-        level=level,
-        format=(
-            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-            "<level>{level: <8}</level> | "
-            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-            "<level>{message}</level>"
-        ),
-    )
+FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+    "<level>{message}</level>"
+)
+
+
+class LoggingSetup:
+    store: LogStore | None = None
+
+    @classmethod
+    def configure(cls, level: str = "INFO", persist: bool = True) -> None:
+        logger.remove()
+        logger.add(sys.stderr, level=level, format=FORMAT)
+
+        if not persist or cls.store is not None:
+            return
+
+        store = LogStore(settings.database_url, retention_days=settings.log_retention_days)
+        if store.start():
+            logger.add(store.sink, level=settings.log_store_level, format="{message}")
+            cls.store = store
+            atexit.register(store.stop)
+
+
+def configure_logging(level: str = "INFO", persist: bool = True) -> None:
+    LoggingSetup.configure(level, persist)
