@@ -17,6 +17,7 @@ from tribal_assistant.agents.roles.commander import CommanderAgent
 from tribal_assistant.agents.roles.economist import EconomistAgent
 from tribal_assistant.agents.roles.quartermaster import QuartermasterAgent
 from tribal_assistant.agents.roles.raider import RaiderAgent
+from tribal_assistant.agents.roles.steward import StewardAgent
 from tribal_assistant.agents.roles.strategist import StrategistAgent
 from tribal_assistant.agents.toolbox import Toolbox
 from tribal_assistant.agents.trace import RunTrace
@@ -51,6 +52,7 @@ class AgentRunner:
 
     AGENTS: tuple[type[VillageAgent], ...] = (
         QuartermasterAgent,
+        StewardAgent,
         StrategistAgent,
         EconomistAgent,
         CommanderAgent,

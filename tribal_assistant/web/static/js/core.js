@@ -6,6 +6,7 @@ export const AGENTS = [
   { key: "economist", label: "Economista", slot: 3, area: "recursos, armazém, fazenda, mercado, coleta" },
   { key: "commander", label: "Comandante", slot: 4, area: "militar e recrutamento" },
   { key: "raider", label: "Saqueador", slot: 5, area: "saque de bárbaras e coleta" },
+  { key: "steward", label: "Mordomo", slot: 7, area: "relíquia, bandeira, paladino e itens" },
   { key: "operator", label: "Operador", slot: 6, area: "ordens diretas (MCP)" },
 ];
 

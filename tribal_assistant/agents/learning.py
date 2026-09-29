@@ -249,6 +249,18 @@ class LessonBook:
         row = await self.repo.get(f"target:{coords}")
         return json.loads(row.data) if row else {}
 
+    async def due(self, name: str, hours: float) -> bool:
+        from datetime import UTC, datetime, timedelta
+
+        row = await self.repo.get(f"cooldown:{name}")
+        if row is None:
+            return True
+
+        return datetime.now(UTC).replace(tzinfo=None) - row.last_seen >= timedelta(hours=hours)
+
+    async def mark(self, name: str, note: str = "") -> None:
+        await self.repo.observe(f"cooldown:{name}", "cooldown", name, note)
+
     async def summary(self, limit: int = 8) -> str:
         rules = [r for r in await self.repo.list("rule", limit=50) if r.failed]
         rules.sort(key=lambda r: -r.failed)
