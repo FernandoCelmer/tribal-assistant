@@ -5,8 +5,6 @@ from typing import Annotated, Any, Literal
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
-from tribal_assistant.core.agents.runner import AgentRunner
-from tribal_assistant.core.schemas.agents import AgentRunOut
 from tribal_assistant.mcp.annotations import (
     DESTRUCTIVE,
     REACHES_OUT,
@@ -16,7 +14,6 @@ from tribal_assistant.mcp.annotations import (
 )
 from tribal_assistant.mcp.schemas import ActionOutcome, PlanStepIn, SyncOutcome
 from tribal_assistant.mcp.tools.base import ToolGroup
-from tribal_assistant.mcp.tools.bridge import ToolboxBridge
 
 VillageId = Annotated[int, Field(description="Own village id (the `id` field of a village in get_overview), not its coordinates.")]
 DryRun = Annotated[bool, Field(description="true (default) only simulates and logs the decision; false acts in the game. Use false only after the user said yes to the dry run.")]
@@ -34,12 +31,9 @@ Unit = Literal["spear", "sword", "axe", "archer", "spy", "light", "marcher", "he
 
 
 class GameActionTools(ToolGroup):
-    def __init__(self) -> None:
-        self.bridge = ToolboxBridge()
-
     async def operate(self, village_id: int, tool: str, arguments: dict[str, Any], dry_run: bool) -> ActionOutcome:
-        outcome = await self.bridge.invoke(village_id, tool, arguments, dry_run)
-        return ActionOutcome(ok=outcome.ok, dry_run=dry_run, detail=outcome.text, data=outcome.data)
+        body = {"village_id": village_id, "tool": tool, "arguments": arguments, "dry_run": dry_run, "source": "mcp"}
+        return ActionOutcome(**await self.api.post("/agents/act", body))
 
     def register(self, mcp: MCPServer) -> None:
         @GuardedTool(mcp, title="Sync account", annotations=READS_GAME)
@@ -51,16 +45,14 @@ class GameActionTools(ToolGroup):
             reports and quests. Changes nothing in the game. Takes tens of seconds and opens real
             pages, so call it once at the start of a session or after acting, not before every read.
             """
-            from tribal_assistant.core.services.assistant import AssistantService
-
-            result = await AssistantService().sync()
-            return SyncOutcome(ok=result.ok, message=result.message)
+            result = await self.api.post("/assistant/sync")
+            return SyncOutcome(ok=result["ok"], message=result["message"])
 
         @GuardedTool(mcp, title="Run village agents", annotations=DESTRUCTIVE)
         async def run_agents(
             dry_run: DryRun = True,
             village_ids: Annotated[list[int] | None, Field(description="Only these own village ids; omit for every village.")] = None,
-        ) -> AgentRunOut:
+        ) -> dict[str, Any]:
             """Run one full round of the specialists on each village, in order: quartermaster (quests,
             rewards, daily bonus), strategist (plan), economist (economy builds, scavenging unlocks),
             commander (military builds, recruiting) and raider (barbarian loot, scavenging).
@@ -71,10 +63,7 @@ class GameActionTools(ToolGroup):
             after the user agrees. Needs a synced account (sync_account); a live round that acted
             re-syncs on its own.
             """
-            from dataclasses import asdict
-
-            report = await AgentRunner(dry_run=dry_run, trigger="mcp").run(village_ids)
-            return AgentRunOut.model_validate(asdict(report))
+            return await self.api.post("/agents/run", {"dry_run": dry_run, "village_ids": village_ids})
 
         @GuardedTool(mcp, title="Upgrade building", annotations=REACHES_OUT)
         async def upgrade_building(

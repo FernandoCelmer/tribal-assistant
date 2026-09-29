@@ -1,31 +1,25 @@
 """Public world data around your villages."""
 
 import json
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
-from tribal_assistant.core.schemas.world import WorldStatus
-from tribal_assistant.core.services.world import WorldService
 from tribal_assistant.mcp.annotations import READ_ONLY, READS_GAME, GuardedTool
 from tribal_assistant.mcp.schemas import BarbarianTarget, BarbarianTargets, Nearby, SyncOutcome
 from tribal_assistant.mcp.tools.base import ToolGroup
-from tribal_assistant.mcp.tools.bridge import ToolboxBridge
 
 
 class WorldTools(ToolGroup):
-    def __init__(self) -> None:
-        self.bridge = ToolboxBridge()
-
     def register(self, mcp: MCPServer) -> None:
         @GuardedTool(mcp, title="World data status", annotations=READ_ONLY)
-        async def get_world_status() -> WorldStatus:
+        async def get_world_status() -> dict[str, Any]:
             """How much public world data is stored locally (villages, players, tribes), the world and
             unit speed, and when it was downloaded. When fetched_at is empty or older than a day,
             call sync_world before list_nearby or list_barbarians.
             """
-            return await self.with_session(lambda s: WorldService(s).status())
+            return await self.api.get("/world/status")
 
         @GuardedTool(mcp, title="Nearby villages", annotations=READ_ONLY)
         async def list_nearby(
@@ -39,8 +33,7 @@ class WorldTools(ToolGroup):
             per unit. For scouting neighbours and threats; for picking loot targets prefer
             list_barbarians, which also flags targets hit recently and respects the role's attack radius.
             """
-            rows = await self.with_session(lambda s: WorldService(s).nearby(village_id, kind, radius, limit))
-            return Nearby(villages=rows)
+            return Nearby(villages=await self.api.get("/world/nearby", village_id=village_id, kind=kind, radius=radius, limit=limit))
 
         @GuardedTool(mcp, title="Barbarian loot targets", annotations=READ_ONLY)
         async def list_barbarians(
@@ -54,12 +47,15 @@ class WorldTools(ToolGroup):
             list when world data is missing; an empty list comes with a note on what to do.
             """
             args = {"limit": limit} | ({"radius": radius} if radius else {})
-            outcome = await self.bridge.invoke(village_id, "list_barbarians", args, dry_run=True)
+            outcome = await self.api.post(
+                "/agents/act", {"village_id": village_id, "tool": "list_barbarians", "arguments": args, "dry_run": True, "source": "mcp"}
+            )
+            text = outcome["detail"]
 
-            if not outcome.text.startswith("["):
-                return BarbarianTargets(targets=[], note=outcome.text)
+            if not text.startswith("["):
+                return BarbarianTargets(targets=[], note=text)
 
-            return BarbarianTargets(targets=[BarbarianTarget(**row) for row in json.loads(outcome.text)])
+            return BarbarianTargets(targets=[BarbarianTarget(**row) for row in json.loads(text)])
 
         @GuardedTool(mcp, title="Download world data", annotations=READS_GAME)
         async def sync_world() -> SyncOutcome:
@@ -67,9 +63,5 @@ class WorldTools(ToolGroup):
             database. Read-only on the game side and account-independent; the files change about
             once an hour, so once a day is enough for looting.
             """
-            from tribal_assistant.core.db.session import init_db
-            from tribal_assistant.core.game.modules.world_sync import sync_world as download
-
-            await init_db()
-            await download()
-            return SyncOutcome(ok=True, message="dados do mundo atualizados")
+            status = await self.api.post("/world/sync")
+            return SyncOutcome(ok=True, message=f"dados do mundo atualizados: {status}")

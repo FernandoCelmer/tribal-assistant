@@ -1,13 +1,13 @@
 """MCP server: account state, world data, farm list, guarded game actions, knowledge resources and workflow prompts."""
 
 import argparse
-import asyncio
+import logging
+import os
 from collections.abc import Sequence
 
 from mcp.server.mcpserver import MCPServer
 
-from tribal_assistant.core.config import settings
-from tribal_assistant.core.logging import configure_logging
+from tribal_assistant.mcp.client import ApiClient
 from tribal_assistant.mcp.prompts import Prompts
 from tribal_assistant.mcp.resources import Resources
 from tribal_assistant.mcp.tools.base import ToolGroup
@@ -60,6 +60,9 @@ Rules, whatever the client:
 class TribalMcpServer:
     GROUPS: tuple[type[ToolGroup], ...] = (StateTools, WorldTools, FarmTools, GameActionTools)
 
+    def __init__(self, api: ApiClient | None = None) -> None:
+        self.api = api or ApiClient()
+
     def build(self) -> MCPServer:
         mcp = MCPServer(
             "tribal-assistant",
@@ -70,10 +73,10 @@ class TribalMcpServer:
         )
 
         for group in self.GROUPS:
-            group().register(mcp)
+            group(self.api).register(mcp)
 
         Prompts().register(mcp)
-        Resources().register(mcp)
+        Resources(self.api).register(mcp)
         return mcp
 
     @staticmethod
@@ -84,17 +87,10 @@ class TribalMcpServer:
         parser.add_argument("--port", type=int, default=8765)
         return parser.parse_args(argv)
 
-    @staticmethod
-    def select_account() -> None:
-        """Every tool works on one account: TRIBAL_ACCOUNT, or the first enabled one."""
-        from tribal_assistant.core.accounts.context import set_account
-
-        set_account(_pick_account())
 
     def main(self, argv: Sequence[str] | None = None) -> None:
-        configure_logging(settings.log_level)
+        logging.basicConfig(level=os.environ.get("LOG_LEVEL", "WARNING"))
         args = self.parse_args(argv)
-        self.select_account()
         mcp = self.build()
 
         if args.http:
@@ -103,20 +99,6 @@ class TribalMcpServer:
 
         mcp.run()
 
-
-def _pick_account():
-    import os
-
-    from tribal_assistant.core.accounts.registry import AccountRegistry
-    from tribal_assistant.core.db.session import SessionFactory, init_db
-
-    async def find():
-        await init_db()
-        async with SessionFactory() as session:
-            raw = os.environ.get("TRIBAL_ACCOUNT", "")
-            return await AccountRegistry(session).find(int(raw) if raw.isdigit() else None)
-
-    return asyncio.run(find())
 
 
 def main(argv: Sequence[str] | None = None) -> None:

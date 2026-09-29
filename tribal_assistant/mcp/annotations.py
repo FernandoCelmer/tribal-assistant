@@ -1,4 +1,4 @@
-"""Tool annotation presets and the guard that turns domain errors into MCP tool errors.
+"""Tool annotation presets and the guard that turns API errors into MCP tool errors.
 
 READ_ONLY reads the local database; READS_GAME reads the live game or public world files;
 WRITES_LOCAL adds local rows; REPLACES_LOCAL overwrites local state (plan, goal, settings);
@@ -13,8 +13,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
-from tribal_assistant.core.ai.errors import LLMError
-from tribal_assistant.core.errors import DomainError
+from tribal_assistant.mcp.client import ApiError
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 READS_GAME = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True)
@@ -25,7 +24,7 @@ DESTRUCTIVE = ToolAnnotations(read_only_hint=False, destructive_hint=True, idemp
 
 
 class GuardedTool:
-    """Registers a coroutine as an MCP tool; domain errors surface as the tool's error text."""
+    """Registers a coroutine as an MCP tool; API errors surface as the tool's error text."""
 
     def __init__(self, mcp: MCPServer, **options: Any) -> None:
         self.mcp = mcp
@@ -36,7 +35,7 @@ class GuardedTool:
         async def guarded(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await fn(*args, **kwargs)
-            except (DomainError, LLMError) as exc:
+            except ApiError as exc:
                 raise ToolError(str(exc)) from exc
 
         return self.mcp.tool(**self.options)(guarded)

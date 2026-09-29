@@ -33,8 +33,14 @@ PROMPTS = {"grow_village", "farm_round", "first_noble_plan", "agent_round", "dai
 
 
 @pytest.fixture
-def server():
-    return TribalMcpServer().build()
+def server(client):
+    from httpx import ASGITransport
+
+    from tribal_assistant.api.app import app
+    from tribal_assistant.mcp.client import ApiClient
+
+    api = ApiClient(base_url="http://test", transport=ASGITransport(app=app))
+    return TribalMcpServer(api).build()
 
 
 async def _tools(server) -> dict:

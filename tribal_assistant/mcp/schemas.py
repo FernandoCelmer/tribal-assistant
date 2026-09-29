@@ -4,27 +4,21 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from tribal_assistant.core.schemas.agents import AgentDecisionOut
-from tribal_assistant.core.schemas.coordination import CoordinationOut
-from tribal_assistant.core.schemas.farm import FarmTarget
-from tribal_assistant.core.schemas.plan import VillagePlanOut
-from tribal_assistant.core.schemas.world import NearbyVillage
-
 
 class Decisions(BaseModel):
-    decisions: list[AgentDecisionOut] = Field(description="Newest first: agent, action, arguments, ok, dry_run, reason and the game's answer.")
+    decisions: list[dict[str, Any]] = Field(description="Newest first: agent, action, arguments, ok, dry_run, reason and the game's answer.")
 
 
 class Plans(BaseModel):
-    plans: list[VillagePlanOut] = Field(description="One plan per village with each step's live status and progress.")
+    plans: list[dict[str, Any]] = Field(description="One plan per village with each step's live status and progress.")
 
 
 class Nearby(BaseModel):
-    villages: list[NearbyVillage] = Field(description="Closest first, with travel minutes per unit.")
+    villages: list[dict[str, Any]] = Field(description="Closest first, with travel minutes per unit.")
 
 
 class FarmTargets(BaseModel):
-    targets: list[FarmTarget] = Field(description="Local farm list the raider falls back on when world data is missing.")
+    targets: list[dict[str, Any]] = Field(description="Local farm list the raider falls back on when world data is missing.")
 
 
 class BarbarianTarget(BaseModel):
@@ -70,4 +64,4 @@ class SyncOutcome(BaseModel):
 
 
 class Coordination(BaseModel):
-    villages: list[CoordinationOut] = Field(description="Latest coordinator round per village: role, mode, next action, executed, deferred with reasons, reservations, vetoes and insights.")
+    villages: list[dict[str, Any]] = Field(description="Latest coordinator round per village: role, mode, next action, executed, deferred with reasons, reservations, vetoes and insights.")

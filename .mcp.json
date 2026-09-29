@@ -2,8 +2,13 @@
   "mcpServers": {
     "tribal-assistant": {
       "command": "poetry",
-      "args": ["run", "tribal-assistant-mcp"],
-      "env": {}
+      "args": [
+        "run",
+        "tribal-assistant-mcp"
+      ],
+      "env": {
+        "TRIBAL_API_URL": "http://127.0.0.1:8000"
+      }
     }
   }
 }
