@@ -12,7 +12,7 @@ install: venv
 	$(VENV)/bin/playwright install chromium
 
 run:
-	$(VENV)/bin/uvicorn tribal_assistant.server:app --reload --host 0.0.0.0 --port 8000
+	$(VENV)/bin/uvicorn tribal_assistant.api.app:app --reload --host 0.0.0.0 --port 8000
 
 test:
 	$(VENV)/bin/pytest -v

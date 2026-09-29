@@ -47,7 +47,7 @@ async def test_dashboard_skips_missing_banner_art(client: AsyncClient) -> None:
 
 
 def test_banner_art_used_when_present(tmp_path) -> None:
-    from tribal_assistant.api.pages import BannerArt
+    from tribal_assistant.web.pages import BannerArt
 
     (tmp_path / "art").mkdir()
     (tmp_path / "art" / "banner.jpg").write_bytes(b"jpg")

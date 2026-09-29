@@ -145,9 +145,26 @@
   }
 })();
 
-(() => {
+(async () => {
   const select = document.querySelector("[data-account-switch]");
+  const box = document.querySelector("[data-account-box]");
   if (!select) return;
+
+  let accounts = [];
+  try {
+    accounts = await (await fetch("/api/v1/accounts")).json();
+  } catch {
+    return;
+  }
+  if (!accounts.length) return;
+
+  const cookie = document.cookie.split("; ").find((c) => c.startsWith("tw_account="));
+  const chosen = Number(cookie ? cookie.split("=")[1] : 0);
+  const current = accounts.find((a) => a.id === chosen) || accounts.find((a) => a.enabled) || accounts[0];
+
+  select.innerHTML = accounts.map((a) => `<option value="${a.id}">${a.name.replace(/[<>&"]/g, "")}${a.enabled ? "" : " (pausada)"}</option>`).join("");
+  select.value = current.id;
+  box.hidden = false;
   select.addEventListener("change", () => {
     document.cookie = `tw_account=${select.value}; path=/; max-age=31536000; samesite=lax`;
     location.reload();

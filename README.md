@@ -95,9 +95,9 @@ tribal-assistant farm tick
 ```python
 import asyncio
 
-from tribal_assistant.db.session import SessionFactory, init_db
-from tribal_assistant.services.game import GameService
-from tribal_assistant.services.world import WorldService
+from tribal_assistant.core.db.session import SessionFactory, init_db
+from tribal_assistant.core.services.game import GameService
+from tribal_assistant.core.services.world import WorldService
 
 
 async def main() -> None:
@@ -115,7 +115,7 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-The FastAPI app is `tribal_assistant.server:app`; build your own with `tribal_assistant.server.create_app()`.
+The FastAPI app is `tribal_assistant.api.app:app`; build your own with `tribal_assistant.api.app.create_app()`.
 
 ## Accounts and PostgreSQL
 

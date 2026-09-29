@@ -119,7 +119,7 @@ def serve(
     import uvicorn
 
     uvicorn.run(
-        "tribal_assistant.server:app", host=host, port=port, reload=reload, timeout_graceful_shutdown=5
+        "tribal_assistant.api.app:app", host=host, port=port, reload=reload, timeout_graceful_shutdown=5
     )
 
 

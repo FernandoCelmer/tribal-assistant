@@ -1,4 +1,4 @@
-"""Server-rendered dashboard pages: one template per page, shared layout and navigation."""
+"""Dashboard pages: templates and static files only; every piece of data comes from the API in the browser."""
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -7,9 +7,12 @@ from typing import ClassVar
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from tribal_assistant.version import __version__
+
+WEB_DIR = Path(__file__).parent
 
 
 @dataclass(frozen=True)
@@ -57,7 +60,7 @@ class WebPages:
 
     REDIRECTS: ClassVar[dict[str, str]] = {"/agents": "/agentes", "/design": "/componentes"}
 
-    def __init__(self, web_dir: Path) -> None:
+    def __init__(self, web_dir: Path = WEB_DIR) -> None:
         self.web_dir = web_dir
         self.templates = Jinja2Templates(directory=web_dir / "templates")
         self.banner = BannerArt(web_dir / "static")
@@ -74,6 +77,8 @@ class WebPages:
         return list(grouped.items())
 
     def register(self, app: FastAPI) -> None:
+        app.mount("/static", StaticFiles(directory=self.web_dir / "static"), name="static")
+
         for spec in self.PAGES:
             app.add_api_route(spec.path, self._handler(spec), methods=["GET"], include_in_schema=False, response_class=HTMLResponse)
 
@@ -82,7 +87,6 @@ class WebPages:
 
     def _handler(self, spec: PageSpec) -> Callable[[Request], Awaitable[HTMLResponse]]:
         async def render(request: Request) -> HTMLResponse:
-            accounts, current = await self._accounts(request)
             return self.templates.TemplateResponse(
                 request,
                 f"pages/{spec.template}",
@@ -93,30 +97,12 @@ class WebPages:
                     "current_label": spec.label,
                     "banner_style": self.banner.style() if spec.key == "overview" else "",
                     "version": __version__,
-                    "accounts": accounts,
-                    "current_account": current,
                 },
                 headers={"Cache-Control": "no-cache"},
             )
 
         return render
 
-    @staticmethod
-    async def _accounts(request: Request) -> tuple[list, int | None]:
-        from tribal_assistant.api.deps import requested_account
-        from tribal_assistant.core.db.session import SessionFactory
-        from tribal_assistant.core.repositories.accounts import AccountRepository
-
-        try:
-            async with SessionFactory() as session:
-                accounts = list(await AccountRepository(session).list())
-        except Exception:
-            return [], None
-
-        wanted = requested_account(request)
-        ids = [a.id for a in accounts]
-        current = wanted if wanted in ids else next((a.id for a in accounts if a.enabled), ids[0] if ids else None)
-        return accounts, current
 
     @staticmethod
     def _redirect(target: str) -> Callable[[], Awaitable[RedirectResponse]]:
