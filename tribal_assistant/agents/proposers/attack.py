@@ -11,7 +11,8 @@ from tribal_assistant.agents.guardrails import SCAVENGE_MIN_POP
 from tribal_assistant.agents.knowledge import UNITS
 from tribal_assistant.agents.proposers.base import Proposer, clamp
 
-SQUADS = ({"light": 5}, {"spear": 10}, {"axe": 10}, {"spear": 5})
+RAIDERS = ("light", "knight", "spear", "axe", "marcher")
+UNKNOWN_HAUL = 300
 MAX_RAIDS = 3
 SCAVENGERS = ("spear", "sword", "axe", "archer", "light", "marcher", "heavy")
 MIN_CONFIDENCE = 0.35
@@ -36,9 +37,7 @@ class AttackProposer(Proposer):
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
         items = await self._raids(view)
-        scavenge = self._scavenge(view, reserved={u: n for p in items for u, n in p.troops.items()})
-        if scavenge:
-            items.append(scavenge)
+        items += self._scavenge(view, reserved={u: n for p in items for u, n in p.troops.items()})
 
         return items
 
@@ -59,12 +58,13 @@ class AttackProposer(Proposer):
             if target.get("recently_attacked"):
                 continue
 
-            squad = next((s for s in SQUADS if all(home.get(u, 0) >= n for u, n in s.items())), None)
+            want = int((target.get("avg_haul") or UNKNOWN_HAUL) * 1.15)
+            squad = self.squad(home, want)
             if squad is None:
                 break
 
             confidence, why = await self._confidence(view, target)
-            carry = sum(UNITS[u].carry * n for u, n in squad.items() if u in UNITS)
+            carry = self.carry(squad)
             haul = target.get("avg_haul") or carry * 0.5
             for unit, count in squad.items():
                 home[unit] -= count
@@ -106,13 +106,54 @@ class AttackProposer(Proposer):
         view.note(insight)
         return max(0.3, insight.weight(half_life_hours=24)), f"último relatório {data.get('last_result', '?')} há {insight.age_hours():.0f}h"
 
-    def _scavenge(self, view: CoordinationView, reserved: dict[str, int]) -> Proposal | None:
-        ctx = view.ctx
-        free = sorted(
-            (o for o in ctx.village.scavenge if not o.is_locked and o.return_at is None), key=lambda o: o.option_id, reverse=True
-        )
-        if not free:
+    @staticmethod
+    def carry(squad: dict[str, int]) -> int:
+        return sum(UNITS[u].carry * n for u, n in squad.items() if u in UNITS)
+
+    @classmethod
+    def squad(cls, home: dict[str, int], want: int) -> dict[str, int] | None:
+        """Smallest group of raiders, fastest carriers first, that can take `want` resources."""
+        squad: dict[str, int] = {}
+        carried = 0
+        for unit in RAIDERS:
+            capacity = UNITS[unit].carry if unit in UNITS else 0
+            if not capacity or home.get(unit, 0) <= 0 or carried >= want:
+                continue
+
+            count = min(home[unit], -(-(want - carried) // capacity))
+            squad[unit] = count
+            carried += count * capacity
+
+        if not squad or carried < min(want, UNKNOWN_HAUL) * 0.5:
             return None
+
+        return squad
+
+    @staticmethod
+    def split(units: dict[str, int], factors: dict[int, float]) -> dict[int, dict[str, int]]:
+        """Share troops among free scavenging tiers; lower tiers get more (weight 1/loot factor), each part at least 10 pop."""
+        options = sorted(factors, reverse=True)
+        while options:
+            weights = {o: 1 / factors[o] for o in options}
+            total = sum(weights.values())
+            parts = {o: {u: int(n * weights[o] / total) for u, n in units.items()} for o in options}
+            top = options[0]
+            for unit, count in units.items():
+                parts[top][unit] += count - sum(p[unit] for p in parts.values())
+
+            parts = {o: {u: n for u, n in p.items() if n > 0} for o, p in parts.items()}
+            if all(sum(UNITS[u].pop * n for u, n in p.items() if u in UNITS) >= SCAVENGE_MIN_POP for p in parts.values()):
+                return parts
+
+            options = options[:-1]
+
+        return {}
+
+    def _scavenge(self, view: CoordinationView, reserved: dict[str, int]) -> list[Proposal]:
+        ctx = view.ctx
+        free = {o.option_id: o.loot_factor or 0.1 * o.option_id for o in ctx.village.scavenge if not o.is_locked and o.return_at is None}
+        if not free:
+            return []
 
         units = {}
         for name in SCAVENGERS:
@@ -121,20 +162,24 @@ class AttackProposer(Proposer):
             if count > 0:
                 units[name] = count
 
-        pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
-        if pop < SCAVENGE_MIN_POP:
+        parts = self.split(units, free)
+        if not parts:
+            pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
             view.note(Insight("scavenge_pop", f"coleta parada: só {pop} de população em casa (mínimo {SCAVENGE_MIN_POP})", Certainty.FACT, now(), 1.0, pop, self.key))
-            return None
+            return []
 
-        return Proposal(
-            self.key,
-            "send_scavenge",
-            {"option_id": free[0].option_id, "units": units, "reason": "tropas ociosas coletando"},
-            "tropas paradas em casa",
-            f"coleta {free[0].option_id}",
-            troops=units,
-            factors=Factors(urgency=0.2, impact=0.35, opportunity=0.5),
-            horizon=Horizon.IMMEDIATE,
-            confidence=0.95,
-            key="send_scavenge",
-        )
+        return [
+            Proposal(
+                self.key,
+                "send_scavenge",
+                {"option_id": option, "units": squad, "reason": "tropas ociosas coletando"},
+                f"tropas paradas em casa; coleta {option} livre",
+                f"coleta {option}",
+                troops=squad,
+                factors=Factors(urgency=0.2, impact=0.35, opportunity=0.5),
+                horizon=Horizon.IMMEDIATE,
+                confidence=0.95,
+                key=f"send_scavenge:{option}",
+            )
+            for option, squad in parts.items()
+        ]
