@@ -36,6 +36,7 @@ class OperatorAgent(VillageAgent):
         "equip_relic",
         "rename_village",
         "assign_flag",
+        "learn_knight_skill",
     )
 
     async def rules(self, box: "Toolbox") -> str:

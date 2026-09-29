@@ -550,6 +550,30 @@ class AssignFlag(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class LearnKnightSkill(AgentTool):
+    name = "learn_knight_skill"
+    description = (
+        "Gasta um ponto de habilidade do paladino na estátua. Só habilidades liberadas por livro. "
+        "1 Investida (bárbaro +5% ataque), 5 Motivação (+3% madeira), 9 Esgrima (espadachim +5% defesa)."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"skill_id": {"type": "integer", "minimum": 1, "maximum": 12}, "reason": REASON},
+        "required": ["skill_id", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        skill_id = int(args["skill_id"])
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) aprender habilidade {skill_id}")
+
+        result = await box.actions.learn_knight_skill(box.ctx.game_id, skill_id)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (

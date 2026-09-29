@@ -876,9 +876,15 @@ class GameActions:
 
             confirm = page.locator("#selected_flag .btn-confirm-yes:visible")
             if await confirm.count():
-                self._capture(await page.content(), "flag-assign")
                 await human_click(page, confirm.first)
                 await page.wait_for_timeout(1_500)
+
+            second = page.locator(".evt-confirm-btn:visible")
+            if await second.count():
+                await human_click(page, second.first)
+                await page.wait_for_timeout(1_500)
+
+            self._capture(await page.content(), "flag-assign")
 
             messages = await self.screen_messages(page)
             if messages["errors"]:
@@ -893,6 +899,65 @@ class GameActions:
         logger.info("Assigned flag {}_{} in village {}", flag_type, level, village_id)
         return ActionResult(
             True, "assign_flag", f"bandeira atribuída: {current}", {"notices": messages["notices"]}
+        )
+
+    async def learn_knight_skill(self, village_id: str, skill_id: int) -> ActionResult:
+        """Spend a paladin skill point on a learnable skill of the statue skill tree."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "statue")
+            await page.wait_for_timeout(1_500)
+
+            node = page.locator(f'.skill_node.learnable[data-skill="{skill_id}"]')
+            if not await node.count():
+                return ActionResult(
+                    False,
+                    "learn_knight_skill",
+                    f"habilidade {skill_id} não pode ser aprendida agora",
+                )
+
+            await human_click(page, node.first)
+            await human_delay(800, 1500)
+            self._capture(await page.content(), f"knight-skill-{skill_id}")
+
+            learn = page.locator(
+                ".popup_box_container .btn:visible:not(.btn-pp):not(.btn-confirm-no), "
+                "#knight_skill_tree .btn:visible:not(.btn-pp)"
+            )
+            if not await learn.count():
+                return ActionResult(False, "learn_knight_skill", "botão de aprender não encontrado")
+
+            await human_click(page, learn.first)
+            await page.wait_for_timeout(1_200)
+
+            second = page.locator(".evt-confirm-btn:visible")
+            if await second.count():
+                await human_click(page, second.first)
+                await page.wait_for_timeout(1_200)
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "learn_knight_skill", " | ".join(messages["errors"]))
+
+            await _open(page, "statue", village_id)
+            await page.wait_for_timeout(1_200)
+            learned = await page.locator(
+                f'.skill_node[data-skill="{skill_id}"]:not(.learnable):not(.unknown)'
+            ).count()
+
+        if not learned:
+            return ActionResult(
+                False,
+                "learn_knight_skill",
+                f"habilidade {skill_id} não foi aprendida",
+                {"notices": messages["notices"]},
+            )
+
+        logger.info("Learned paladin skill {} in village {}", skill_id, village_id)
+        return ActionResult(
+            True,
+            "learn_knight_skill",
+            f"habilidade {skill_id} aprendida",
+            {"notices": messages["notices"]},
         )
 
     async def claim_rewards(self, village_id: str) -> ActionResult:

@@ -49,7 +49,7 @@ class ScreenCatalog:
 
     def missing(self, levels: dict[str, int]) -> list[str]:
         buildings = [screen for screen in WATCHED if levels.get(screen, 0) >= 1]
-        popups = ["inventory_details", *(["statue_recruit"] if levels.get("statue", 0) >= 1 else [])]
+        popups = ["inventory_details", *(["statue_recruit", "statue_train"] if levels.get("statue", 0) >= 1 else [])]
         wanted = ["menu", *buildings, *self.ACCOUNT, *popups]
         return [screen for screen in wanted if self.stale(screen)]
 
@@ -91,6 +91,16 @@ class ScreenCatalog:
                 await page.wait_for_timeout(900)
                 parts.append(await page.locator(".inventory_detail").first.evaluate("(n) => n.outerHTML"))
             self.save(name, "\n".join(parts) or "<!-- empty -->")
+            return
+
+        if name == "statue_train":
+            await _open(page, "statue", village_id)
+            launch = page.locator(".knight_train_launch")
+            if await launch.count():
+                await launch.first.click()
+                await page.wait_for_timeout(1_500)
+            self.save(name, await page.evaluate(POPUP_JS) or "<!-- no popup -->")
+            await page.keyboard.press("Escape")
             return
 
         if name == "statue_recruit":
