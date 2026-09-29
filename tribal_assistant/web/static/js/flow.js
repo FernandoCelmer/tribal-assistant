@@ -15,6 +15,8 @@ const TOOL_LABELS = {
   claim_quest_rewards: "coletar recompensas",
   complete_quest: "concluir missão",
   set_village_goal: "definir objetivo",
+  set_village_plan: "definir plano",
+  open_daily_bonus: "abrir baú diário",
 };
 
 const OUTCOMES = {
