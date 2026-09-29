@@ -1,5 +1,6 @@
 """Quests: collect rewards and hand in finished missions."""
 
+import re
 from typing import TYPE_CHECKING
 
 from tribal_assistant.agents.roles.base import VillageAgent
@@ -31,10 +32,9 @@ class QuartermasterAgent(VillageAgent):
                 if outcome.ok:
                     done.append(f"missão {quest['id']}")
 
-        storage = box.ctx.village.storage or 0
-        fullest = max(box.ctx.stock.get(r, 0) for r in ("wood", "clay", "iron"))
-        if box.ctx.rewards_pending and storage and fullest >= storage * 0.9:
-            done.append("armazém quase cheio: recompensas guardadas para não desperdiçar")
+        overflow = await self.overflow(box) if box.ctx.rewards_pending else []
+        if overflow:
+            done.append(f"recompensas guardadas: {', '.join(overflow)} estouraria o armazém")
         elif box.ctx.rewards_pending:
             outcome = await box.invoke("claim_quest_rewards", {"reason": "recompensas prontas"})
             if outcome.ok:
@@ -48,3 +48,27 @@ class QuartermasterAgent(VillageAgent):
                 done.append(outcome.text)
 
         return "; ".join(done) or "nada a coletar"
+
+    @staticmethod
+    def reward_resources(label: str) -> tuple[int, int, int]:
+        """Resources in a reward label like 'Poço de argila 5 150 150 100 Tudo' (the last three numbers)."""
+        numbers = [int(n.replace(".", "")) for n in re.findall(r"\d[\d.]*", label)]
+        if len(numbers) < 3:
+            return 0, 0, 0
+
+        wood, clay, iron = numbers[-3:]
+        return wood, clay, iron
+
+    async def overflow(self, box: "Toolbox") -> list[str]:
+        """Resources that would pass storage if every pending reward were claimed now."""
+        from tribal_assistant.repositories.agents import AgentRepository
+
+        total = [0, 0, 0]
+        for reward in await AgentRepository(box.session).pending_rewards():
+            for i, amount in enumerate(self.reward_resources(reward.label)):
+                total[i] += amount
+
+        storage = box.ctx.village.storage or 0
+        stock = [box.ctx.stock.get(r, 0) for r in ("wood", "clay", "iron")]
+        names = ("madeira", "argila", "ferro")
+        return [names[i] for i in range(3) if storage and stock[i] + total[i] > storage]

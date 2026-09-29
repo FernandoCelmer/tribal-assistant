@@ -34,6 +34,10 @@ class RecruitmentProposer(Proposer):
 
             items.append(self._recruit(view, step.target, plan.count, f"plano pede {step.amount} {step.target}", weight, purpose=f"plan:{step.target}"))
 
+        research = await self._research(view)
+        if research:
+            items.append(research)
+
         storage = ctx.village.storage or 1
         if any(v >= storage * 0.85 for v in ctx.stock.values()):
             for unit in FARM_UNITS:
@@ -57,4 +61,31 @@ class RecruitmentProposer(Proposer):
             confidence=1.0,
             purpose=purpose,
             risks=["concorre com obras econômicas"],
+        )
+
+    RESEARCH_PRIORITY = ("light", "axe", "spy", "marcher", "heavy", "ram", "archer", "sword", "catapult")
+
+    async def _research(self, view: CoordinationView) -> Proposal | None:
+        ctx = view.ctx
+        if ctx.levels.get("smith", 0) < 1 or view.dry_run or not await view.cooldown("smith", 1):
+            return None
+
+        techs = await view.actions.smith(ctx.game_id)
+        ready = {t["unit"]: t for t in techs if t.get("level", 0) == 0 and not t.get("blocked")}
+        unit = next((u for u in self.RESEARCH_PRIORITY if u in ready), None)
+        if unit is None:
+            return None
+
+        cost = {k: v for k, v in ready[unit].get("cost", {}).items() if v}
+        return Proposal(
+            self.key,
+            "research_unit",
+            {"unit": unit, "reason": f"pesquisar {unit}"},
+            f"{unit} liberado para pesquisa no ferreiro",
+            f"permite recrutar {unit}",
+            cost=cost,
+            factors=Factors(urgency=0.3, impact=0.7 if unit in ("light", "axe") else 0.45, opportunity=0.5),
+            horizon=Horizon.TACTICAL,
+            confidence=0.8 if cost else 0.6,
+            risks=[] if cost else ["custo só aparece na tela do ferreiro"],
         )

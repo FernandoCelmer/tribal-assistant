@@ -40,6 +40,7 @@ class OperatorAgent(VillageAgent):
         "train_knight",
         "accept_market_offer",
         "create_market_offer",
+        "research_unit",
     )
 
     async def rules(self, box: "Toolbox") -> str:

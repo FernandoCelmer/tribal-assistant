@@ -777,6 +777,29 @@ class CreateMarketOffer(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class ResearchUnit(AgentTool):
+    name = "research_unit"
+    description = "Pesquisa uma unidade no ferreiro (libera o recrutamento dela). Ex.: axe exige Ferreiro 2; light exige Estábulo."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"unit": {"type": "string", "enum": ["spear", "sword", "axe", "archer", "spy", "light", "marcher", "heavy", "ram", "catapult"]}, "reason": REASON},
+        "required": ["unit", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        unit = str(args["unit"])
+        if box.ctx.levels.get("smith", 0) < 1:
+            return ToolOutcome(False, "RECUSADO: aldeia sem ferreiro")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) pesquisar {unit}")
+
+        result = await box.actions.research(box.ctx.game_id, unit)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (

@@ -136,6 +136,9 @@ class UpkeepProposer(Proposer):
         if not item.get("usable"):
             return None
 
+        if "livro" in name.lower() or "livro de habilidade" in detail.lower():
+            return "livro de habilidade libera habilidade do paladino"
+
         if "Construção" in name or "construção" in detail:
             return "bônus de construção com fila ocupada" if building else None
 

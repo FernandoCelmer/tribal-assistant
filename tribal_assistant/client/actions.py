@@ -104,6 +104,15 @@ MERCHANTS_JS = """() => {
   return {free: m ? Number(m[1]) : 0, total: m ? Number(m[2]) : 0, carry: c ? Number(c[1].replace(/\\D/g, '')) : 0};
 }"""
 
+SMITH_JS = """() => {
+  const techs = (window.BuildingSmith && BuildingSmith.techs && BuildingSmith.techs.available) || {};
+  return Object.values(techs).map(t => ({
+    unit: t.id, level: Number(t.level || 0),
+    blocked: Object.keys(t).filter(k => k.startsWith('error_') && t[k]),
+    cost: {wood: Number(t.wood || 0), clay: Number(t.stone || 0), iron: Number(t.iron || 0)},
+  }));
+}"""
+
 FREE_FINISH = "#buildqueue .btn-instant-free"
 FREE_WAIT_MAX = 75
 FREE_WAIT_JS = "(n) => { const at = Number(n.dataset.availableFrom || 0); return at ? Math.max(0, at - Date.now() / 1000) : null; }"
@@ -1170,6 +1179,55 @@ class GameActions:
             "create_offer",
             f"oferta criada: {amount} {sell} por {amount} {buy} (até {max_hours}h)",
             {"notices": messages["notices"]},
+        )
+
+    async def smith(self, village_id: str) -> list[dict[str, Any]]:
+        """Technologies at the smithy with level, blocking reasons and cost."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "smith")
+            await page.wait_for_timeout(1_000)
+            return await page.evaluate(SMITH_JS) or []
+
+    async def research(self, village_id: str, unit: str) -> ActionResult:
+        """Research a unit at the smithy through its research button (never a premium option)."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "smith")
+            await page.wait_for_timeout(1_000)
+
+            row = page.locator(
+                f'tr:has(a.unit_link[data-unit="{unit}"]), div:has(> a.unit_link[data-unit="{unit}"])'
+            ).last
+            button = row.locator(
+                'a.btn-research:visible, a.btn:visible:not(.btn-pp):not(.btn-disabled):has-text("Pesquis"), '
+                'button:visible:not(.btn-pp):has-text("Pesquis")'
+            )
+            if not await button.count():
+                self._capture(await page.content(), f"smith-research-{unit}")
+                return ActionResult(
+                    False, "research", f"botão de pesquisa de {unit} não disponível"
+                )
+
+            await human_click(page, button.first)
+            await page.wait_for_timeout(1_500)
+
+            confirm = page.locator(".evt-confirm-btn:visible")
+            if await confirm.count():
+                await human_click(page, confirm.first)
+                await page.wait_for_timeout(1_200)
+
+            self._capture(await page.content(), f"smith-research-{unit}")
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(
+                    False, "research", " | ".join(messages["errors"]), {"unit": unit}
+                )
+
+        logger.info("Research {} started in village {}", unit, village_id)
+        return ActionResult(
+            True,
+            "research",
+            f"pesquisa de {unit} iniciada",
+            {"unit": unit, "notices": messages["notices"]},
         )
 
     async def claim_rewards(self, village_id: str) -> ActionResult:
