@@ -135,6 +135,18 @@ REPORT_DETAIL_JS = r"""() => {
 
 EVALUATE_ATTEMPTS = 3
 REPORT_DETAILS_PER_SYNC = 5
+TEXTS_PER_SYNC = 5
+
+CONTENT_TEXT_JS = """() => {
+  const root = document.querySelector('#content_value') || document.body;
+  const clone = root.cloneNode(true);
+  clone.querySelectorAll('script, style, .vis_item, #report_list').forEach(n => n.remove());
+  return clone.innerText.replace(/\\s+/g, ' ').trim().slice(0, 4000);
+}"""
+
+MAIL_LIST_JS = """() => [...document.querySelectorAll('#content_value a[href*="screen=mail"][href*="view="]')]
+  .map(a => ({id: new URL(a.href).searchParams.get('view'), title: a.innerText.trim()}))
+  .filter((m, i, all) => m.id && m.title && all.findIndex(o => o.id === m.id) === i)"""
 
 
 FIND_LINK_JS = """(want) => {
@@ -300,6 +312,7 @@ async def _read_village(page: Page, village_id: str, finish_free: bool = False) 
 
 
 CAPTURED: list[str] = []
+LEARNED: list[tuple[str, str, str, str]] = []
 
 
 class ReportClock:
@@ -332,7 +345,50 @@ async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[di
     return rows
 
 
-async def _read_game(known_reports: set[str], finish_free: bool = False) -> GameSnapshot:
+async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, Any]], known: set[str]) -> None:
+    """Open unread reports of any kind and messages, and keep their full text for learning."""
+    budget = TEXTS_PER_SYNC
+
+    for row in report_rows:
+        if budget <= 0:
+            break
+
+        key = f"report:{row['id']}"
+        if key in known:
+            continue
+
+        try:
+            await _open(page, "report", village_id, mode="all", view=row["id"])
+            LEARNED.append((key, "report", str(row.get("title", ""))[:255], await _evaluate(page, CONTENT_TEXT_JS)))
+            budget -= 1
+        except PlaywrightError as exc:
+            logger.debug("Could not read report {}: {}", row["id"], exc)
+
+    try:
+        await _open(page, "mail", village_id)
+        mails = await _evaluate(page, MAIL_LIST_JS) or []
+    except PlaywrightError:
+        mails = []
+
+    for mail in mails:
+        if budget <= 0:
+            break
+
+        key = f"mail:{mail['id']}"
+        if key in known:
+            continue
+
+        try:
+            await _open(page, "mail", village_id, mode="view", view=mail["id"])
+            LEARNED.append((key, "mail", mail["title"][:255], await _evaluate(page, CONTENT_TEXT_JS)))
+            budget -= 1
+        except PlaywrightError as exc:
+            logger.debug("Could not read message {}: {}", mail["id"], exc)
+
+
+async def _read_game(
+    known_reports: set[str], finish_free: bool = False, learned: set[str] | None = None
+) -> GameSnapshot:
     page = await game_session.page()
     await _ensure_in_game(page)
 
@@ -351,6 +407,7 @@ async def _read_game(known_reports: set[str], finish_free: bool = False) -> Game
     if first.new_reports or not known_reports or ReportClock.due():
         report_rows = await _read_reports(page, village_ids[0], known_reports)
         ReportClock.mark()
+        await _read_texts(page, village_ids[0], report_rows, learned or set())
     player = parse_player(await _game_data(page), overview_text)
 
     await game_session.save_state()
@@ -369,7 +426,11 @@ async def sync_game() -> GameSnapshot:
             async with SessionFactory() as session:
                 known = await GameRepository(session).report_ids()
                 config = await AgentSettingsRepository(session).get()
-            snapshot = await _read_game(known, config.auto_finish_free)
+
+                from tribal_assistant.repositories.lessons import LessonRepository
+
+                learned = await LessonRepository(session).keys(("report", "mail"))
+            snapshot = await _read_game(known, config.auto_finish_free, learned)
             async with SessionFactory() as session:
                 await GameRepository(session).persist(snapshot)
 
@@ -378,7 +439,9 @@ async def sync_game() -> GameSnapshot:
                 book = LessonBook(session)
                 await book.reports(snapshot.reports, known)
                 await book.screens(ScreenCatalog(), CAPTURED)
+                await book.texts(LEARNED)
                 CAPTURED.clear()
+                LEARNED.clear()
         except Exception as exc:
             session_state.logged_in = False
             session_state.last_error = str(exc)

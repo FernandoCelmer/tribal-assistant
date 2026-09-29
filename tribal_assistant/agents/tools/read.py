@@ -45,14 +45,14 @@ class LookupKnowledge(AgentTool):
     description = (
         "Fatos do jogo (ajuda oficial): requisitos, nível máximo e papel de um edifício; custo, população, "
         "velocidade, carga, ataque/defesa e requisito de uma unidade; a estratégia de base (kind=strategy); "
-        "ou um guia completo (kind=guide, id=inicio, avancado ou nobre). "
+        "ou um guia completo (kind=guide, id=inicio, avancado, nobre ou tribo). "
         "Use só em caso de dúvida; o jogo tem a palavra final."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
             "kind": {"type": "string", "enum": ["building", "unit", "strategy", "guide"], "description": "O que consultar."},
-            "id": {"type": "string", "description": "Id do edifício (main, barracks, snob...) ou da unidade (spear, light...); inicio, avancado ou nobre para guide; vazio para strategy."},
+            "id": {"type": "string", "description": "Id do edifício (main, barracks, snob...) ou da unidade (spear, light...); inicio, avancado, nobre ou tribo para guide; vazio para strategy."},
         },
         "required": ["kind"],
         "additionalProperties": False,

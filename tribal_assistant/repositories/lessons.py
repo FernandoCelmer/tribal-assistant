@@ -64,6 +64,10 @@ class LessonRepository:
 
         return row if _now() - row.last_seen <= timedelta(minutes=minutes) else None
 
+    async def keys(self, topics: tuple[str, ...]) -> set[str]:
+        stmt = select(Lesson.key).where(Lesson.topic.in_(topics), Lesson.text != "")
+        return set((await self.session.execute(stmt)).scalars().all())
+
     async def list(self, topic: str | None = None, limit: int = 100) -> Sequence[Lesson]:
         stmt = select(Lesson).order_by(Lesson.last_seen.desc()).limit(limit)
         if topic:

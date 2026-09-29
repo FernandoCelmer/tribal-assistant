@@ -102,13 +102,14 @@ Nobre
 - Início tardio num mundo antigo: defesa primeiro (lanceiros e espadachins), nobre depois.
 Aldeia final: recursos, Fazenda e Armazém 30; Edifício principal 20; Ferreiro 20; Muralha 20.
 Nunca gaste pontos premium.
-Guias completos: lookup_knowledge kind=guide id=inicio (primeiros dias), avancado (várias aldeias, tribo) ou nobre (conquista).
+Guias completos: lookup_knowledge kind=guide id=inicio (primeiros dias), avancado (várias aldeias, tribo), nobre (conquista) ou tribo (escolher e usar uma tribo).
 """
 
 GUIDES = {
     "inicio": "Primeiros dias: economia de saque, ordem de construção, missões, coleta, tropas e rotina.",
     "avancado": "Fase avançada: especialização de aldeias, mercado, ataques sincronizados, defesa e tribo.",
     "nobre": "Conquista: academia, espionagem, limpeza, nobres sincronizados e defesa da aldeia nova.",
+    "tribo": "Tribos: para que servem, como escolher, riscos e como entram no planejamento.",
 }
 GUIDES_DIR = Path(__file__).parent / "guides"
 

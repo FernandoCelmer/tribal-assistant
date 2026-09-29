@@ -11,6 +11,10 @@ async def sync_world() -> None:
     data = await fetch_world()
     async with SessionFactory() as session:
         await WorldRepository(session).replace(data)
+
+        from tribal_assistant.agents.learning import LessonBook
+
+        await LessonBook(session).neighbourhood()
     logger.info(
         "World synced: {} villages, {} players, {} allies",
         len(data.villages), len(data.players), len(data.allies),
