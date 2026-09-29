@@ -5,21 +5,23 @@
 [![Playwright](https://img.shields.io/badge/Playwright-browser-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/python/)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-FE5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
 
-**Tribal Assistant** is an open-source Python assistant for the browser strategy game **Tribal Wars** (Guerra Tribal / Die Stämme). It plays your accounts through a real browser session: village agents decide builds, troops, raids, scavenging, trades, quests, the event forge, tribe and mentor, while a coordinator weighs their proposals. Everything they see and decide is stored in the database (SQLite or PostgreSQL) and shown in a Next.js panel with light and dark mode.
+**Tribal Assistant** is an open-source Python assistant for the browser strategy game **Tribal Wars** (Guerra Tribal / Die Stämme). It plays your accounts through a real browser session: village agents decide builds, troops, raids, scavenging, trades, quests, the event forge, tribe and mentor, while a coordinator weighs their proposals. Everything they see and decide is stored in the database (SQLite or PostgreSQL) and shown in a Next.js panel that works on desktop and phone.
 
 Use it as a **server** (`tribal-assistant serve` plus the panel in `apps/web`), a **CLI** (`tribal-assistant`), a **Python library** (`import tribal_assistant`) or an **MCP server** for AI clients.
 
-| Light | Dark |
-|-------|------|
-| ![Tribal Assistant dashboard, light theme](docs/screenshots/dashboard-light.png) | ![Tribal Assistant dashboard, dark theme](docs/screenshots/dashboard-dark.png) |
+| Overview | Strategy |
+|----------|----------|
+| ![Overview](docs/screenshots/overview.png) | ![Strategy](docs/screenshots/strategy.png) |
 
-| Agents | Settings |
-|--------|----------|
-| ![Agents page](docs/screenshots/agents.png) | ![Settings page](docs/screenshots/settings.png) |
+| Agents | Challenges |
+|--------|------------|
+| ![Agents](docs/screenshots/agents.png) | ![Challenges](docs/screenshots/challenges.png) |
 
-| Decision graph | Charts |
-|----------------|--------|
-| ![Decision graph](docs/screenshots/graph.png) | ![Charts](docs/screenshots/charts.png) |
+| Charts | Decision graph |
+|--------|----------------|
+| ![Charts](docs/screenshots/charts.png) | ![Decision graph](docs/screenshots/graph.png) |
+
+<p align="center"><img src="docs/screenshots/mobile.png" alt="Overview on a phone" width="260"></p>
 
 ## Features
 
@@ -31,7 +33,7 @@ Use it as a **server** (`tribal-assistant serve` plus the panel in `apps/web`), 
 - **Scavenging** — shows each scavenge option, its return time and unlock state.
 - **Incoming attack alerts** — highlights attacks and nobles heading to your villages.
 - **Scheduler** — APScheduler jobs with jitter and configurable quiet hours.
-- **Panel** — Next.js app in `apps/web`: responsive, keyboard accessible, light and dark themes, paginated lists, in-app confirmations.
+- **Panel** — Next.js app in `apps/web`: responsive, keyboard accessible, dark theme, paginated lists, in-app confirmations.
 - **REST API** — FastAPI with OpenAPI docs at `/docs`.
 
 ## Install
