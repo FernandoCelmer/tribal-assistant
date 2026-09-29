@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 
 if TYPE_CHECKING:
@@ -716,17 +717,9 @@ class AcceptMarketOffer(AgentTool):
         }
         storage = box.ctx.village.storage or 0
 
-        if receive == pay:
-            return ToolOutcome(False, "RECUSADO: troca do mesmo recurso")
-
-        if amount > receive_amount:
-            return ToolOutcome(False, f"RECUSADO: razão ruim ({amount} por {receive_amount})")
-
-        if stock[pay] - amount < storage * 0.2:
-            return ToolOutcome(False, f"RECUSADO: pagar {amount} deixaria pouco de {pay}")
-
-        if stock[receive] + receive_amount > storage:
-            return ToolOutcome(False, f"RECUSADO: {receive} estouraria o armazém")
+        refusal = MarketRule.refusal(stock, pay, amount, receive, receive_amount, storage)
+        if refusal:
+            return ToolOutcome(False, f"RECUSADO: {refusal}")
 
         if box.dry_run:
             return ToolOutcome(
@@ -750,7 +743,7 @@ class CreateMarketOffer(AgentTool):
         "properties": {
             "sell": {"type": "string", "enum": ["wood", "stone", "iron"]},
             "buy": {"type": "string", "enum": ["wood", "stone", "iron"]},
-            "amount": {"type": "integer", "minimum": 100, "maximum": 1000},
+            "amount": {"type": "integer", "minimum": 100, "maximum": 1000, "multipleOf": 100},
             "max_hours": {"type": "integer", "minimum": 1, "maximum": 96},
             "reason": REASON,
         },
@@ -764,11 +757,9 @@ class CreateMarketOffer(AgentTool):
         stock = {"wood": box.ctx.stock.get("wood", 0), "stone": box.ctx.stock.get("clay", 0), "iron": box.ctx.stock.get("iron", 0)}
         storage = box.ctx.village.storage or 0
 
-        if sell == buy:
-            return ToolOutcome(False, "RECUSADO: oferta do mesmo recurso")
-
-        if stock[sell] - amount < max(storage * 0.2, stock[buy]):
-            return ToolOutcome(False, f"RECUSADO: oferecer {amount} de {sell} deixaria pouco")
+        refusal = MarketRule.refusal(stock, sell, amount, buy, amount, storage)
+        if refusal:
+            return ToolOutcome(False, f"RECUSADO: {refusal}")
 
         if box.dry_run:
             return ToolOutcome(True, f"(simulação) oferta {amount} {sell} por {amount} {buy}")

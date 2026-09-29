@@ -3,6 +3,7 @@
 from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.market import MIN_GAP, MarketRule
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 
@@ -118,7 +119,7 @@ class EconomyProposer(Proposer):
             "stone": ctx.stock.get("clay", 0),
             "iron": ctx.stock.get("iron", 0),
         }
-        if max(stock.values()) - min(stock.values()) < 500 or not await view.cooldown(
+        if max(stock.values()) - min(stock.values()) < MIN_GAP or not await view.cooldown(
             "market", 0.5
         ):
             return None
@@ -174,7 +175,7 @@ class EconomyProposer(Proposer):
 
     async def _own_offer(self, view: CoordinationView, stock: dict[str, int]) -> Proposal | None:
         plan = self.own_offer(stock, view.ctx.village.storage or 0)
-        if plan is None or not await view.cooldown("market_offer", 2):
+        if plan is None or not await view.cooldown("market_offer", 1):
             return None
 
         merchants = await view.actions.market_merchants(view.ctx.game_id)
@@ -204,14 +205,15 @@ class EconomyProposer(Proposer):
 
     @staticmethod
     def own_offer(stock: dict[str, int], storage: int) -> tuple[str, str, int] | None:
-        high = max(stock, key=stock.get)
-        low = min(stock, key=stock.get)
-        gap = stock[high] - stock[low]
-        amount = min(1000, (gap // 2) // 100 * 100)
-        if amount < 300 or stock[high] - amount < storage * 0.2:
+        plan = MarketRule.lot(stock)
+        if plan is None:
             return None
 
-        return high, low, amount
+        high, low, amount = plan
+        if MarketRule.refusal(stock, high, amount, low, amount, storage):
+            return None
+
+        return plan
 
     @staticmethod
     def pick_offer(
@@ -223,12 +225,8 @@ class EconomyProposer(Proposer):
             if o.get("can_accept")
             and o.get("receive")
             and o.get("pay")
-            and o["receive"] != o["pay"]
-            and o["pay_amount"] <= o["receive_amount"]
             and (o.get("minutes") or 0) <= max_minutes
-            and stock[o["pay"]] - o["pay_amount"] >= storage * 0.1
-            and stock[o["receive"]] + o["receive_amount"] <= storage
-            and (stock[o["pay"]] - o["pay_amount"] >= stock[o["receive"]] or stock[o["receive"]] < storage * 0.1)
+            and not MarketRule.refusal(stock, o["pay"], o["pay_amount"], o["receive"], o["receive_amount"], storage)
         ]
         fits.sort(
             key=lambda o: (

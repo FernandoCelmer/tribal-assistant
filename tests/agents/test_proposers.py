@@ -40,7 +40,24 @@ def test_market_offer_only_trades_surplus_for_the_lowest_resource():
 
 def test_own_offer_splits_the_gap_and_keeps_a_floor():
     assert EconomyProposer.own_offer({"wood": 300, "stone": 1500, "iron": 700}, 2285) == ("stone", "wood", 600)
-    assert EconomyProposer.own_offer({"wood": 800, "stone": 1000, "iron": 900}, 2285) is None
+    assert EconomyProposer.own_offer({"wood": 900, "stone": 1000, "iron": 950}, 2285) is None
+
+
+def test_small_surplus_still_trades_in_lots_of_a_hundred():
+    stock = {"wood": 406, "stone": 287, "iron": 1119}
+
+    assert EconomyProposer.own_offer(stock, 4247) == ("iron", "stone", 400)
+    assert EconomyProposer.own_offer({"wood": 800, "stone": 1000, "iron": 900}, 2285) == ("stone", "wood", 100)
+
+
+def test_trade_never_flips_the_imbalance():
+    from tribal_assistant.core.agents.market import MarketRule
+
+    stock = {"wood": 406, "stone": 287, "iron": 1119}
+
+    assert MarketRule.refusal(stock, "iron", 400, "stone", 400, 4247) is None
+    assert MarketRule.refusal(stock, "iron", 900, "stone", 900, 4247)
+    assert MarketRule.refusal(stock, "iron", 1000, "wood", 1000, 4247)
 
 
 def test_skill_books_are_used():
