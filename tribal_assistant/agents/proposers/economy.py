@@ -22,7 +22,14 @@ class EconomyProposer(Proposer):
 
         base = int(storage * view.config.resource_reserve)
         if base:
-            items.append(Reservation("base", "base", "reserva mínima configurada", {"wood": base, "clay": base, "iron": base}))
+            items.append(
+                Reservation(
+                    "base",
+                    "base",
+                    "reserva mínima configurada",
+                    {"wood": base, "clay": base, "iron": base},
+                )
+            )
 
         for building in PlanTracker.next_builds(ctx.plan)[:1]:
             cost = view.build_cost(building)
@@ -58,7 +65,11 @@ class EconomyProposer(Proposer):
                     f"o armazém enche em {storage_hours:.1f}h",
                     "evitar perder produção por falta de espaço",
                     cost=view.build_cost("storage"),
-                    factors=Factors(urgency=self.urgency_from_hours(storage_hours, horizon), impact=0.6, risk_avoided=0.8),
+                    factors=Factors(
+                        urgency=self.urgency_from_hours(storage_hours, horizon),
+                        impact=0.6,
+                        risk_avoided=0.8,
+                    ),
                     horizon=Horizon.IMMEDIATE,
                     deadline=estimator.deadline(storage_hours),
                     confidence=0.85,
@@ -90,21 +101,29 @@ class EconomyProposer(Proposer):
 
     @staticmethod
     def _buildable(view: CoordinationView, building: str) -> bool:
-        return not view.guard.check_upgrade(view.ctx, building) or "recurso" in (view.guard.check_upgrade(view.ctx, building) or "")
+        return not view.guard.check_upgrade(view.ctx, building) or "recurso" in (
+            view.guard.check_upgrade(view.ctx, building) or ""
+        )
 
     async def _trade(self, view: CoordinationView) -> Proposal | None:
         ctx = view.ctx
         if ctx.levels.get("market", 0) < 1 or view.dry_run:
             return None
 
-        stock = {"wood": ctx.stock.get("wood", 0), "stone": ctx.stock.get("clay", 0), "iron": ctx.stock.get("iron", 0)}
-        if max(stock.values()) - min(stock.values()) < 500 or not await view.cooldown("market", 0.5):
+        stock = {
+            "wood": ctx.stock.get("wood", 0),
+            "stone": ctx.stock.get("clay", 0),
+            "iron": ctx.stock.get("iron", 0),
+        }
+        if max(stock.values()) - min(stock.values()) < 500 or not await view.cooldown(
+            "market", 0.5
+        ):
             return None
 
         offers = await view.actions.market_offers(ctx.game_id)
         choice = self.pick_offer(offers, stock, ctx.village.storage or 0)
         if choice is None:
-            return None
+            return await self._own_offer(view, stock)
 
         return Proposal(
             self.key,
@@ -119,15 +138,64 @@ class EconomyProposer(Proposer):
             },
             f"{choice['pay']} sobrando e {choice['receive']} em falta",
             f"+{choice['receive_amount']} {choice['receive']} em {choice.get('minutes')} min",
-            cost={"wood" if choice["pay"] == "wood" else "clay" if choice["pay"] == "stone" else "iron": choice["pay_amount"]},
+            cost={
+                "wood"
+                if choice["pay"] == "wood"
+                else "clay"
+                if choice["pay"] == "stone"
+                else "iron": choice["pay_amount"]
+            },
             factors=Factors(urgency=0.3, impact=0.5, opportunity=0.6, opportunity_cost=0.2),
             horizon=Horizon.TACTICAL,
             confidence=0.8,
             risks=["recurso só chega depois da viagem do comerciante"],
         )
 
+    async def _own_offer(self, view: CoordinationView, stock: dict[str, int]) -> Proposal | None:
+        plan = self.own_offer(stock, view.ctx.village.storage or 0)
+        if plan is None or not await view.cooldown("market_offer", 2):
+            return None
+
+        merchants = await view.actions.market_merchants(view.ctx.game_id)
+        if merchants.get("free", 0) <= 0:
+            return None
+
+        sell, buy, amount = plan
+        amount = min(amount, merchants.get("carry") or 1000)
+        return Proposal(
+            self.key,
+            "create_market_offer",
+            {
+                "sell": sell,
+                "buy": buy,
+                "amount": amount,
+                "max_hours": 5,
+                "reason": f"ofertar {sell} sobrando por {buy}",
+            },
+            f"nenhuma oferta boa de {buy}; {sell} sobrando",
+            f"+{amount} {buy} quando alguém aceitar",
+            cost={"wood" if sell == "wood" else "clay" if sell == "stone" else "iron": amount},
+            factors=Factors(urgency=0.2, impact=0.4, opportunity=0.5, opportunity_cost=0.2),
+            horizon=Horizon.TACTICAL,
+            confidence=0.6,
+            risks=["comerciante fica preso até alguém aceitar"],
+        )
+
     @staticmethod
-    def pick_offer(offers: list[dict], stock: dict[str, int], storage: int, max_minutes: int = MARKET_MINUTES) -> dict | None:
+    def own_offer(stock: dict[str, int], storage: int) -> tuple[str, str, int] | None:
+        high = max(stock, key=stock.get)
+        low = min(stock, key=stock.get)
+        gap = stock[high] - stock[low]
+        amount = min(1000, (gap // 2) // 100 * 100)
+        if amount < 300 or stock[high] - amount < storage * 0.2:
+            return None
+
+        return high, low, amount
+
+    @staticmethod
+    def pick_offer(
+        offers: list[dict], stock: dict[str, int], storage: int, max_minutes: int = MARKET_MINUTES
+    ) -> dict | None:
         fits = [
             o
             for o in offers
@@ -141,5 +209,11 @@ class EconomyProposer(Proposer):
             and stock[o["receive"]] + o["receive_amount"] <= storage
             and stock[o["pay"]] - o["pay_amount"] >= stock[o["receive"]]
         ]
-        fits.sort(key=lambda o: (min(stock, key=stock.get) != o["receive"], -o["receive_amount"], o.get("minutes") or 0))
+        fits.sort(
+            key=lambda o: (
+                min(stock, key=stock.get) != o["receive"],
+                -o["receive_amount"],
+                o.get("minutes") or 0,
+            )
+        )
         return fits[0] if fits else None

@@ -739,6 +739,44 @@ class AcceptMarketOffer(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class CreateMarketOffer(AgentTool):
+    name = "create_market_offer"
+    description = (
+        "Cria uma oferta própria no mercado na proporção 1:1 (a única permitida): dá `amount` de `sell` e pede "
+        "o mesmo de `buy`. Prende um comerciante até alguém aceitar. Recusado se esvaziar o recurso oferecido."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "sell": {"type": "string", "enum": ["wood", "stone", "iron"]},
+            "buy": {"type": "string", "enum": ["wood", "stone", "iron"]},
+            "amount": {"type": "integer", "minimum": 100, "maximum": 1000},
+            "max_hours": {"type": "integer", "minimum": 1, "maximum": 96},
+            "reason": REASON,
+        },
+        "required": ["sell", "buy", "amount", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        sell, buy, amount = str(args["sell"]), str(args["buy"]), int(args["amount"])
+        stock = {"wood": box.ctx.stock.get("wood", 0), "stone": box.ctx.stock.get("clay", 0), "iron": box.ctx.stock.get("iron", 0)}
+        storage = box.ctx.village.storage or 0
+
+        if sell == buy:
+            return ToolOutcome(False, "RECUSADO: oferta do mesmo recurso")
+
+        if stock[sell] - amount < max(storage * 0.2, stock[buy]):
+            return ToolOutcome(False, f"RECUSADO: oferecer {amount} de {sell} deixaria pouco")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) oferta {amount} {sell} por {amount} {buy}")
+
+        result = await box.actions.create_offer(box.ctx.game_id, sell, amount, buy, int(args.get("max_hours", 5)))
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (

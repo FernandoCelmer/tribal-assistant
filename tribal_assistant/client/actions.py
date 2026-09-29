@@ -97,6 +97,13 @@ MARKET_OFFERS_JS = """() => {
   });
 }"""
 
+MERCHANTS_JS = """() => {
+  const text = (document.querySelector('#content_value') || document.body).innerText;
+  const m = text.match(/Comerciantes:\\s*(\\d+)\\s*\\/\\s*(\\d+)/);
+  const c = text.match(/transporte:\\s*([\\d.]+)/);
+  return {free: m ? Number(m[1]) : 0, total: m ? Number(m[2]) : 0, carry: c ? Number(c[1].replace(/\\D/g, '')) : 0};
+}"""
+
 FREE_FINISH = "#buildqueue .btn-instant-free"
 FREE_WAIT_MAX = 75
 FREE_WAIT_JS = "(n) => { const at = Number(n.dataset.availableFrom || 0); return at ? Math.max(0, at - Date.now() / 1000) : null; }"
@@ -1121,6 +1128,48 @@ class GameActions:
             "accept_offer",
             f"troca aceita: {amount} {pay} por {match['receive_amount']} {receive} ({player})",
             {"notices": messages["notices"], "minutes": match["minutes"]},
+        )
+
+    async def market_merchants(self, village_id: str) -> dict[str, int]:
+        """Free and total merchants and how much one delivery can carry."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "market", mode="own_offer")
+            return await page.evaluate(MERCHANTS_JS)
+
+    async def create_offer(
+        self, village_id: str, sell: str, amount: int, buy: str, max_hours: int = 5
+    ) -> ActionResult:
+        """Post an own market offer at the only allowed ratio (1:1): give `amount` of `sell` for the same of `buy`."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "market", mode="own_offer")
+            merchants = await page.evaluate(MERCHANTS_JS)
+            if merchants.get("free", 0) <= 0:
+                return ActionResult(False, "create_offer", "nenhum comerciante livre")
+
+            form = page.locator("#own_offer_form")
+            if not await form.count():
+                return ActionResult(False, "create_offer", "formulário de oferta não encontrado")
+
+            await form.locator("#res_sell_amount").fill(str(amount))
+            await form.locator(f"#res_sell_{sell}").check()
+            await form.locator("#res_buy_amount").fill(str(amount))
+            await form.locator(f"#res_buy_{buy}").check()
+            await form.locator('input[name="multi"]').fill("1")
+            await form.locator('input[name="max_time"]').fill(str(max_hours))
+            await human_delay(500, 1100)
+            await self._click_and_settle(page, form.locator("#submit_offer"))
+            self._capture(await page.content(), "market-offer")
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "create_offer", " | ".join(messages["errors"]))
+
+        logger.info("Market offer: {} {} for {} {}", amount, sell, amount, buy)
+        return ActionResult(
+            True,
+            "create_offer",
+            f"oferta criada: {amount} {sell} por {amount} {buy} (até {max_hours}h)",
+            {"notices": messages["notices"]},
         )
 
     async def claim_rewards(self, village_id: str) -> ActionResult:

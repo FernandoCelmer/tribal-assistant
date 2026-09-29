@@ -36,3 +36,8 @@ def test_market_offer_only_trades_surplus_for_the_lowest_resource():
 
     assert EconomyProposer.pick_offer(offers, stock, 3000)["player"] == "a"
     assert EconomyProposer.pick_offer(offers, {"wood": 400, "stone": 850, "iron": 360}, 2285) is None
+
+
+def test_own_offer_splits_the_gap_and_keeps_a_floor():
+    assert EconomyProposer.own_offer({"wood": 300, "stone": 1500, "iron": 700}, 2285) == ("stone", "wood", 600)
+    assert EconomyProposer.own_offer({"wood": 800, "stone": 1000, "iron": 900}, 2285) is None
