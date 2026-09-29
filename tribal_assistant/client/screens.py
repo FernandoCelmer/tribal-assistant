@@ -38,6 +38,8 @@ class ScreenCatalog:
         "reports": ("report", {}),
         "simulator": ("place", {"mode": "sim"}),
         "dominance": ("ranking", {"mode": "dominance"}),
+        "market_own_offer": ("market", {"mode": "own_offer"}),
+        "market_traders": ("market", {"mode": "traders"}),
     }
     REFRESH: ClassVar[timedelta] = timedelta(hours=6)
 

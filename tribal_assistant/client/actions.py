@@ -77,6 +77,26 @@ KNIGHT_STATE_JS = """() => {
   };
 }"""
 
+MARKET_OFFERS_JS = """() => {
+  const names = {Madeira: 'wood', Argila: 'stone', Ferro: 'iron'};
+  const res = (td) => {
+    const icon = td && td.querySelector('.icon.header[data-title]');
+    return {res: icon ? names[icon.dataset.title] || null : null, amount: Number((td ? td.innerText : '').replace(/\\D/g, '')) || 0};
+  };
+  const rows = [...document.querySelectorAll('#content_value table.vis tr')]
+    .filter(tr => tr.cells.length >= 7 && tr.querySelector('a[href*="info_player"]'));
+  return rows.map((tr, index) => {
+    const receive = res(tr.cells[0]);
+    const pay = res(tr.cells[1]);
+    const time = (tr.cells[3].innerText.match(/(\\d+):(\\d+):(\\d+)/) || []).slice(1).map(Number);
+    return {
+      index, receive: receive.res, receive_amount: receive.amount, pay: pay.res, pay_amount: pay.amount,
+      player: tr.cells[2].innerText.trim(), minutes: time.length ? time[0] * 60 + time[1] : null,
+      can_accept: !!tr.cells[6].querySelector('form, input[type=submit], .btn'),
+    };
+  });
+}"""
+
 FREE_FINISH = "#buildqueue .btn-instant-free"
 FREE_WAIT_MAX = 75
 FREE_WAIT_JS = "(n) => { const at = Number(n.dataset.availableFrom || 0); return at ? Math.max(0, at - Date.now() / 1000) : null; }"
@@ -1040,6 +1060,68 @@ class GameActions:
             page = await self._in_game(village_id, "statue")
             await page.wait_for_timeout(1_200)
             return await page.evaluate(KNIGHT_STATE_JS)
+
+    async def market_offers(self, village_id: str) -> list[dict[str, Any]]:
+        """Other players' offers in the market (never the premium merchant row)."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "market", mode="other_offer")
+            return await page.evaluate(MARKET_OFFERS_JS) or []
+
+    async def accept_offer(
+        self, village_id: str, receive: str, pay: str, amount: int, player: str
+    ) -> ActionResult:
+        """Accept one unit of a player's offer, matched by resources, amount and player."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "market", mode="other_offer")
+            offers = await page.evaluate(MARKET_OFFERS_JS) or []
+
+            match = next(
+                (
+                    o
+                    for o in offers
+                    if o["receive"] == receive
+                    and o["pay"] == pay
+                    and o["pay_amount"] == amount
+                    and o["player"] == player
+                ),
+                None,
+            )
+            if match is None:
+                return ActionResult(False, "accept_offer", "oferta não está mais disponível")
+
+            if not match["can_accept"]:
+                return ActionResult(
+                    False, "accept_offer", "sem recursos ou comerciantes para esta oferta"
+                )
+
+            rows = page.locator("#content_value table.vis tr").filter(
+                has=page.locator('a[href*="info_player"]')
+            )
+            row = rows.nth(match["index"])
+            count = row.locator('input[name="count"]')
+            if await count.count():
+                await count.first.fill("1")
+
+            button = row.locator('input[type="submit"]:not(.btn-pp), .btn:not(.btn-pp)').first
+            await self._click_and_settle(page, button)
+            self._capture(await page.content(), "market-accept")
+
+            confirm = page.locator(".evt-confirm-btn:visible, .btn-confirm-yes:visible")
+            if await confirm.count():
+                await human_click(page, confirm.first)
+                await page.wait_for_timeout(1_500)
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "accept_offer", " | ".join(messages["errors"]))
+
+        logger.info("Accepted market offer: {} {} for {} from {}", amount, receive, pay, player)
+        return ActionResult(
+            True,
+            "accept_offer",
+            f"troca aceita: {amount} {pay} por {match['receive_amount']} {receive} ({player})",
+            {"notices": messages["notices"], "minutes": match["minutes"]},
+        )
 
     async def claim_rewards(self, village_id: str) -> ActionResult:
         """Claim every reward waiting in the "Recompensas" tab (resources land in this village)."""
