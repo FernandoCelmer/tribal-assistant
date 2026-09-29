@@ -3,13 +3,13 @@
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
 
 BATCH = 25
 MIN_BATCH = 5
 FARM_UNITS = ("light", "spear", "axe")
-SCAVENGE_SHARE = 0.4
 SCAVENGE_CAP = 1000
 MIN_SPIES = 5
 SPIES_PER_LIGHT = 5
@@ -62,9 +62,9 @@ class RecruitmentProposer(Proposer):
         return items
 
     @staticmethod
-    def scavenge_target(pop_max: int) -> int:
+    def scavenge_target(pop_max: int, share: float = 0.4) -> int:
         """Spears worth keeping for scavenging: they pay back in hours, so the army grows with the farm."""
-        return min(SCAVENGE_CAP, int(pop_max * SCAVENGE_SHARE))
+        return min(SCAVENGE_CAP, int(pop_max * share))
 
     @staticmethod
     def spy_target(light: int) -> int:
@@ -100,7 +100,7 @@ class RecruitmentProposer(Proposer):
             return None
 
         queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == "spear")
-        missing = self.scavenge_target(ctx.village.pop_max or 0) - spear.total - queued
+        missing = self.scavenge_target(ctx.village.pop_max or 0, knob(view, "scavenge_share")) - spear.total - queued
         if missing < MIN_BATCH or queued >= BATCH * 2:
             return None
 
@@ -108,7 +108,7 @@ class RecruitmentProposer(Proposer):
         if plan.refusal or plan.count < MIN_BATCH:
             return None
 
-        return self._recruit(view, "spear", plan.count, f"lanceiros para a coleta ({spear.total}/{self.scavenge_target(ctx.village.pop_max or 0)})", weight, opportunity=0.7, purpose="scavenge")
+        return self._recruit(view, "spear", plan.count, f"lanceiros para a coleta ({spear.total}/{self.scavenge_target(ctx.village.pop_max or 0, knob(view, "scavenge_share"))})", weight, opportunity=0.7, purpose="scavenge")
 
     def _recruit(self, view: CoordinationView, unit: str, count: int, reason: str, impact: float, opportunity: float = 0.3, purpose: str = "") -> Proposal:
         return Proposal(

@@ -3,6 +3,7 @@
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.pacing import BuildPacing
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
@@ -13,7 +14,7 @@ NON_ECONOMIC = ("wall", "market", "hide", "watchtower", "statue", "garage")
 CAPACITY = ("storage", "farm")
 SCAVENGE_UNLOCK = {2: (250, 300, 250), 3: (1000, 1200, 1000), 4: (10000, 12000, 10000)}
 PIT_RESOURCE = {"wood": "wood", "stone": "clay", "iron": "iron"}
-FILLER_WAIT_HOURS = 0.25
+FILLER_EXTRA = ("wall", "hide", "storage", "farm")
 
 
 class InfrastructureProposer(Proposer):
@@ -63,7 +64,7 @@ class InfrastructureProposer(Proposer):
 
         filler = self.filler(view, plan)
         if filler:
-            items.append(self._build(view, filler, "fila vazia: obra que cabe no estoque agora", impact=0.4, opportunity=0.8))
+            items.append(self._build(view, filler, "fila vazia: obra que cabe no estoque enquanto o plano espera", impact=0.4, opportunity=0.8))
 
         for option_id in PlanTracker.next_unlocks(ctx.plan)[:1]:
             if not view.guard.check_unlock_scavenge(ctx, option_id):
@@ -90,13 +91,14 @@ class InfrastructureProposer(Proposer):
         if view.ctx.queue or not plan:
             return None
 
-        if view.estimator.hours_to_afford(view.build_cost(plan[0])) <= FILLER_WAIT_HOURS:
+        if view.estimator.hours_to_afford(view.build_cost(plan[0])) <= knob(view, "filler_wait_hours"):
             return None
 
         stock = view.ctx.stock
+        candidates = dict.fromkeys([*BuildPacing.pits(view.ctx.levels), *plan[1:4], *FILLER_EXTRA])
         affordable = [
             pit
-            for pit in BuildPacing.pits(view.ctx.levels)
+            for pit in candidates
             if (cost := view.build_cost(pit)) and all(stock.get(r, 0) >= cost.get(r, 0) for r in ("wood", "clay", "iron")) and cls._ok(view, pit)
         ]
         return min(affordable, key=lambda pit: sum(view.build_cost(pit).get(r, 0) for r in ("wood", "clay", "iron")), default=None)

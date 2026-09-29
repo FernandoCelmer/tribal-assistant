@@ -13,6 +13,7 @@ from tribal_assistant.core.agents.coordination.policy import Policy
 from tribal_assistant.core.agents.coordination.proposal import Proposal
 from tribal_assistant.core.agents.coordination.roles import RoleSelector
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import KnobStore
 from tribal_assistant.core.agents.proposers.attack import AttackProposer
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.defense import DefenseProposer
@@ -97,6 +98,7 @@ class VillageRound:
         ctx.policy = Policy.for_role(mode.value)
         view = CoordinationView(ctx, self.session, self.config, self.actions, self.dry_run, mode, base, self._box(ctx, "coordinator", "Coordenador"))
         view.recent = await self._recent(ctx)
+        view.knobs = await KnobStore(self.session).load()
         view.note(Insight("policy", f"limites do modo {mode.value}: {ctx.policy.describe()}", Certainty.FACT, now(), 1.0, None, "coordenador"))
         view.note(Insight("role", f"papel {base.value}: {reason}", Certainty.FACT, now(), 1.0, base.value, "coordenador"))
 

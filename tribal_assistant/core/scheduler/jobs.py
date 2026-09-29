@@ -79,6 +79,17 @@ async def _docs_job() -> None:
         logger.info("Docs sincronizados: {} arquivo(s) atualizados, {} removidos, {} seções", report.updated, report.removed, report.chunks)
 
 
+async def _tuning_job() -> None:
+    from tribal_assistant.core.agents.knobs import Tuner
+    from tribal_assistant.core.db.session import SessionFactory
+
+    async with SessionFactory() as session:
+        changes = await Tuner(session).run()
+
+    for name, value, why in changes:
+        logger.info("Ajuste automático: {} = {} ({})", name, value, why)
+
+
 async def _build_slot_free(session, now: datetime, slots: int) -> bool:
     from sqlalchemy import func, select
 
@@ -170,6 +181,15 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         ),
         id="sync_game",
         next_run_time=datetime.now() + timedelta(seconds=10),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        per_account(_tuning_job),
+        trigger=IntervalTrigger(hours=1, jitter=120),
+        id="tuning",
+        next_run_time=datetime.now() + timedelta(minutes=5),
         max_instances=1,
         coalesce=True,
         replace_existing=True,

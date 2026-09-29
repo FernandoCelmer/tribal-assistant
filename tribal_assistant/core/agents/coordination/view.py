@@ -10,6 +10,7 @@ from tribal_assistant.core.agents.coordination.estimates import Estimator
 from tribal_assistant.core.agents.coordination.insight import Insight
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.guardrails import Guardrails
+from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.game.actions import GameActions
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
@@ -35,6 +36,7 @@ class CoordinationView:
     satisfied: set[str] = field(default_factory=set)
     note_error: str = ""
     recent: set[str] = field(default_factory=set)
+    knobs: Knobs = field(default_factory=Knobs)
 
     def __post_init__(self) -> None:
         self.estimator = Estimator(self.ctx)

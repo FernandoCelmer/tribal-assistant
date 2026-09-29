@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.market import MIN_GAP, MarketRule
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
@@ -78,14 +79,14 @@ class EconomyProposer(Proposer):
         storage = ctx.village.storage or 0
         items = []
 
-        base = int(storage * view.ctx.policy.resource_reserve)
-        if base:
+        base = self.base_reserve(storage, view.ctx.policy.resource_reserve, ctx.stock, knob(view, "base_stock_share"))
+        if any(base.values()):
             items.append(
                 Reservation(
                     "base",
                     "base",
-                    "reserva mínima configurada (não vale para obras)",
-                    {"wood": base, "clay": base, "iron": base},
+                    "reserva mínima (não vale para obras; no máximo 25% do estoque)",
+                    base,
                     applies_to=SPENDING,
                 )
             )
@@ -242,6 +243,11 @@ class EconomyProposer(Proposer):
             confidence=0.9,
             key=f"cancel_market_offer:{offer['id']}",
         )
+
+    @staticmethod
+    def base_reserve(storage: int, share: float, stock: dict[str, int], stock_share: float) -> dict[str, int]:
+        """A floor that never swallows the whole stock: the smaller of the policy share of storage and a self-tuned share of what is there."""
+        return {r: int(min(storage * share, stock.get(r, 0) * stock_share)) for r in ("wood", "clay", "iron")}
 
     @staticmethod
     def pop_lock_hours(samples: list[tuple[datetime, int]], pop_free: int) -> float:
