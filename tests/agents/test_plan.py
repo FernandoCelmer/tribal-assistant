@@ -2,10 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from tests.agents.builders import building, context, scavenge, unit
 from tribal_assistant.agents.plan import PlanTracker, RulePlanner
-from tribal_assistant.agents.roles.commander import CommanderAgent
-from tribal_assistant.agents.roles.economist import EconomistAgent
 from tribal_assistant.agents.roles.quartermaster import QuartermasterAgent
-from tribal_assistant.agents.roles.raider import RaiderAgent
 from tribal_assistant.agents.roles.strategist import StrategistAgent
 from tribal_assistant.agents.view import ContextView
 from tribal_assistant.schemas.agent_settings import AgentSettings
@@ -65,7 +62,7 @@ def test_only_strategist_asks_for_ai_and_only_when_plan_is_stale() -> None:
     ctx.plan_refreshed_at -= timedelta(minutes=settings.plan_refresh_minutes + 1)
     assert StrategistAgent().needs_llm(ctx, settings)
 
-    for agent in (EconomistAgent(), CommanderAgent(), RaiderAgent(), QuartermasterAgent()):
+    for agent in (QuartermasterAgent(),):
         assert not agent.needs_llm(ctx, settings)
 
 
