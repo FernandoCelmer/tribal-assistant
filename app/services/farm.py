@@ -35,14 +35,14 @@ class FarmService:
     async def tick(self) -> FarmTickResult:
         """Send farm attacks against enabled targets.
 
-        Actual browser dispatch happens in `app.bot.modules.farm`. This service
+        Actual browser dispatch happens in `app.client.modules.farm`. This service
         orchestrates the DB round-trips.
         """
         if not settings.farm_enabled:
             logger.info("Farm disabled by config, skipping tick")
             return FarmTickResult(dispatched=0, skipped=0)
 
-        from app.bot.modules.farm import FarmRunner  # local import breaks cycle
+        from app.client.modules.farm import FarmRunner  # local import breaks cycle
 
         targets = list(await self.repository.list(enabled_only=True))
         runner = FarmRunner()
