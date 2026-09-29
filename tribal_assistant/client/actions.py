@@ -874,10 +874,12 @@ class GameActions:
             await human_click(page, box.first)
             await human_delay(800, 1500)
 
-            confirm = page.locator("#selected_flag .btn-confirm-yes:visible")
+            confirm = page.locator("#selected_flag .btn-confirm-yes")
             if await confirm.count():
-                await human_click(page, confirm.first)
-                await page.wait_for_timeout(1_500)
+                await confirm.first.hover()
+                await human_delay(300, 700)
+                await confirm.first.evaluate("(n) => n.click()")
+                await page.wait_for_timeout(2_000)
 
             second = page.locator(".evt-confirm-btn:visible")
             if await second.count():
