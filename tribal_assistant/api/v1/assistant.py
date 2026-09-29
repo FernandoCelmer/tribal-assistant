@@ -1,22 +1,18 @@
 """Assistant control endpoints."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
+from tribal_assistant.api.deps import AssistantServiceDep
 from tribal_assistant.core.schemas.assistant import AssistantStatus, CommandResult
-from tribal_assistant.core.services.assistant import AssistantService
 
 assistant_router = APIRouter()
 
 
-def _service() -> AssistantService:
-    return AssistantService()
-
-
 @assistant_router.get("/status", response_model=AssistantStatus)
-async def status(service: AssistantService = Depends(_service)) -> AssistantStatus:
+async def status(service: AssistantServiceDep) -> AssistantStatus:
     return await service.status()
 
 
 @assistant_router.post("/sync", response_model=CommandResult)
-async def sync(service: AssistantService = Depends(_service)) -> CommandResult:
+async def sync(service: AssistantServiceDep) -> CommandResult:
     return await service.sync()

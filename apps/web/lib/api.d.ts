@@ -880,6 +880,10 @@ export interface components {
         AssistantStatus: {
             /** Running */
             running: boolean;
+            /** Playing */
+            playing: boolean;
+            /** Agents Enabled */
+            agents_enabled: boolean;
             /** Logged In */
             logged_in: boolean;
             /** World */

@@ -11,6 +11,7 @@ from tribal_assistant.core.accounts.registry import AccountRegistry
 from tribal_assistant.core.db.session import SessionFactory
 from tribal_assistant.core.services.accounts import AccountService
 from tribal_assistant.core.services.agents import AgentService
+from tribal_assistant.core.services.assistant import AssistantService
 from tribal_assistant.core.services.challenges import ChallengeService
 from tribal_assistant.core.services.game import GameService
 from tribal_assistant.core.services.observability import ObservabilityService
@@ -58,6 +59,7 @@ def provide[S](service: type[S]) -> Callable[..., S]:
 
 AccountServiceDep = Annotated[AccountService, Depends(provide(AccountService))]
 AgentServiceDep = Annotated[AgentService, Depends(provide(AgentService))]
+AssistantServiceDep = Annotated[AssistantService, Depends(provide(AssistantService))]
 ChallengeServiceDep = Annotated[ChallengeService, Depends(provide(ChallengeService))]
 GameServiceDep = Annotated[GameService, Depends(provide(GameService))]
 ObservabilityServiceDep = Annotated[ObservabilityService, Depends(provide(ObservabilityService))]

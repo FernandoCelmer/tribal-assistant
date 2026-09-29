@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 class AssistantStatus(BaseModel):
     running: bool
+    playing: bool
+    agents_enabled: bool
     logged_in: bool
     world: str
     scheduler_jobs: list[str] = []

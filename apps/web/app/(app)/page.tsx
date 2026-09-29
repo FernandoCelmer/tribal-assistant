@@ -25,6 +25,7 @@ export default async function OverviewPage() {
   const player = overview?.player;
   const village = overview?.villages[0];
   const round = coordination?.[0];
+  const state = !status ? { label: "sem API", tone: "danger" as const } : !status.playing ? { label: "só painel", tone: "neutral" as const } : !status.running ? { label: "parado", tone: "danger" as const } : !status.agents_enabled ? { label: "agentes desligados", tone: "warning" as const } : { label: "jogando", tone: "success" as const };
   const next = round?.data?.next_action as { title?: string; reason?: string; why?: string } | undefined;
   const incoming = overview?.commands.filter((c) => c.direction === "in") ?? [];
   const protectedUntil = player?.protection_until;
@@ -61,7 +62,7 @@ export default async function OverviewPage() {
 
         <div className="space-y-4">
           <Panel>
-            <PanelHeader title="Assistente" aside={<Badge tone={status?.running ? "success" : "neutral"}>{status?.running ? "rodando" : "parado"}</Badge>} />
+            <PanelHeader title="Assistente" aside={<Badge tone={state.tone}>{state.label}</Badge>} />
             <PanelBody className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-secondary">Sessão no jogo</span><span>{status?.logged_in ? "conectada" : "desconectada"}</span></div>
               <div className="flex justify-between"><span className="text-secondary">Última sincronização</span><span>{relative(status?.last_sync_at)}</span></div>
