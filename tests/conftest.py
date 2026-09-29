@@ -1,14 +1,22 @@
 """Test fixtures — in-memory SQLite session + FastAPI client."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from tribal_assistant.accounts.context import AccountContext, use_account
 from tribal_assistant.db.base import Base
 from tribal_assistant.db.session import get_session
 from tribal_assistant.server import app as fastapi_app
+
+
+@pytest.fixture(autouse=True)
+def account_context() -> Iterator[AccountContext]:
+    account = AccountContext(id=1, name="teste", server="br144", world_url="https://br144.example", username="u", password="p")
+    with use_account(account):
+        yield account
 
 
 @pytest.fixture
