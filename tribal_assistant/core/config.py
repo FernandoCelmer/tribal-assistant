@@ -40,9 +40,6 @@ class Settings(BaseSettings):
     quiet_hours: str | None = None
     html_capture_dir: str = "./storage/html"
 
-    farm_enabled: bool = True
-    farm_min_loot: int = 10
-    farm_max_wall_level: int = 1
 
     ai_provider: str = "none"
     ai_model: str | None = None

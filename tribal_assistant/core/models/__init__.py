@@ -14,7 +14,6 @@ from tribal_assistant.core.models.agent import (
 from tribal_assistant.core.models.building import Building
 from tribal_assistant.core.models.command import Command
 from tribal_assistant.core.models.coordination import CoordinationRound, VillageStrategy
-from tribal_assistant.core.models.farm_target import FarmTarget
 from tribal_assistant.core.models.lesson import Lesson
 from tribal_assistant.core.models.log import AppLog
 from tribal_assistant.core.models.player import Player
@@ -37,7 +36,6 @@ __all__ = [
     "Building",
     "Command",
     "CoordinationRound",
-    "FarmTarget",
     "Lesson",
     "Player",
     "QuestRewardState",

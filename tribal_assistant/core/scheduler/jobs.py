@@ -64,21 +64,6 @@ async def _sync_world_job() -> None:
         logger.exception("world sync failed")
 
 
-async def _farm_tick_job() -> None:
-    from tribal_assistant.core.db.session import SessionFactory
-    from tribal_assistant.core.services.farm import FarmService
-
-    async with SessionFactory() as session:
-        service = FarmService.__new__(FarmService)
-        from tribal_assistant.core.repositories.farm import FarmTargetRepository
-
-        service.repository = FarmTargetRepository(session)
-        try:
-            await service.tick()
-        except Exception:
-            logger.exception("farm tick failed")
-
-
 async def _build_slot_free(session, now: datetime, slots: int) -> bool:
     from sqlalchemy import func, select
 
@@ -183,14 +168,6 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         coalesce=True,
         replace_existing=True,
     )
-    if settings.farm_enabled:
-        scheduler.add_job(
-            per_account(_farm_tick_job),
-            trigger=IntervalTrigger(minutes=5),
-            id="farm_tick",
-            replace_existing=True,
-        )
-
     scheduler.add_job(
         per_account(_agents_job),
         trigger=IntervalTrigger(minutes=1, jitter=20),

@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.errors import NotFoundError
-from tribal_assistant.core.models.farm_target import FarmTarget
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.world import WorldRepository
 from tribal_assistant.core.schemas.world import NearbyVillage, WorldStatus
@@ -44,7 +43,6 @@ class WorldService:
         origin = await self._origin(village_id)
         ox, oy = (int(n) for n in origin.coords.split("|"))
         units = await self.repository.setting("units")
-        farm_coords = set((await self.session.execute(select(FarmTarget.coords))).scalars().all())
 
         rows = await self.repository.villages_in_box(
             ox, oy, radius, 0 if kind == "barbarian" else None
@@ -68,7 +66,6 @@ class WorldService:
                     player_name=player.name if player else None,
                     ally_tag=ally.tag if ally else None,
                     is_barbarian=village.player_id == 0,
-                    is_farm_target=coords in farm_coords,
                     travel_minutes={
                         unit: round(distance * float(units[unit]["speed"]), 1)
                         for unit in TRAVEL_UNITS

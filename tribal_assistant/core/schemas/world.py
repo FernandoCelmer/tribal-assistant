@@ -22,5 +22,4 @@ class NearbyVillage(BaseModel):
     player_name: str | None
     ally_tag: str | None
     is_barbarian: bool
-    is_farm_target: bool
     travel_minutes: dict[str, float]

@@ -14,7 +14,6 @@ READ_ONLY_TOOLS = {
     "get_plans",
     "get_world_status",
     "list_nearby",
-    "list_farm_targets",
     "get_coordination",
 }
 GAME_ACTIONS = {
@@ -28,7 +27,7 @@ GAME_ACTIONS = {
     "unlock_scavenge",
     "open_daily_bonus",
 }
-LOCAL_WRITES = {"set_village_goal", "set_village_plan", "update_agent_settings", "remove_farm_target", "set_village_role"}
+LOCAL_WRITES = {"set_village_goal", "set_village_plan", "update_agent_settings", "set_village_role"}
 PROMPTS = {"grow_village", "farm_round", "first_noble_plan", "agent_round", "daily_routine"}
 
 
@@ -50,8 +49,8 @@ async def _tools(server) -> dict:
 async def test_tool_surface(server) -> None:
     tools = await _tools(server)
 
-    assert set(tools) == READ_ONLY_TOOLS | GAME_ACTIONS | LOCAL_WRITES | {"sync_account", "sync_world", "add_farm_target"}
-    assert len(tools) == 29
+    assert set(tools) == READ_ONLY_TOOLS | GAME_ACTIONS | LOCAL_WRITES | {"sync_account", "sync_world"}
+    assert len(tools) == 26
     for tool in tools.values():
         assert tool.description
         assert tool.title

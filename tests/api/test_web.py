@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
-PAGES = ["/", "/aldeia", "/arredores", "/relatorios", "/farm", "/estrategia", "/agentes", "/graficos", "/grafos", "/logs", "/configuracoes", "/componentes"]
+PAGES = ["/", "/aldeia", "/arredores", "/relatorios", "/estrategia", "/agentes", "/graficos", "/grafos", "/logs", "/configuracoes", "/componentes"]
 
 
 @pytest.mark.parametrize("path", PAGES)

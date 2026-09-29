@@ -2,12 +2,9 @@
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from sqlalchemy import select
-
 from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 from tribal_assistant.core.errors import DomainError
-from tribal_assistant.core.models.farm_target import FarmTarget
 from tribal_assistant.core.services.world import WorldService
 
 if TYPE_CHECKING:
@@ -83,8 +80,8 @@ class ListBarbarians(AgentTool):
     name = "list_barbarians"
     description = (
         "Aldeias bárbaras dentro do raio de ataque, da mais perto para a mais longe, em JSON com coords, pontos, "
-        "distância, minutos de viagem por unidade e recently_attacked (pule essas). Usa a lista local de "
-        "farm quando faltam dados do mundo. Chame uma vez antes de send_farm_attack."
+        "distância, minutos de viagem por unidade e recently_attacked (pule essas). "
+        "Chame uma vez antes de send_farm_attack."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
@@ -115,19 +112,6 @@ class ListBarbarians(AgentTool):
             }
             for r in rows
         ]
-
-        if not targets:
-            farm = (
-                await box.session.execute(select(FarmTarget).where(FarmTarget.enabled.is_(True)))
-            ).scalars()
-            targets = [
-                {
-                    "coords": f.coords,
-                    "source": "farm_targets",
-                    "recently_attacked": await box.repo.attacked_recently(f.coords, box.ctx.policy.retarget_minutes),
-                }
-                for f in farm
-            ]
 
         if not targets:
             return ToolOutcome(True, "nenhuma bárbara conhecida; sincronize o mundo (world sync)")

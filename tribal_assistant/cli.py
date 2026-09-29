@@ -17,13 +17,11 @@ from tribal_assistant.version import __version__
 console = Console()
 app = typer.Typer(
     name="tribal-assistant",
-    help="Tribal Wars account assistant: sync, farm, world data and web dashboard.",
+    help="Tribal Wars account assistant: sync, agents, world data and web dashboard.",
     no_args_is_help=True,
     add_completion=False,
 )
-farm_app = typer.Typer(help="Farm targets and farm ticks.", no_args_is_help=True)
 world_app = typer.Typer(help="Public world data: sync, status, nearby villages.", no_args_is_help=True)
-app.add_typer(farm_app, name="farm")
 agents_app = typer.Typer(help="Village agents: run a round, read decisions and configuration.", no_args_is_help=True)
 app.add_typer(world_app, name="world")
 app.add_typer(agents_app, name="agents")
@@ -183,78 +181,6 @@ def status(as_json: JsonOption = False) -> None:
         console.print(f"[red]incoming {c.kind}[/red] → {c.village_coords} at {c.arrival_at:%H:%M:%S} · {c.label}")
 
 
-@farm_app.command("list")
-def farm_list(
-    all_targets: Annotated[bool, typer.Option("--all", help="Include disabled targets.")] = False,
-    as_json: JsonOption = False,
-) -> None:
-    """List farm targets."""
-    from tribal_assistant.core.repositories.farm import FarmTargetRepository
-    from tribal_assistant.core.schemas.farm import FarmTarget
-
-    rows = _run(_with_session(lambda s: FarmTargetRepository(s).list(enabled_only=not all_targets)))
-    targets = [FarmTarget.model_validate(r) for r in rows]
-    if as_json:
-        _print_json(targets)
-        return
-    table = Table("ID", "Coords", "Template", "Wall", "Enabled", "Last attack", "Last loot")
-    for t in targets:
-        table.add_row(
-            str(t.id), t.coords, t.template, str(t.wall_level), "yes" if t.enabled else "no",
-            t.last_attack_at.strftime("%Y-%m-%d %H:%M") if t.last_attack_at else "—", f"{t.last_loot:,}",
-        )
-    console.print(table)
-
-
-@farm_app.command("add")
-def farm_add(
-    coords: Annotated[str, typer.Argument(help="Target coordinates, e.g. 500|500.")],
-    template: Annotated[str, typer.Option(help="Farm assistant template: A, B or C.")] = "A",
-    wall: Annotated[int, typer.Option(min=0, max=20, help="Known wall level.")] = 0,
-) -> None:
-    """Add a farm target."""
-    from pydantic import ValidationError
-
-    from tribal_assistant.core.errors import DomainError
-    from tribal_assistant.core.schemas.farm import FarmTargetCreate
-    from tribal_assistant.core.services.farm import FarmService
-
-    try:
-        payload = FarmTargetCreate(coords=coords, template=template.upper(), wall_level=wall)
-        target = _run(_with_session(lambda s: FarmService(s).add(payload)))
-    except (ValidationError, DomainError) as exc:
-        console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(1) from exc
-    console.print(f"added farm target #{target.id} {target.coords} (template {target.template})")
-
-
-@farm_app.command("remove")
-def farm_remove(target_id: Annotated[int, typer.Argument(help="Target ID from `farm list`.")]) -> None:
-    """Remove a farm target."""
-    from tribal_assistant.core.errors import DomainError
-    from tribal_assistant.core.services.farm import FarmService
-
-    try:
-        _run(_with_session(lambda s: FarmService(s).remove(target_id)))
-    except DomainError as exc:
-        console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(1) from exc
-    console.print(f"removed farm target #{target_id}")
-
-
-@farm_app.command("tick")
-def farm_tick() -> None:
-    """Send farm attacks against enabled targets now."""
-    from tribal_assistant.core.services.farm import FarmService
-
-    result = _run(_with_game(lambda: _with_session(lambda s: FarmService(s).tick())))
-    console.print(f"dispatched: {result.dispatched} · skipped: {result.skipped}")
-    for error in result.errors:
-        console.print(f"[red]{error}[/red]")
-    if result.errors:
-        raise typer.Exit(1)
-
-
 @world_app.command("sync")
 def world_sync() -> None:
     """Download the public world data (villages, players, tribes, config)."""
@@ -302,7 +228,7 @@ def world_nearby(
     if as_json:
         _print_json(rows)
         return
-    table = Table("Village", "Coords", "Points", "Distance", "Owner", "Spear", "Light cav.", "Farm")
+    table = Table("Village", "Coords", "Points", "Distance", "Owner", "Spear", "Light cav.")
     for n in rows:
         owner = "barbarian" if n.is_barbarian else f"{n.player_name or '?'}" + (f" [{n.ally_tag}]" if n.ally_tag else "")
         spear, light = n.travel_minutes.get("spear"), n.travel_minutes.get("light")
@@ -310,7 +236,6 @@ def world_nearby(
             n.name, n.coords, f"{n.points:,}", f"{n.distance:.1f}", owner,
             f"{spear:.0f} min" if spear is not None else "—",
             f"{light:.0f} min" if light is not None else "—",
-            "yes" if n.is_farm_target else "",
         )
     console.print(table)
 

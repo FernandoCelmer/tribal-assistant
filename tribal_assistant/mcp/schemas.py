@@ -17,17 +17,12 @@ class Nearby(BaseModel):
     villages: list[dict[str, Any]] = Field(description="Closest first, with travel minutes per unit.")
 
 
-class FarmTargets(BaseModel):
-    targets: list[dict[str, Any]] = Field(description="Local farm list the raider falls back on when world data is missing.")
-
-
 class BarbarianTarget(BaseModel):
     coords: str = Field(description="Target coordinates x|y.")
     points: int | None = Field(default=None, description="Village points; high points on a former player village may mean troops left.")
     distance: float | None = Field(default=None, description="Distance in fields from the origin village.")
     minutes: dict[str, float] | None = Field(default=None, description="Travel minutes per unit.")
     recently_attacked: bool = Field(description="Hit recently; send_farm_attack will refuse it.")
-    source: str = Field(default="world", description="world (public world data) or farm_targets (local list).")
 
 
 class BarbarianTargets(BaseModel):

@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.knowledge import UNITS, GameKnowledge
-from tribal_assistant.core.models.farm_target import FarmTarget
 from tribal_assistant.core.models.world import WorldVillage
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
@@ -176,13 +175,4 @@ class Guardrails:
         row = (
             await self.session.execute(select(WorldVillage).where(WorldVillage.x == x, WorldVillage.y == y))
         ).scalar_one_or_none()
-        if row is not None:
-            return row.player_id == 0
-
-        farm = (
-            await self.session.execute(
-                select(FarmTarget).where(FarmTarget.coords == target, FarmTarget.enabled.is_(True))
-            )
-        ).scalar_one_or_none()
-
-        return farm is not None
+        return row is not None and row.player_id == 0

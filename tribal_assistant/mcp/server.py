@@ -1,4 +1,4 @@
-"""MCP server: account state, world data, farm list, guarded game actions, knowledge resources and workflow prompts."""
+"""MCP server: account state, world data, guarded game actions, knowledge resources and workflow prompts."""
 
 import argparse
 import logging
@@ -11,7 +11,6 @@ from tribal_assistant.mcp.client import ApiClient
 from tribal_assistant.mcp.prompts import Prompts
 from tribal_assistant.mcp.resources import Resources
 from tribal_assistant.mcp.tools.base import ToolGroup
-from tribal_assistant.mcp.tools.farm import FarmTools
 from tribal_assistant.mcp.tools.game import GameActionTools
 from tribal_assistant.mcp.tools.state import StateTools
 from tribal_assistant.mcp.tools.world import WorldTools
@@ -58,7 +57,7 @@ Rules, whatever the client:
 
 
 class TribalMcpServer:
-    GROUPS: tuple[type[ToolGroup], ...] = (StateTools, WorldTools, FarmTools, GameActionTools)
+    GROUPS: tuple[type[ToolGroup], ...] = (StateTools, WorldTools, GameActionTools)
 
     def __init__(self, api: ApiClient | None = None) -> None:
         self.api = api or ApiClient()
