@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tribal Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Cinzel:wght@600;700&display=swap">
+<link rel="stylesheet" href="/static/tribal.css">
+</head>
+<body class="page">
+<a class="skip-link" href="#main">Pular para o conteúdo</a>
+<div class="shell">
+
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" href="/"><svg class="icon icon--lg" aria-hidden="true"><use href="/static/icons.svg#i-crown"/></svg>Tribal Assistant</a>
+    <div class="topbar__utils">
+      <span id="updated" aria-live="polite">—</span>
+      <a href="/docs" target="_blank" rel="noopener">API</a>
+    </div>
+  </div>
+</header>
+
+<div class="shell__nav">
+  <nav class="nav" aria-label="Seções do painel" data-nav>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-list">
+      <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-menu"/></svg>Menu
+      <span class="nav__toggle-current"></span>
+    </button>
+    <ul class="nav__list" id="nav-list">
+      <li class="nav__item"><a class="nav__link" href="#overview">Visão geral</a></li>
+      <li class="nav__item"><a class="nav__link" href="#village">Aldeia</a></li>
+      <li class="nav__item"><a class="nav__link" href="#army">Tropas e edifícios</a></li>
+      <li class="nav__item"><a class="nav__link" href="#surroundings">Arredores</a></li>
+      <li class="nav__item"><a class="nav__link" href="#reports-panel">Relatórios</a></li>
+      <li class="nav__item"><a class="nav__link" href="#farm">Farm</a></li>
+      <li class="nav__item">
+        <details class="nav__menu">
+          <summary class="nav__link">Mais <svg class="icon icon--chevron" aria-hidden="true"><use href="/static/icons.svg#i-chevron"/></svg></summary>
+          <ul class="nav__submenu">
+            <li><a href="/design"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-palette"/></svg>Componentes</a></li>
+            <li><a href="/docs" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-book"/></svg>Documentação da API</a></li>
+          </ul>
+        </details>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<main id="main" class="shell__main">
+  <header class="banner">
+    <div class="banner__plaque">
+      <p class="banner__eyebrow" aria-hidden="true"><span class="divider__gem"></span></p>
+      <h1 class="banner__title">Tribal Assistant</h1>
+      <p class="banner__tagline">Painel de comando da sua conta</p>
+    </div>
+  </header>
+
+  <div class="grid-2" id="overview">
+    <section class="panel panel--ornate" aria-labelledby="h-assistant">
+      <div class="panel__header panel__header--wood">
+        <h2 class="panel__title" id="h-assistant"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-gear"/></svg>Assistente</h2>
+      </div>
+      <div class="panel__body panel__body--column">
+        <div class="indicator-grid">
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-plug"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">API</span><span class="indicator__value" id="s-health">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-hourglass"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Scheduler</span><span class="indicator__value" id="s-running">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-key"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Login</span><span class="indicator__value" id="s-login">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-globe"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Mundo</span><span class="indicator__value" id="s-world">—</span></span></div>
+          <div class="indicator"><span class="indicator__icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-clock"/></svg></span>
+            <span class="indicator__body"><span class="indicator__label">Último sync</span><span class="indicator__value" id="s-sync">—</span></span></div>
+        </div>
+        <div class="alert alert--danger" id="s-error" role="alert" hidden>
+          <svg class="icon alert__icon" aria-hidden="true"><use href="/static/icons.svg#i-alert"/></svg>
+          <div><strong class="alert__title">Último erro</strong><span id="s-error-text"></span></div>
+        </div>
+        <div class="btn-row" style="margin-top:auto">
+          <button class="btn btn--primary btn--lg" id="btn-sync" type="button"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-refresh"/></svg>Sincronizar agora</button>
+          <button class="btn btn--lg" id="btn-start" type="button"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-play"/></svg>Iniciar</button>
+          <button class="btn btn--lg" id="btn-stop" type="button"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-stop"/></svg>Parar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--ornate" aria-labelledby="h-account">
+      <div class="panel__header panel__header--wood">
+        <h2 class="panel__title" id="h-account"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-crown"/></svg>Conta</h2>
+      </div>
+      <div class="panel__body panel__body--column" id="player"><p class="empty">Sem dados do jogador ainda.</p></div>
+    </section>
+  </div>
+
+  <section class="panel" id="commands-card" aria-labelledby="h-commands" hidden>
+    <div class="panel__header">
+      <h2 class="panel__title" id="h-commands"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-swords"/></svg>Movimentos de tropas</h2>
+      <span class="badge badge--danger" id="inc-count" hidden></span>
+    </div>
+    <div class="table-scroll" aria-label="Movimentos de tropas">
+      <table class="table">
+        <thead><tr><th scope="col">Tipo</th><th scope="col">Aldeia</th><th scope="col">Comando</th><th scope="col">Chegada</th><th scope="col" class="num">Em</th></tr></thead>
+        <tbody id="commands"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="village" aria-labelledby="h-village">
+    <div class="panel__header">
+      <div class="panel__heading">
+        <h2 class="panel__title" id="h-village"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-castle"/></svg>Aldeia</h2>
+        <span class="panel__meta" id="v-meta"></span>
+      </div>
+      <div class="panel__actions">
+        <label class="sr-only" for="village-select">Escolher aldeia</label>
+        <select class="select" id="village-select" hidden></select>
+      </div>
+    </div>
+    <div class="panel__body">
+      <p id="village-empty" class="empty">Nenhuma aldeia sincronizada ainda. Clique em “Sincronizar agora”.</p>
+      <div id="village-body" hidden>
+        <div class="resource-grid">
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--wood"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-wood"/></svg></span>
+            <span class="resource__label">Madeira</span>
+            <span class="resource__value res--wood" id="r-wood">—</span>
+            <span class="resource__sub" id="r-wood-sub"></span>
+            <div class="meter meter--wood" aria-hidden="true"><i id="r-wood-bar"></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--clay"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-clay"/></svg></span>
+            <span class="resource__label">Argila</span>
+            <span class="resource__value res--clay" id="r-clay">—</span>
+            <span class="resource__sub" id="r-clay-sub"></span>
+            <div class="meter meter--clay" aria-hidden="true"><i id="r-clay-bar"></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--iron"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-iron"/></svg></span>
+            <span class="resource__label">Ferro</span>
+            <span class="resource__value res--iron" id="r-iron">—</span>
+            <span class="resource__sub" id="r-iron-sub"></span>
+            <div class="meter meter--iron" aria-hidden="true"><i id="r-iron-bar"></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--storage"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-storage"/></svg></span>
+            <span class="resource__label">Armazém</span>
+            <span class="resource__value" id="r-storage">—</span>
+            <span class="resource__sub" id="r-storage-sub"></span>
+            <div class="meter meter--placeholder" aria-hidden="true"><i></i></div>
+          </div>
+          <div class="resource">
+            <span class="resource__icon indicator__icon res--pop"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-pop"/></svg></span>
+            <span class="resource__label">População</span>
+            <span class="resource__value" id="r-pop">—</span>
+            <span class="resource__sub" id="r-pop-sub"></span>
+            <div class="meter meter--pop" aria-hidden="true"><i id="r-pop-bar"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-2 grid-2--wide-left" id="village-detail" hidden>
+    <section class="panel" aria-labelledby="h-recs">
+      <div class="panel__header"><h2 class="panel__title" id="h-recs"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-hammer"/></svg>O que evoluir</h2></div>
+      <div class="panel__body"><ul class="rec-list" id="recs"></ul></div>
+    </section>
+    <section class="panel" aria-labelledby="h-scavenge">
+      <div class="panel__header"><h2 class="panel__title" id="h-scavenge"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-compass"/></svg>Coleta</h2></div>
+      <div class="panel__body"><ul class="tiles" id="scavenge"></ul></div>
+    </section>
+  </div>
+
+  <section class="panel" id="army" aria-label="Tropas e edifícios" hidden>
+    <div class="tabs" role="tablist" aria-label="Tropas e edifícios">
+      <button class="tab" type="button" role="tab" id="tab-troops" aria-selected="true" aria-controls="tp-troops">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-swords"/></svg>Tropas</button>
+      <button class="tab" type="button" role="tab" id="tab-buildings" aria-selected="false" aria-controls="tp-buildings" tabindex="-1">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-hammer"/></svg>Edifícios</button>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="tp-troops" aria-labelledby="tab-troops">
+      <div class="table-scroll" aria-label="Tropas">
+        <table class="table">
+          <thead><tr>
+            <th scope="col">Unidade</th><th scope="col" class="num">Na aldeia</th><th scope="col" class="num">Fora</th><th scope="col" class="num">Total</th>
+            <th scope="col" class="num">Pode recrutar</th><th scope="col" class="num">Madeira</th><th scope="col" class="num">Argila</th>
+            <th scope="col" class="num">Ferro</th><th scope="col" class="num">Pop</th><th scope="col" class="num">Tempo</th><th scope="col">Status</th>
+          </tr></thead>
+          <tbody id="units"></tbody>
+        </table>
+      </div>
+      <div class="panel__footer" id="recruit-queue"></div>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="tp-buildings" aria-labelledby="tab-buildings" hidden>
+      <div class="table-scroll" aria-label="Edifícios">
+        <table class="table">
+          <thead><tr>
+            <th scope="col">Edifício</th><th scope="col" class="num">Nível</th><th scope="col">Fila</th>
+            <th scope="col" class="num">Madeira</th><th scope="col" class="num">Argila</th><th scope="col" class="num">Ferro</th>
+            <th scope="col" class="num">Pop</th><th scope="col" class="num">Tempo</th><th scope="col">Status</th>
+          </tr></thead>
+          <tbody id="buildings"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="surroundings" aria-labelledby="h-nearby">
+    <div class="panel__header">
+      <h2 class="panel__title" id="h-nearby"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-compass"/></svg>Arredores</h2>
+      <span class="panel__meta" id="world-meta"></span>
+      <div class="panel__actions">
+        <div class="field"><label class="field__label" for="nearby-kind">Tipo</label>
+          <select class="select" id="nearby-kind"><option value="barbarian">Bárbaras</option><option value="player">Jogadores</option><option value="all">Todas</option></select></div>
+        <div class="field"><label class="field__label" for="nearby-radius">Raio</label>
+          <select class="select" id="nearby-radius"><option>10</option><option selected>15</option><option>20</option><option>30</option></select></div>
+      </div>
+    </div>
+    <div class="table-scroll" aria-label="Aldeias nos arredores">
+      <table class="table">
+        <thead><tr>
+          <th scope="col">Aldeia</th><th scope="col">Coords</th><th scope="col" class="num">Pontos</th><th scope="col" class="num">Distância</th>
+          <th scope="col">Dono</th><th scope="col" class="num">Lanceiro</th><th scope="col" class="num">Cav. leve</th><th scope="col"><span class="sr-only">Ações</span></th>
+        </tr></thead>
+        <tbody id="nearby"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="reports-panel" aria-labelledby="h-reports">
+    <div class="panel__header">
+      <h2 class="panel__title" id="h-reports"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-scroll"/></svg>Relatórios</h2>
+      <span class="panel__meta" id="r-count"></span>
+    </div>
+    <div class="table-scroll" aria-label="Relatórios">
+      <table class="table">
+        <thead><tr><th scope="col"><span class="sr-only">Resultado</span></th><th scope="col">Assunto</th><th scope="col">Recebido</th><th scope="col" class="num">Saque</th></tr></thead>
+        <tbody id="reports"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="farm" aria-labelledby="h-farm">
+    <div class="panel__header">
+      <h2 class="panel__title" id="h-farm"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-flag"/></svg>Farm</h2>
+      <span class="panel__meta" id="t-count"></span>
+      <div class="panel__actions">
+        <button class="btn" id="btn-tick" type="button"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-swords"/></svg>Rodar saque agora</button>
+      </div>
+    </div>
+    <div class="panel__body">
+      <form class="form-row" id="target-form">
+        <div class="field">
+          <label class="field__label" for="f-coords">Coordenadas</label>
+          <input class="input input--coords" id="f-coords" name="coords" placeholder="500|500" required pattern="\d{1,3}\|\d{1,3}" aria-describedby="f-coords-help">
+          <span class="field__help" id="f-coords-help">Formato x|y</span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="f-template">Modelo</label>
+          <select class="select" id="f-template" name="template"><option>A</option><option>B</option><option>C</option></select>
+          <span class="field__help">Assistente de saque</span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="f-wall">Muralha</label>
+          <input class="input input--short" id="f-wall" name="wall_level" type="number" min="0" max="20" value="0">
+          <span class="field__help">Nível 0–20</span>
+        </div>
+        <div class="field">
+          <button class="btn btn--primary" type="submit"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#i-plus"/></svg>Adicionar alvo</button>
+          <span class="field__help">&nbsp;</span>
+        </div>
+      </form>
+    </div>
+    <div class="table-scroll" aria-label="Alvos de farm">
+      <table class="table">
+        <thead><tr>
+          <th scope="col">Coords</th><th scope="col">Modelo</th><th scope="col" class="num">Muralha</th><th scope="col">Ativo</th>
+          <th scope="col">Último ataque</th><th scope="col" class="num">Último saque</th>
+        </tr></thead>
+        <tbody id="targets"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <section>
+      <h2>Tribal Assistant</h2>
+      <p>Painel local de acompanhamento e automação da sua conta. Os dados se atualizam a cada 10 segundos.</p>
+    </section>
+    <nav aria-label="Seções do painel (rodapé)">
+      <h2>Painel</h2>
+      <ul>
+        <li><a href="#overview">Visão geral</a></li>
+        <li><a href="#village">Aldeia</a></li>
+        <li><a href="#surroundings">Arredores</a></li>
+        <li><a href="#farm">Farm</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Recursos">
+      <h2>Recursos</h2>
+      <ul>
+        <li><a href="/docs" target="_blank" rel="noopener">Documentação da API</a></li>
+        <li><a href="/design">Componentes</a></li>
+        <li><a href="/health" target="_blank" rel="noopener">Saúde da API</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/shell.js"></script>
+<script>
+const API = "/api/v1";
+const $ = (id) => document.getElementById(id);
+const fmt = new Intl.NumberFormat("pt-BR");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const when = (iso) => iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+const icon = (name, cls = "") => `<svg class="icon ${cls}" aria-hidden="true"><use href="/static/icons.svg#i-${name}"/></svg>`;
+const badge = (html, tone = "neutral") => `<span class="badge badge--${tone}">${html}</span>`;
+const pill = (on, yes, no) => badge(on ? yes : no, on ? "success" : "danger");
+const PRIORITY = { high: "alta", medium: "média", low: "baixa" };
+const PRIORITY_TONES = { high: "danger", medium: "warning", low: "neutral" };
+const UNIT_LABELS = {
+  spear: "Lanceiro", sword: "Espadachim", axe: "Bárbaro", archer: "Arqueiro", spy: "Explorador",
+  light: "Cavalaria leve", marcher: "Arqueiro a cavalo", heavy: "Cavalaria pesada", ram: "Aríete",
+  catapult: "Catapulta", knight: "Paladino", snob: "Nobre", militia: "Milícia",
+};
+
+function duration(seconds) {
+  if (seconds == null) return "—";
+  seconds = Math.max(0, Math.round(seconds));
+  const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
+  if (h) return `${h}h ${String(m).padStart(2, "0")}m`;
+  if (m) return `${m}m ${String(s).padStart(2, "0")}s`;
+  return `${s}s`;
+}
+
+function errorText(body, status) {
+  const d = body && body.detail;
+  if (!d) return `HTTP ${status}`;
+  if (typeof d === "string") return d;
+  if (Array.isArray(d)) return d.map((e) => e.msg).join("; ");
+  return d.message || JSON.stringify(d);
+}
+
+async function call(path, opts = {}) {
+  const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(errorText(body, res.status));
+  return body;
+}
+
+let toastTimer;
+function toast(msg, isErr = false) {
+  const t = $("toast");
+  t.className = `toast alert alert--${isErr ? "danger" : "info"} is-shown`;
+  t.innerHTML = `${icon(isErr ? "alert" : "info", "alert__icon")}<span>${esc(msg)}</span>`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("is-shown"), 4000);
+}
+
+let overview = null;
+let selectedId = null;
+try { selectedId = Number(localStorage.getItem("tw.village")) || null; } catch {}
+
+const currentVillage = () =>
+  overview?.villages.find((v) => v.id === selectedId) || overview?.villages[0] || null;
+
+function liveStock(v, key) {
+  const elapsedH = v.synced_at ? (Date.now() - new Date(v.synced_at)) / 3.6e6 : 0;
+  return Math.min(v.storage, Math.floor(v[key] + v[`${key}_prod`] * elapsedH));
+}
+
+function renderPlayer() {
+  const p = overview?.player;
+  if (!p) { $("player").innerHTML = `<p class="empty">Sem dados do jogador ainda.</p>`; return; }
+  const extras = [];
+  if (p.protection_until && new Date(p.protection_until) > Date.now())
+    extras.push(badge(`${icon("shield")}Proteção <span data-until="${esc(p.protection_until)}"></span>`, "info"));
+  if (p.new_reports) extras.push(badge(`${p.new_reports} relatório(s) novo(s)`, "warning"));
+  if (p.new_mails) extras.push(badge(`${p.new_mails} mensagem(ns)`, "warning"));
+  if (p.daily_bonus) extras.push(badge("bônus diário disponível", "success"));
+  if (p.new_quests) extras.push(badge("missão nova", "neutral"));
+  const row = (ic, label, value) => `<div>${icon(ic)}<dt>${label}</dt><dd>${value}</dd></div>`;
+  $("player").innerHTML = `
+    <p class="account__name">${esc(p.name)}</p>
+    <dl class="ledger">
+      ${row("star", "Pontos", fmt.format(p.points))}
+      ${row("trophy", "Ranking", `#${fmt.format(p.rank)}`)}
+      ${row("castle", "Aldeias", p.villages)}
+      ${row("gem", "Pontos premium", fmt.format(p.premium_points))}
+      ${row("swords", "Ataques chegando", p.incomings ? badge(`${icon("swords")}${p.incomings}`, "danger") : "0")}
+    </dl>
+    ${extras.length ? `<div class="badge-row panel__foot-badges">${extras.join("")}</div>` : ""}`;
+}
+
+function renderVillageSelect() {
+  const sel = $("village-select");
+  const villages = overview?.villages || [];
+  sel.hidden = villages.length < 2;
+  sel.innerHTML = villages.map((v) => `<option value="${v.id}">${esc(v.name)} (${esc(v.coords)})</option>`).join("");
+  const v = currentVillage();
+  if (v) sel.value = v.id;
+}
+
+function renderResources() {
+  const v = currentVillage();
+  if (!v) return;
+  for (const key of ["wood", "clay", "iron"]) {
+    const stock = liveStock(v, key);
+    const pct = v.storage ? stock / v.storage * 100 : 0;
+    $(`r-${key}`).textContent = fmt.format(stock);
+    const full = v[`${key}_prod`] > 0 && stock < v.storage
+      ? ` · cheio em ${duration((v.storage - stock) / v[`${key}_prod`] * 3600)}` : stock >= v.storage ? " · CHEIO" : "";
+    $(`r-${key}-sub`).textContent = `+${fmt.format(v[`${key}_prod`])}/h${full}`;
+    $(`r-${key}-bar`).style.width = `${pct}%`;
+  }
+  $("r-storage").textContent = fmt.format(v.storage);
+  $("r-storage-sub").textContent = "capacidade por recurso";
+  const popPct = v.pop_max ? v.pop_current / v.pop_max * 100 : 0;
+  $("r-pop").textContent = `${fmt.format(v.pop_current)} / ${fmt.format(v.pop_max)}`;
+  $("r-pop-sub").textContent = `${fmt.format(v.pop_max - v.pop_current)} livres`;
+  $("r-pop-bar").style.width = `${popPct}%`;
+  $("r-pop-bar").style.background = popPct >= 85 ? "var(--color-danger)" : "var(--color-text-muted)";
+}
+
+function recStatus(r) {
+  if (r.can_build) return badge("pode construir agora", "success");
+  if (r.blocker && r.eta_seconds === 0) return badge(esc(r.blocker));
+  if (r.eta_seconds != null) return badge(`recursos em ${duration(r.eta_seconds)}`, "warning");
+  return badge(esc(r.blocker || "armazém insuficiente"));
+}
+
+function renderVillage() {
+  const v = currentVillage();
+  const has = !!v;
+  $("village-empty").hidden = has;
+  for (const id of ["village-body", "village-detail", "army"]) $(id).hidden = !has;
+  if (!has) { $("v-meta").textContent = ""; return; }
+
+  $("v-meta").textContent = `${v.name} · ${v.coords} · ${fmt.format(v.points)} pontos · sync ${when(v.synced_at)}`;
+  renderResources();
+
+  $("recs").innerHTML = v.recommendations.length ? v.recommendations.map((r) => `
+    <li class="rec inset">
+      <div class="rec__top"><b>${esc(r.label)} ${r.from_level} → ${r.to_level}</b>
+        ${badge(PRIORITY[r.priority] || esc(r.priority), PRIORITY_TONES[r.priority])}${recStatus(r)}</div>
+      <div class="rec__cost">
+        <span class="res res--wood">${icon("wood")}${fmt.format(r.wood)}</span>
+        <span class="res res--clay">${icon("clay")}${fmt.format(r.clay)}</span>
+        <span class="res res--iron">${icon("iron")}${fmt.format(r.iron)}</span>
+        <span class="muted">pop ${r.pop} · ${duration(r.build_time)}</span></div>
+      <p class="rec__why">${esc(r.reason)}</p>
+    </li>`).join("")
+    : `<li class="empty">Nada urgente.</li>`;
+
+  const num = (n) => n == null ? "—" : fmt.format(n);
+  $("units").innerHTML = v.units.length ? v.units.map((u) => `
+    <tr class="${u.total || u.available ? "" : "is-dim"}">
+      <td>${esc(UNIT_LABELS[u.name] || u.name)}</td><td class="num"><b>${fmt.format(u.home)}</b></td>
+      <td class="num">${fmt.format(u.away)}</td><td class="num">${fmt.format(u.total)}</td>
+      <td class="num">${u.available ? fmt.format(u.max_recruit) : "—"}</td>
+      <td class="num res--wood">${num(u.cost_wood)}</td><td class="num res--clay">${num(u.cost_clay)}</td>
+      <td class="num res--iron">${num(u.cost_iron)}</td><td class="num">${num(u.cost_pop)}</td>
+      <td class="num">${u.build_time == null ? "—" : duration(u.build_time)}</td>
+      <td>${u.available ? badge("recrutável", "success") : badge(esc(u.blocker || "indisponível"))}</td></tr>`).join("")
+    : `<tr><td colspan="11" class="empty">Sem dados de tropas.</td></tr>`;
+  $("recruit-queue").innerHTML = v.recruit_orders.length
+    ? "Recrutando: " + v.recruit_orders.map((r) => `${r.count} ${esc(UNIT_LABELS[r.unit] || r.unit)} <span data-until="${esc(r.finishes_at || "")}"></span>`).join(" · ")
+    : "Nenhum recrutamento em andamento.";
+
+  $("scavenge").innerHTML = v.scavenge.length ? v.scavenge.map((o) => {
+    const state = o.is_locked
+      ? (o.unlock_at ? `desbloqueando <span data-until="${esc(o.unlock_at)}"></span>` : "bloqueada")
+      : o.return_at ? `volta em <span data-until="${esc(o.return_at)}"></span>` : badge("livre", "success");
+    const cls = o.is_locked && !o.unlock_at ? "is-dim" : "";
+    return `<li class="tile inset ${cls}"><span><b>${esc(o.name)}</b><br><span class="muted">${Math.round(o.loot_factor * 100)}% do carregamento</span></span><span class="tile__state">${state}</span></li>`;
+  }).join("") : `<li class="empty">Sem dados de coleta.</li>`;
+
+  $("buildings").innerHTML = v.buildings.map((b) => {
+    const queued = b.queued_level ? `→ ${b.queued_level} <span class="muted" data-until="${esc(b.queued_until || "")}"></span>` : "";
+    const cost = (n) => n == null ? "—" : fmt.format(n);
+    const status = b.can_build ? badge("pode", "success")
+      : b.blocker ? badge(esc(b.blocker)) : badge("sem recursos", "warning");
+    return `<tr class="${b.level === 0 && !b.can_build ? "is-dim" : ""}">
+      <td>${esc(b.label)}</td><td class="num">${b.level}${b.max_level ? `<span class="muted">/${b.max_level}</span>` : ""}</td>
+      <td>${queued}</td>
+      <td class="num res--wood">${cost(b.next_wood)}</td><td class="num res--clay">${cost(b.next_clay)}</td>
+      <td class="num res--iron">${cost(b.next_iron)}</td><td class="num">${cost(b.next_pop)}</td>
+      <td class="num">${b.build_time == null ? "—" : duration(b.build_time)}</td><td>${status}</td></tr>`;
+  }).join("");
+  tickCountdowns();
+}
+
+const KIND_LABELS = { attack: "ataque", noble: "nobre", support: "apoio", return: "retorno", cancel: "cancelado", other: "outro" };
+
+function renderCommands() {
+  const list = overview?.commands || [];
+  const incoming = list.filter((c) => c.direction === "in" && (c.kind === "attack" || c.kind === "noble"));
+  $("commands-card").hidden = !list.length;
+  $("commands-card").classList.toggle("is-alert", incoming.length > 0);
+  $("inc-count").hidden = !incoming.length;
+  $("inc-count").textContent = `${incoming.length} ataque(s) chegando`;
+  $("commands").innerHTML = list.map((c) => {
+    const danger = c.direction === "in" && (c.kind === "attack" || c.kind === "noble");
+    const tone = danger ? "danger" : c.direction === "in" ? "warning" : "neutral";
+    return `<tr>
+      <td>${badge(`${c.direction === "in" ? "chegando" : "saindo"} · ${KIND_LABELS[c.kind] || esc(c.kind)}`, tone)}</td>
+      <td>${esc(c.village_coords)}</td><td>${esc(c.label)}</td><td>${when(c.arrival_at)}</td>
+      <td class="num" data-until="${esc(c.arrival_at)}"></td></tr>`;
+  }).join("");
+  tickCountdowns();
+}
+
+const RESULT_LABELS = { green: "vitória sem perdas", yellow: "vitória com perdas", red: "derrota", blue: "espionagem" };
+
+function renderReports() {
+  const list = overview?.reports || [];
+  $("r-count").textContent = `(${list.length})`;
+  $("reports").innerHTML = list.length ? list.map((r) => {
+    const loot = r.loot_wood + r.loot_clay + r.loot_iron;
+    const label = RESULT_LABELS[r.result] || "sem resultado";
+    return `<tr>
+      <td><span class="dot ${RESULT_LABELS[r.result] ? `dot--${r.result}` : ""}" title="${label}" aria-hidden="true"></span><span class="sr-only">${label}</span></td>
+      <td>${r.is_new ? "<b>" : ""}${esc(r.title)}${r.is_new ? "</b>" : ""}</td>
+      <td class="muted">${when(r.received_at)}</td>
+      <td class="num">${loot ? `${fmt.format(loot)}${r.haul_total ? `/${fmt.format(r.haul_total)}` : ""}` : "—"}</td></tr>`;
+  }).join("") : `<tr><td colspan="4" class="empty">Nenhum relatório.</td></tr>`;
+}
+
+async function loadNearby() {
+  const v = currentVillage();
+  if (!v) { $("nearby").innerHTML = `<tr><td colspan="8" class="empty">Sincronize uma aldeia primeiro.</td></tr>`; return; }
+  try {
+    const status = await call(`${API}/world/status`);
+    $("world-meta").textContent = status.fetched_at
+      ? `${fmt.format(status.villages)} aldeias no mundo · velocidade ${status.speed}x · dados de ${when(status.fetched_at + "Z")}`
+      : "baixando dados do mundo…";
+    const rows = await call(`${API}/world/nearby?village_id=${v.id}&kind=${$("nearby-kind").value}&radius=${$("nearby-radius").value}&limit=40`);
+    $("nearby").innerHTML = rows.length ? rows.map((n) => `<tr>
+      <td>${esc(n.name)}</td><td>${esc(n.coords)}</td><td class="num">${fmt.format(n.points)}</td>
+      <td class="num">${n.distance.toFixed(1)}</td>
+      <td>${n.is_barbarian ? `<span class="muted">bárbara</span>` : `${esc(n.player_name || "?")}${n.ally_tag ? ` <span class="muted">[${esc(n.ally_tag)}]</span>` : ""}`}</td>
+      <td class="num">${n.travel_minutes.spear != null ? duration(n.travel_minutes.spear * 60) : "—"}</td>
+      <td class="num">${n.travel_minutes.light != null ? duration(n.travel_minutes.light * 60) : "—"}</td>
+      <td><div class="row-actions">${n.is_barbarian ? (n.is_farm_target ? badge("no farm", "success") : `<button class="btn btn--sm" type="button" data-farm="${esc(n.coords)}" aria-label="Adicionar ${esc(n.coords)} ao farm">${icon("plus")}farm</button>`) : ""}</div></td></tr>`).join("")
+      : `<tr><td colspan="8" class="empty">Nada neste raio.</td></tr>`;
+  } catch (e) {
+    $("nearby").innerHTML = `<tr><td colspan="8" class="empty">${esc(e.message)}</td></tr>`;
+  }
+}
+
+function tickCountdowns() {
+  for (const el of document.querySelectorAll("[data-until]")) {
+    const until = el.dataset.until;
+    el.textContent = until ? duration((new Date(until) - Date.now()) / 1000) : "";
+  }
+}
+
+async function loadStatus() {
+  try {
+    const h = await call("/health");
+    $("s-health").innerHTML = pill(true, `ok v${esc(h.version)}`);
+  } catch { $("s-health").innerHTML = pill(false, "", "offline"); }
+  try {
+    const s = await call(`${API}/assistant/status`);
+    $("s-running").innerHTML = pill(s.running, "rodando", "parado");
+    $("s-login").innerHTML = pill(s.logged_in, "logado", "deslogado");
+    $("s-world").textContent = s.world || "—";
+    $("s-sync").textContent = when(s.last_sync_at);
+    $("s-error").hidden = !s.last_error;
+    $("s-error-text").textContent = s.last_error || "";
+  } catch { $("s-running").textContent = "erro"; }
+}
+
+async function loadOverview() {
+  try { overview = await call(`${API}/game/overview`); } catch { return; }
+  renderPlayer();
+  renderVillageSelect();
+  renderVillage();
+  renderCommands();
+  renderReports();
+}
+
+async function loadTargets() {
+  const rows = await call(`${API}/farm/targets`).catch(() => []);
+  $("t-count").textContent = `(${rows.length})`;
+  $("targets").innerHTML = rows.length ? rows.map((t) => `<tr>
+      <td>${esc(t.coords)}</td><td>${esc(t.template)}</td>
+      <td class="num">${t.wall_level}</td>
+      <td>${pill(t.enabled, "sim", "não")}</td>
+      <td class="muted">${when(t.last_attack_at)}</td>
+      <td class="num">${fmt.format(t.last_loot)}</td></tr>`).join("")
+    : `<tr><td colspan="6" class="empty">Nenhum alvo. Adicione acima.</td></tr>`;
+}
+
+let nearbyLoadedAt = 0;
+
+async function refresh() {
+  await Promise.all([loadStatus(), loadOverview(), loadTargets()]);
+  if (Date.now() - nearbyLoadedAt > 60000) { nearbyLoadedAt = Date.now(); loadNearby(); }
+  $("updated").textContent = "atualizado " + new Date().toLocaleTimeString("pt-BR");
+}
+
+async function action(btn, fn) {
+  btn.disabled = true;
+  btn.setAttribute("aria-busy", "true");
+  try { await fn(); } catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; btn.removeAttribute("aria-busy"); refresh(); }
+}
+
+$("village-select").onchange = (e) => {
+  selectedId = Number(e.target.value);
+  try { localStorage.setItem("tw.village", selectedId); } catch {}
+  renderVillage();
+  loadNearby();
+};
+$("nearby-kind").onchange = loadNearby;
+$("nearby-radius").onchange = loadNearby;
+$("nearby").onclick = (e) => {
+  const btn = e.target.closest("[data-farm]");
+  if (!btn) return;
+  const coords = btn.dataset.farm;
+  action(btn, async () => {
+    await call(`${API}/farm/targets`, { method: "POST", body: JSON.stringify({ coords, template: "A", wall_level: 0 }) });
+    toast(`${coords} adicionada ao farm`);
+    loadNearby();
+  });
+};
+$("btn-sync").onclick = (e) => action(e.currentTarget, async () => {
+  toast("Sincronizando… se aparecer captcha, resolva na janela do Chromium");
+  const r = await call(`${API}/assistant/sync`, { method: "POST" });
+  toast(r.message, !r.ok);
+});
+$("btn-start").onclick = (e) => action(e.currentTarget, async () => toast((await call(`${API}/assistant/start`, { method: "POST" })).message));
+$("btn-stop").onclick = (e) => action(e.currentTarget, async () => toast((await call(`${API}/assistant/stop`, { method: "POST" })).message));
+$("btn-tick").onclick = (e) => action(e.currentTarget, async () => {
+  const r = await call(`${API}/farm/tick`, { method: "POST" });
+  toast(`Enviados: ${r.dispatched} · pulados: ${r.skipped}${r.errors.length ? " · erros: " + r.errors.join("; ") : ""}`, r.errors.length > 0);
+});
+$("target-form").onsubmit = (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const btn = e.target.querySelector("button");
+  action(btn, async () => {
+    await call(`${API}/farm/targets`, { method: "POST", body: JSON.stringify({
+      coords: f.get("coords"), template: f.get("template"), wall_level: Number(f.get("wall_level")) }) });
+    e.target.reset();
+    toast("Alvo adicionado");
+  });
+};
+
+refresh();
+setInterval(refresh, 10000);
+setInterval(() => { renderResources(); tickCountdowns(); }, 1000);
+</script>
+</body>
+</html>

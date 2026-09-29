@@ -1,6 +1,6 @@
-from app.models.building import Building
-from app.models.village import Village
-from app.services.advisor import recommend
+from tribal_assistant.models.building import Building
+from tribal_assistant.models.village import Village
+from tribal_assistant.services.advisor import recommend
 
 
 def _village(**overrides: int) -> Village:

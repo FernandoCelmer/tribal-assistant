@@ -1,4 +1,4 @@
-from app.client.scraper.village import scrape_village
+from tribal_assistant.client.scraper.village import scrape_village
 
 HTML = """
 <html><body>

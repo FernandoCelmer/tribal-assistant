@@ -12,20 +12,20 @@ install: venv
 	$(VENV)/bin/playwright install chromium
 
 run:
-	$(VENV)/bin/uvicorn app:app --reload --host 0.0.0.0 --port 8000
+	$(VENV)/bin/uvicorn tribal_assistant.server:app --reload --host 0.0.0.0 --port 8000
 
 test:
 	$(VENV)/bin/pytest -v
 
 lint:
-	$(VENV)/bin/ruff check app tests
+	$(VENV)/bin/ruff check tribal_assistant tests
 
 fmt:
-	$(VENV)/bin/ruff format app tests
-	$(VENV)/bin/ruff check --fix app tests
+	$(VENV)/bin/ruff format tribal_assistant tests
+	$(VENV)/bin/ruff check --fix tribal_assistant tests
 
 typecheck:
-	$(VENV)/bin/mypy app
+	$(VENV)/bin/mypy tribal_assistant
 
 migrate:
 	$(VENV)/bin/alembic upgrade head

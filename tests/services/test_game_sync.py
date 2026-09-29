@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.client.scraper.game import (
+from tribal_assistant.client.scraper.game import (
     GameSnapshot,
     parse_commands,
     parse_player,
@@ -13,7 +13,7 @@ from app.client.scraper.game import (
     parse_scavenge,
     parse_village,
 )
-from app.repositories.game import GameRepository
+from tribal_assistant.repositories.game import GameRepository
 
 GAME_DATA = {
     "world": "br144",
