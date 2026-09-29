@@ -119,21 +119,38 @@ The FastAPI app is `tribal_assistant.server:app`; build your own with `tribal_as
 
 ## Village agents
 
-Every round, five specialists run on each of your villages, in this order:
+Each round has three stages per village:
 
-| Agent | Area | Tools |
-|-------|------|-------|
-| Quartermaster | Quests | collect rewards, hand in finished quests |
-| Strategist | Village goal | read state and quests, set the goal the others follow |
-| Economist | Headquarters, resources, farm, storage, hiding place, market | queue upgrades |
-| Commander | Barracks, stable, workshop, smithy, wall, statue, academy | queue upgrades, recruit |
-| Raider | Rally point | loot nearby barbarian villages |
+1. **Quartermaster** hands in finished quests, claims rewards (unless storage would overflow) and opens daily chests, so free resources arrive before anything is spent.
+2. **Strategist** keeps the **village plan** up to date (AI when enabled, otherwise the rule planner).
+3. **Coordinator** collects structured proposals from eight specialists, reserves resources, applies vetoes, ranks everything with one score and executes in order. What it did not do is recorded with the reason.
+
+| Specialist | Observes | Delivers |
+|------------|----------|----------|
+| Economia | production, stock, storage, costs | storage and farm ahead of their limits, reserves, market trades of surplus |
+| Infraestrutura | building levels, queue, bottlenecks | the next upgrade with its justification (plan, quest, headquarters, weakest pit) |
+| Recrutamento | troops, population, recruit queues | units the plan asks for, surplus into raiding troops |
+| Defesa | incoming attacks, troops, time to impact | vetoes (troops stay home, no optional spending), a defense reservation, wall and defenders |
+| Ataque | barbarian targets, reports, distance, troops | raids with a confidence from report freshness, idle troops sent scavenging |
+| Expansão | noble path, economy | progress to the academy; in expansion role a 30% strategic reservation |
+| Inteligência | reports, targets, neighbours | labelled insights (fact, estimate, hypothesis) and missing or stale data |
+| Mordomo | relics, flags, paladin, inventory | production relic and best flag assigned, paladin skills and XP training, items used at the right time |
+
+**How the coordinator decides**
+
+- **Role and mode.** Each village has a role (growth, defense, offensive, support, expansion). It is derived from progress or fixed by you on `/estrategia`; an incoming attack switches the round to *emergency* until the impact.
+- **Proposal format.** Every proposal carries action, arguments, reason, expected benefit, cost, troops, horizon (immediate, tactical, strategic), deadline, confidence, dependencies and risks.
+- **Priority.** `urgency + impact + risk avoided + opportunity − opportunity cost − uncertainty`, with weights that change with the mode (in emergency, urgency and risk dominate; in growth, economic return does).
+- **Reservations.** Defense, strategic goal, the next plan build (when affordable within 1.5 h) and the configured base reserve. "Available" means free after reservations; only the owner of a reservation may spend it.
+- **Hard vetoes.** Troops committed to an imminent defense never leave; no optional spending that would break an approved defense; no raid below 35% confidence (old or bad information); no repeating an action whose confirmation has not arrived yet; repeated identical failures are refused by the lessons.
+- **Approval.** Actions listed in `approval_actions` are only proposed; they wait on `/estrategia` for an *Aprovar* click. `dry_run` works as a pure diagnosis mode.
+- **Horizons and review.** Each round stores the next review time: the earliest of a deferred proposal becoming affordable, the build queue ending, storage filling or an attack landing.
 
 New villages are picked up automatically after the next sync.
 
 **AI plans, rules execute.** Only the Strategist calls the model: it writes a **village plan** (up to 12 ordered steps — build X to level N, recruit, unlock scavenging) with `set_village_plan`. The other agents execute the plan with rules, at zero token cost. The plan is rewritten only when it is missing, older than `plan_refresh_minutes`, finished or stuck, so the model runs a few times a day instead of five times per round. Without an AI key the same plan comes from a built-in rule planner (quests, advisor, balanced production, path to the first nobleman).
 
-Plan progress is measured from the real village state every round (pending, queued, done, blocked) and shown on `/agentes`. Builds in the plan may take any free queue slot, so a Smithy step is no longer starved by economy builds; when storage is almost full, the Economist and Commander spend the surplus on buildings and troops.
+Plan progress is measured from the real village state every round (pending, queued, done, blocked) and shown on `/agentes`.
 
 Token savings: role-sliced compact text context instead of full JSON, no duplicate state reads, short answers (`AI_MAX_TOKENS`, default 2048), a cap on tool loops (`llm_max_steps`), and `llm_agents` to choose which agents may call the model (default: only the Strategist).
 
@@ -156,6 +173,7 @@ The guardrails and the schedule are **runtime settings** stored in the database,
 | `llm_agents` | `["strategist"]` | agents allowed to call the AI |
 | `plan_refresh_minutes` | `360` | minutes before the strategist rewrites the plan (free with rules; one AI call when AI is on) |
 | `llm_max_steps` | `6` | tool rounds per AI conversation |
+| `approval_actions` | `[]` | actions the coordinator only proposes, waiting for approval on `/estrategia` |
 
 Every decision, including refusals, is stored with its reason and shown in the dashboard.
 
@@ -189,7 +207,7 @@ tribal-assistant mcp            # stdio, for Claude Code / Claude Desktop / Code
 tribal-assistant mcp --http     # streamable HTTP on 127.0.0.1:8765
 ```
 
-The repository ships a `.mcp.json`, so Claude Code picks the server up when opened in this folder. It exposes 21 tools and 4 prompts (`grow_village`, `farm_round`, `first_noble_plan`, `agent_round`):
+The repository ships a `.mcp.json`, so Claude Code picks the server up when opened in this folder. It exposes 29 tools and 5 prompts (`grow_village`, `farm_round`, `first_noble_plan`, `agent_round`, `daily_routine`), including `get_coordination` and `set_village_role`:
 
 - **read-only:** `get_overview`, `get_quests`, `get_plans`, `get_agent_decisions`, `get_agents_config`, `lookup_knowledge`, `get_world_status`, `list_nearby`, `list_farm_targets`
 - **game actions:** `upgrade_building`, `recruit_units`, `send_farm_attack`, `claim_quest_rewards`, `complete_quest` and `run_agents`. They pass the guardrails and default to `dry_run=true`.
@@ -210,6 +228,7 @@ Each topic is its own page, reached from the sidebar (a drawer on phones):
 | `/arredores` | nearby villages, add farm targets |
 | `/relatorios` | battle reports with loot |
 | `/farm` | farm targets |
+| `/estrategia` | per village: role and mode, next best action with reason, cost and confidence, the executed sequence, deferred proposals and why, reservations, vetoes, insights, the specialists |
 | `/agentes` | live status of the agents, village plan, rounds, the full reasoning of each round, live feed |
 | `/graficos` | agent metrics (actions per hour, refusals, tokens) and village evolution |
 | `/grafos` | decision graph: agents → tools → results |
