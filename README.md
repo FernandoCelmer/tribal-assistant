@@ -256,6 +256,28 @@ Each topic is its own page, reached from the sidebar (a drawer on phones):
 
 Everything shown there is stored in the database: rounds (`agent_runs`), every reasoning step and tool call (`agent_steps`), decisions (`agent_decisions`), village snapshots at every sync (`village_snapshots`) and application logs (`app_logs`). Live updates arrive over Server-Sent Events at `/api/v1/events`. OpenAPI docs are at `/docs`.
 
+## Deploy (Dokploy)
+
+`deploy/docker-compose.dokploy.yml` builds two services from this repository:
+
+| Service | Image | Exposed |
+|---------|-------|---------|
+| `api` | `deploy/Dockerfile.api`: Python, the engine, headless Chromium | internal only (port 8000) |
+| `web` | `deploy/Dockerfile.web`: Next.js standalone | give it the domain (port 3000) |
+
+In Dokploy: create a **Compose** service from the Git repository, set the compose path to `./deploy/docker-compose.dokploy.yml`, fill the environment from `deploy/.env.example`, add a domain on `web` port `3000` and deploy.
+
+| Variable | Why |
+|----------|-----|
+| `DATABASE_URL` | the PostgreSQL database (`postgresql+asyncpg://...`) |
+| `APP_SECRET` | the key that decrypts the stored game passwords: the content of `storage/secret.key` from the machine that created the accounts |
+| `WEB_PASSWORD` | the panel asks for it (HTTP basic auth, user `WEB_USER`, default `admin`) |
+| `AI_*`, `TELEGRAM_*`, `QUIET_HOURS` | same as the local `.env` |
+
+The API is reached only through the web service, which proxies `/api/v1`, `/docs` and `/openapi.json` behind the same password. `storage/` (browser state, captures) lives in the `storage` volume.
+
+Only one server plays per database: on PostgreSQL the engine takes an advisory lock at start. A second server (for example the one on your machine while the VPS runs) only serves the API and logs "Another server already plays with this database". Stop the local server before deploying so the VPS takes over.
+
 ## Architecture
 
 Four layers, each depending only on the one below:
