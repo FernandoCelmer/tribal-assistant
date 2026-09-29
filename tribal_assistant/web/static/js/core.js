@@ -6,7 +6,15 @@ export const AGENTS = [
   { key: "economist", label: "Economista", slot: 3, area: "recursos, armazém, fazenda, mercado, coleta" },
   { key: "commander", label: "Comandante", slot: 4, area: "militar e recrutamento" },
   { key: "raider", label: "Saqueador", slot: 5, area: "saque de bárbaras e coleta" },
-  { key: "steward", label: "Mordomo", slot: 7, area: "relíquia, bandeira, paladino e itens" },
+  { key: "steward", label: "Mordomo", slot: 1, area: "relíquia, bandeira, paladino e itens" },
+  { key: "economy", label: "Economia", slot: 3, area: "armazém, fazenda, reservas e mercado" },
+  { key: "infrastructure", label: "Infraestrutura", slot: 3, area: "próxima obra e gargalo" },
+  { key: "recruitment", label: "Recrutamento", slot: 4, area: "tropas e produção de unidades" },
+  { key: "defense", label: "Defesa", slot: 4, area: "ataques chegando, vetos e reservas" },
+  { key: "attack", label: "Ataque", slot: 5, area: "saques e coleta" },
+  { key: "expansion", label: "Expansão", slot: 2, area: "caminho do nobre" },
+  { key: "intelligence", label: "Inteligência", slot: 2, area: "relatórios e vizinhos" },
+  { key: "coordinator", label: "Coordenador", slot: 2, area: "compara propostas e decide" },
   { key: "operator", label: "Operador", slot: 6, area: "ordens diretas (MCP)" },
 ];
 

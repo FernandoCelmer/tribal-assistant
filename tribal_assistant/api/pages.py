@@ -45,6 +45,7 @@ class WebPages:
         PageSpec("surroundings", "/arredores", "Arredores", "surroundings.html", "Jogo", "globe"),
         PageSpec("reports", "/relatorios", "Relatórios", "reports.html", "Jogo", "scroll"),
         PageSpec("farm", "/farm", "Farm", "farm.html", "Jogo", "swords"),
+        PageSpec("strategy", "/estrategia", "Estratégia", "strategy.html", "Agentes", "compass"),
         PageSpec("agents", "/agentes", "Agentes", "agents.html", "Agentes", "shield"),
         PageSpec("charts", "/graficos", "Gráficos", "charts.html", "Agentes", "star"),
         PageSpec("flow", "/grafos", "Grafos", "flow.html", "Agentes", "compass"),
