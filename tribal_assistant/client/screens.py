@@ -40,6 +40,15 @@ class ScreenCatalog:
         "dominance": ("ranking", {"mode": "dominance"}),
         "market_own_offer": ("market", {"mode": "own_offer"}),
         "market_traders": ("market", {"mode": "traders"}),
+        "market_all_offers": ("market", {"mode": "all_own_offer"}),
+        "market_send": ("market", {"mode": "send"}),
+        "market_transports": ("market", {"mode": "transports"}),
+        "mentor": ("mentor", {}),
+        "wall": ("wall", {}),
+        "hide": ("hide", {}),
+        "farm_building": ("farm", {}),
+        "place_units": ("place", {"mode": "units"}),
+        "watchtower": ("watchtower", {}),
     }
     REFRESH: ClassVar[timedelta] = timedelta(hours=6)
 
