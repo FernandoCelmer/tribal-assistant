@@ -100,8 +100,8 @@ class StateTools(ToolGroup):
         @GuardedTool(mcp, title="Agent configuration", annotations=READ_ONLY)
         async def get_agents_config() -> dict[str, Any]:
             """How the agents decide and what limits them: brain (LLM provider and model, or rules),
-            which agents may call the AI, schedule (enabled, interval), global dry-run, and the
-            and each village's current limits come from its role (see get_coordination).
+            which agents may call the AI, schedule (enabled, interval) and global dry-run; each
+            village's current limits come from its role (see get_coordination).
             """
             return await self.api.get("/agents/config")
 

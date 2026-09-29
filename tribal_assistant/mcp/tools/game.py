@@ -53,9 +53,10 @@ class GameActionTools(ToolGroup):
             dry_run: DryRun = True,
             village_ids: Annotated[list[int] | None, Field(description="Only these own village ids; omit for every village.")] = None,
         ) -> dict[str, Any]:
-            """Run one full round of the specialists on each village, in order: quartermaster (quests,
-            rewards, daily bonus), strategist (plan), economist (economy builds, scavenging unlocks),
-            commander (military builds, recruiting) and raider (barbarian loot, scavenging).
+            """Run one full round on each village: the quartermaster (quests, rewards, daily bonus),
+            the strategist (plan), then the coordinator, which scores the proposals of the economy,
+            infrastructure, recruitment, defense, attack, expansion, intelligence, steward and
+            diplomacy specialists and executes the best ones.
 
             Uses the configured brain (LLM or rules) and the guardrails; every decision is logged
             (see get_agent_decisions). A live round spends resources and sends troops, so run it with
@@ -132,7 +133,7 @@ class GameActionTools(ToolGroup):
 
             Refused when the tier is locked or already running, troops are not at home, or an
             attack is incoming (troops stay home to defend). Use the highest idle tier and keep
-            the troops the raider needs for looting. Tier state is in get_village_state.
+            the troops the attack specialist needs for looting. Tier state is in get_village_state.
             """
             return await self.operate(
                 village_id, "send_scavenge", {"option_id": option_id, "units": units, "reason": reason}, dry_run
@@ -199,7 +200,7 @@ class GameActionTools(ToolGroup):
             summary: Annotated[str, Field(min_length=1, max_length=500, description="Strategy in 1-3 sentences.")],
             steps: Annotated[list[PlanStepIn], Field(min_length=1, max_length=12, description="Up to 12 steps, most important first.")],
         ) -> ActionOutcome:
-            """Replace the village plan: ordered steps the economist and commander execute on their own,
+            """Replace the village plan: ordered steps the economy, infrastructure and recruitment specialists follow on their own,
             without AI, from the next round on.
 
             Steps with unknown ids or out-of-range amounts are dropped and listed in detail. Build

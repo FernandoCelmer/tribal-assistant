@@ -113,7 +113,7 @@ def serve(
     port: Annotated[int, typer.Option(help="Bind port.")] = settings.app_port,
     reload: Annotated[bool, typer.Option(help="Reload on code changes.")] = settings.app_env == "development",
 ) -> None:
-    """Run the API, the web dashboard and the scheduler."""
+    """Run the API and the engine (scheduler, agents, game browser)."""
     import uvicorn
 
     uvicorn.run(
@@ -243,7 +243,7 @@ def world_nearby(
 @agents_app.command("run")
 def agents_run(
     dry_run: Annotated[
-        bool | None, typer.Option("--dry-run/--live", help="Simulate or act in the game (default: AGENT_DRY_RUN).")
+        bool | None, typer.Option("--dry-run/--live", help="Simulate or act in the game (default: the dry_run agent setting).")
     ] = None,
     village: Annotated[list[int] | None, typer.Option(help="Only these village IDs (repeatable).")] = None,
     as_json: JsonOption = False,
@@ -374,12 +374,6 @@ def quests(as_json: JsonOption = False) -> None:
     console.print(f"recompensas pendentes: {len(data.rewards)}")
 
 
-def main() -> None:
-    app()
-
-
-if __name__ == "__main__":
-    main()
 
 
 @accounts_app.command("list")
@@ -459,3 +453,11 @@ def db_copy(
     if report.skipped:
         console.print(f"sem dados na origem: {', '.join(report.skipped)}")
     console.print("Pronto. Coloque DATABASE_URL com o destino no .env e suba o servidor.")
+
+
+def main() -> None:
+    app()
+
+
+if __name__ == "__main__":
+    main()

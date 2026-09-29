@@ -18,7 +18,7 @@ class StrategistAgent(VillageAgent):
     title = "Estrategista"
     mission = (
         "Escrever o plano da aldeia com set_village_plan: até 12 passos em ordem de prioridade que o "
-        "economista e o comandante executam sozinhos, sem IA. Ordem de prioridade: 1) metas de missão "
+        "especialistas de economia, infraestrutura e recrutamento seguem sozinhos, sem IA. Ordem de prioridade: 1) metas de missão "
         "próximas (dão recursos); 2) Armazém antes de um recurso passar de 85%; 3) Fazenda antes de a "
         "população passar de 85%; 4) minas equilibradas, a mais baixa primeiro; 5) Quartel 3 e tropas de "
         "saque (lanceiros, depois cavalaria leve com Estábulo 3); 6) coleta desbloqueada em ordem; "
