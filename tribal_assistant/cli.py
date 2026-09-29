@@ -89,7 +89,9 @@ def serve(
     """Run the API, the web dashboard and the scheduler."""
     import uvicorn
 
-    uvicorn.run("tribal_assistant.server:app", host=host, port=port, reload=reload)
+    uvicorn.run(
+        "tribal_assistant.server:app", host=host, port=port, reload=reload, timeout_graceful_shutdown=5
+    )
 
 
 @app.command()
