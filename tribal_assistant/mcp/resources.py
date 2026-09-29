@@ -32,6 +32,19 @@ class Resources:
             return GameKnowledge.guide(name) or f"guia desconhecido; use {', '.join(GameKnowledge.guides)}"
 
         @mcp.resource(
+            "tribal://lessons",
+            title="Lessons learned",
+            description="What the assistant learned while playing: failed actions and why, game notices, quests seen and finished.",
+            mime_type="application/json",
+        )
+        async def lessons() -> list[dict]:
+            async def read(session):
+                rows = await AgentService(session).lessons(None, 200)
+                return [row.model_dump(mode="json") for row in rows]
+
+            return await ToolGroup.with_session(read)
+
+        @mcp.resource(
             "tribal://knowledge/buildings",
             title="Buildings",
             description="Every documented building: label, max level, requirements and role.",
