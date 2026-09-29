@@ -1,4 +1,4 @@
-"""FastAPI application: the API over the core engine, plus the web dashboard it serves."""
+"""FastAPI application: the API over the core engine."""
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -10,7 +10,6 @@ from tribal_assistant.api.health import health_router
 from tribal_assistant.api.v1 import v1_router
 from tribal_assistant.core.runtime import engine
 from tribal_assistant.version import __version__
-from tribal_assistant.web.pages import WebPages
 
 API_V1_PREFIX = "/api/v1"
 
@@ -35,7 +34,6 @@ def create_app() -> FastAPI:
     install_error_handlers(application)
     application.include_router(health_router)
     application.include_router(v1_router, prefix=API_V1_PREFIX)
-    WebPages().register(application)
 
     return application
 

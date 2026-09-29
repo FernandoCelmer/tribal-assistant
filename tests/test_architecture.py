@@ -31,9 +31,8 @@ def offenders(layer: str, forbidden: tuple[str, ...]) -> list[str]:
 @pytest.mark.parametrize(
     ("layer", "forbidden"),
     [
-        ("core", ("fastapi", "starlette", "tribal_assistant.api", "tribal_assistant.web", "tribal_assistant.mcp", "tribal_assistant.cli")),
-        ("mcp", ("tribal_assistant.core", "tribal_assistant.api", "tribal_assistant.web", "sqlalchemy", "playwright")),
-        ("web", ("tribal_assistant.core", "tribal_assistant.mcp", "sqlalchemy")),
+        ("core", ("fastapi", "starlette", "tribal_assistant.api", "tribal_assistant.mcp", "tribal_assistant.cli")),
+        ("mcp", ("tribal_assistant.core", "tribal_assistant.api", "sqlalchemy", "playwright")),
         ("api", ("tribal_assistant.mcp", "tribal_assistant.cli", "playwright")),
     ],
 )
