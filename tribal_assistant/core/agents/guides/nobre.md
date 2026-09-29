@@ -1,3 +1,12 @@
+Nobre neste mundo (leia a config do mundo)
+- O sistema de nobres vem da config do mundo: moedas ou academia por armazenamento (pacotes).
+- Moedas: o n-ésimo nobre exige n moedas; armazenamento: o n-ésimo nobre exige n pacotes de 28.000/30.000/25.000. Some o nobre em si: 40.000/50.000/50.000 e 100 de população.
+- Só comece com Edifício principal 20, Ferreiro 20, Mercado 10, Fazenda 24 e um exército de verdade.
+- Primeiro alvo: bárbara perto que você já espionou ou saqueou, de preferência com bônus de fazenda; sem isso, a bárbara grande mais próxima.
+- Trem de 4 nobres conquista cerca de 85,3% das vezes; de 5, sempre.
+- Na velocidade 2 a lealdade volta ~2 pontos por hora: nobres espaçados perdem efeito.
+- Consulte search_docs: "academia armazenamento", "nobre train mesmo segundo".
+
 Para noblar rapidamente, você precisa preparar uma aldeia de conquista, limpar a defesa do alvo e sincronizar vários ataques com nobres. Um nobre sozinho raramente funciona: ele precisa chegar acompanhado de tropas ofensivas e ser seguido por apoio.
 
 1. Prepare o nobre

@@ -3,11 +3,12 @@
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knowledge import GameKnowledge
+from tribal_assistant.core.agents.pacing import BuildPacing
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
+from tribal_assistant.core.agents.protection import Protection
+from tribal_assistant.core.agents.quests import QuestRules
 
-PITS = ("wood", "stone", "iron")
 NON_ECONOMIC = ("wall", "market", "hide", "watchtower", "statue", "garage")
 CAPACITY = ("storage", "farm")
 SCAVENGE_UNLOCK = {2: (250, 300, 250), 3: (1000, 1200, 1000), 4: (10000, 12000, 10000)}
@@ -45,7 +46,12 @@ class InfrastructureProposer(Proposer):
             if self._ok(view, building):
                 items.append(self._build(view, building, f"missão pede {building} {level}", impact=0.55, opportunity=0.75))
 
-        if ctx.levels.get("main", 0) < 20 and self._ok(view, "main"):
+        military = BuildPacing.military_due(ctx.levels, Protection.active(ctx))
+        for building in military:
+            if self._ok(view, building):
+                items.append(self._build(view, building, "2 de quartel e estábulo a cada 3 de EP", impact=0.62, opportunity=0.3))
+
+        if not military and ctx.levels.get("main", 0) < BuildPacing.main_cap(ctx.levels) and self._ok(view, "main"):
             items.append(self._build(view, "main", "edifício principal acelera todas as obras", impact=0.6, opportunity=0.2))
 
         pit = self.bottleneck(view, plan)
@@ -94,7 +100,8 @@ class InfrastructureProposer(Proposer):
             missing = max(0, demand[resource] - view.ctx.stock.get(resource, 0))
             return missing / max(production[resource], 1)
 
-        return max(PITS, key=lambda pit: (pressure(pit), -view.ctx.levels.get(pit, 0)))
+        allowed = BuildPacing.pits(view.ctx.levels) or ["wood"]
+        return max(allowed, key=lambda pit: (pressure(pit), -view.ctx.levels.get(pit, 0)))
 
     @staticmethod
     def capacity_needed(view: CoordinationView, building: str) -> bool:
@@ -111,18 +118,7 @@ class InfrastructureProposer(Proposer):
 
     @staticmethod
     def _quests(view: CoordinationView) -> list[tuple[str, int]]:
-        found = []
-        for quest in view.ctx.quests:
-            for goal in quest.get("goals", []):
-                mapped = GameKnowledge.goal_building(f"{goal.get('title', '')} {goal.get('text', '')}")
-                if not mapped:
-                    continue
-
-                level = mapped[1] or int(goal.get("target") or 1)
-                if view.ctx.levels.get(mapped[0], 0) < level:
-                    found.append((mapped[0], level))
-
-        return found
+        return [(b, lvl) for b, lvl, _ in QuestRules.building_goals(view.ctx.quests, view.ctx.levels)]
 
     def _build(
         self, view: CoordinationView, building: str, reason: str, impact: float, opportunity: float, purpose: str = ""

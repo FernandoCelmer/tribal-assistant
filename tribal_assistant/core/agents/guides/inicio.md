@@ -1,3 +1,25 @@
+Roteiro do sprint (tutoriais do fórum, mundo velocidade 2 e unidades 0,5)
+- Primeiro Quartel 1 e logo Estátua 1: o paladino entra nos saques desde o início.
+- Faça as missões que pagam: Muralha 1 devolve 300 de cada; Esconderijo 3 rende 100 de cada. Por missão, muralha e esconderijo não passam do 3.
+- A missão da milícia fica sem fazer: milícia ativa para a produção das minas.
+- Madeira sempre na frente; ferro 3 níveis abaixo de madeira e argila até existir Estábulo (exemplos do fórum: 3/1/1, 6/1/1, 9/8/6).
+- Lanceiros sem parar nos dois primeiros dias. A missão dos 40 lanceiros paga 900/500/300 e 10 dias de assistente de saque.
+- Portão da cavalaria leve: Edifício principal 10 (sem passar disso antes do Estábulo 3), Quartel 5, Ferreiro 5, Estábulo 3 e Armazém 6-7 para caber os custos.
+
+Saque seguro
+- Espione antes de saquear o que não conhece.
+- Grupos que não morrem em bárbara vazia: 5 ou mais lanceiros com o paladino, ou 4 lanceiros + 3 espadachins.
+- Cavalaria leve necessária para não ter perdas, pela muralha da bárbara: muralha 0 → 1 CL + 1 explorador; 1 → 2; 2 → 8; 3 → 22; 4 → 46; 5 → 85.
+- Por bárbara, suba aos poucos: 2 → 5 → 7 CL conforme o saque volta cheio.
+- Sinais de ex-jogador numa bárbara: academia, estátua ou praça de reunião. Espione e trate como alvo defendido.
+- Ataque chegando: esquive, tire as tropas antes do impacto e volte logo depois.
+
+Fim da proteção
+- Comece 72h antes do fim: Muralha 8 e cerca de 80 lanceiros + 80 espadachins em casa.
+- Machados (bárbaros) só nas ~12h finais, para não travar a cavalaria leve.
+- Depois da proteção: a cada 3 níveis de Edifício principal, 2 de Quartel e 2 de Estábulo.
+- Consulte search_docs: "sprint popeye", "fim da proteção", "muralha cavalaria leve bárbara", "torre de vigia".
+
 A forma mais rápida é jogar a aldeia como uma economia de saque: produção suficiente para manter construções e tropas, ataques constantes a alvos seguros e nenhuma fila importante parada.
 
 Plano detalhado

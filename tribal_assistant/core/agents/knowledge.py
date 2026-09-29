@@ -77,32 +77,36 @@ UNITS: dict[str, UnitInfo] = {
 BUILDING_BY_LABEL = {info.label.lower(): info.id for info in BUILDINGS.values()}
 
 STRATEGY = """\
-Estratégia de base (docs/help):
-Economia
-- Início: evolua Bosque, Poço de argila e Mina de ferro juntos; o mais baixo sobe primeiro.
-- Nunca deixe o Armazém encher: suba-o antes de um recurso passar de 85% da capacidade.
-- Suba a Fazenda antes de a população passar de 85%; sem população nada é construído nem recrutado.
-- Edifício principal mais alto acelera todas as obras; acompanhe-o com as minas.
-- Esconderijo é barato e protege recursos do saque; Muralha (exige Quartel 1) multiplica a defesa.
-- Coleta (praça de reunião) rende recursos sem arriscar tropas: desbloqueie os níveis 1 a 4 em ordem.
-- Missões e bônus diário dão recursos grátis: conclua, colete e abra os baús assim que possível.
-Exército
-- Quartel exige Edifício principal 3; lanceiros saqueiam bem no começo (carregam 25).
-- Ferreiro exige Edifício principal 5 e Quartel 1; Estábulo exige Quartel 5, Ferreiro 5, Edifício principal 10.
-- Cavalaria leve (Estábulo 3) é a melhor unidade de saque: 10 min/campo e carrega 80.
-- Defesa: lanceiros contra cavalaria, espadachins contra infantaria; mantenha tropas em casa com ataque chegando.
+Estratégia de base (docs/help e tutoriais do fórum; mundo velocidade 2, unidades 0,5):
+Início (proteção de iniciante)
+- Estátua 1 logo depois do Quartel 1: o paladino saqueia desde o primeiro dia.
+- Missões dão recursos: faça Muralha 1 (devolve 300 de cada) e Esconderijo 3 (dá 100); por missão, nunca acima do 3.
+- Nunca ative a milícia, nem por missão: ela para as minas.
+- Minas: madeira sempre a mais alta; ferro 3 níveis abaixo de madeira e argila até existir Estábulo.
+- Lanceiros sem parar até 40: a missão dos 40 dá 900/500/300 e 10 dias de assistente de saque.
+- Portão da cavalaria leve: Edifício principal 10 (não passe disso antes do Estábulo 3), Quartel 5, Ferreiro 5, Estábulo 3, Armazém 6-7 para caber os custos.
+- Nunca deixe o Armazém encher; suba a Fazenda antes de a população passar de 85%.
+Fim da proteção (preparar nas 72h finais)
+- Muralha 8, cerca de 80 lanceiros e 80 espadachins em casa; machados só ~12h antes do fim.
+- Depois da proteção: a cada 3 níveis de EP, 2 de Quartel e 2 de Estábulo.
 Saque
-- Saque só aldeias bárbaras (sem dono). Nunca ataque jogadores.
-- Aldeias bárbaras de pontos altos podem ser ex-jogadores com tropas: prefira as de poucos pontos e perto.
-- Grupos pequenos e frequentes rendem mais que um grande; não repita o mesmo alvo logo em seguida.
+- Só aldeias bárbaras; nunca ataque jogadores. Espione antes de saquear quem não conhece.
+- Grupos seguros: 5+ lanceiros com o paladino, ou 4 lanceiros + 3 espadachins.
+- Cavalaria leve sem perdas por muralha da bárbara: 0 → 1 + 1 espião, 1 → 2, 2 → 8, 3 → 22, 4 → 46, 5 → 85.
+- Suba a escala por bárbara conforme o saque volta cheio: 2 → 5 → 7 cavalarias leves.
+- Bárbara com academia, estátua ou praça é ex-jogador: espione e mande mais.
+- Com ataque chegando, esquive: tire as tropas de casa até o impacto passar e volte a saquear.
+Coleta
+- Lanceiro é a unidade da coleta (25 de carga por 1 de população); divida para as coletas terminarem juntas.
 Nobre
-- Academia exige Edifício principal 20, Ferreiro 20 e Mercado 10; Mercado exige Edifício principal 3 e Armazém 2.
-- Nobre custa 40000/50000/50000 e 100 de população: Armazém 20 (50675) e Fazenda altos antes.
-- Nobre nunca vai sozinho (morre); cada ataque tira 20-35 de lealdade, conquista exige 3-5 ataques seguidos.
-- Início tardio num mundo antigo: defesa primeiro (lanceiros e espadachins), nobre depois.
+- Academia exige Edifício principal 20, Ferreiro 20 e Mercado 10; nobre só com Fazenda 24 e exército de verdade.
+- Nobre custa 40000/50000/50000 e 100 de população, mais n moedas (ou n pacotes de 28000/30000/25000) para o n-ésimo nobre.
+- Primeiro alvo: bárbara próxima já espionada (melhor se tiver bônus de fazenda) ou a bárbara grande mais perto.
+- Nobre nunca vai sozinho; cada ataque tira 20-35 de lealdade. Trem de 4 conquista em ~85%, 5 em 100%.
+- Lealdade volta ~2 por hora na velocidade 2: não espace os nobres.
 Aldeia final: recursos, Fazenda e Armazém 30; Edifício principal 20; Ferreiro 20; Muralha 20.
 Nunca gaste pontos premium.
-Guias completos: lookup_knowledge kind=guide id=inicio (primeiros dias), avancado (várias aldeias, tribo), nobre (conquista) ou tribo (escolher e usar uma tribo).
+Guias completos: lookup_knowledge kind=guide id=inicio (primeiros dias), coleta, avancado (várias aldeias, tribo), nobre (conquista) ou tribo.
 """
 
 GUIDES = {

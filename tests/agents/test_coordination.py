@@ -107,8 +107,11 @@ def test_role_rules_pick_defense_offensive_support_expansion_or_growth() -> None
     assert RoleSelector.decide(ctx, {"good_targets": 4})[0] == Role.OFFENSIVE
     assert RoleSelector.decide(context(), {})[0] == Role.GROWTH
 
-    rich = context(buildings=[building("main", 20), building("smith", 18), building("market", 8)])
+    rich = context(buildings=[building("main", 20), building("smith", 18), building("market", 8), building("farm", 24)], units=[unit("spear", 2500)])
     assert RoleSelector.decide(rich, {})[0] == Role.EXPANSION
+
+    no_army = context(buildings=[building("main", 20), building("smith", 18), building("market", 8), building("farm", 24)])
+    assert RoleSelector.decide(no_army, {})[0] != Role.EXPANSION
 
 
 async def test_role_switches_only_after_it_repeats(session: AsyncSession) -> None:

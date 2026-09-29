@@ -20,3 +20,8 @@ Tropas para coletar
 - Um lanceiro coletando rende cerca de 10 recursos por hora e se paga em menos de 10 horas.
 - No começo do mundo, mantenha o Quartel recrutando lanceiros para a coleta até algumas centenas (o agente de Recrutamento mira 40% da população máxima, no máximo 1.000).
 - Recrutar sem parar exige Fazenda à frente: suba a Fazenda antes de a população travar, não depois.
+
+Medição com 300 lanceiros
+- Só média, grande e extrema na proporção 6 : 3 : 2 rendeu 45,8 recursos por minuto.
+- As quatro na proporção 15 : 6 : 3 : 2 rendeu 41,4 por minuto.
+- Com algumas centenas de lanceiros, deixe a pequena de fora; ela volta a valer com um exército bem maior.

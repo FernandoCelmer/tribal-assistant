@@ -2,9 +2,10 @@
 
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.knowledge import GameKnowledge
+from tribal_assistant.core.agents.pacing import BuildPacing
+from tribal_assistant.core.agents.protection import Protection
+from tribal_assistant.core.agents.quests import QuestRules
 from tribal_assistant.core.schemas.plan import PlanStep
-
-RESOURCES = ("wood", "stone", "iron")
 
 
 class PlanTracker:
@@ -81,9 +82,11 @@ class PlanTracker:
 
 
 class RulePlanner:
-    """Early-game plan: main building nonstop, balanced pits, storage and farm ahead of the caps, path to the stable."""
+    """Early game after the forum sprint: statue early, quests, main building, wood-led pits, gate to light cavalry."""
 
     STABLE_PATH = (("main", 10), ("barracks", 5), ("smith", 5), ("stable", 3))
+    STORAGE_FOR_STABLE = 6
+    WALL_AT_PROTECTION_END = 8
 
     def plan(self, ctx: VillageContext) -> tuple[str, list[PlanStep]]:
         levels = ctx.levels
@@ -99,17 +102,13 @@ class RulePlanner:
             seen.add(key)
             steps.append(PlanStep(kind=kind, target=target, amount=amount, reason=reason))
 
-        for quest in ctx.quests:
-            for goal in quest.get("goals", []):
-                mapped = GameKnowledge.goal_building(f"{goal.get('title', '')} {goal.get('text', '')}")
-                if not mapped:
-                    continue
+        if levels.get("barracks", 0) >= 1 and ctx.building("statue") is not None and levels.get("statue", 0) < 1:
+            add("build", "statue", 1, "estátua cedo: paladino saqueia desde o início")
 
-                level = mapped[1] or int(goal.get("target") or 1)
-                if mapped[0] not in ("wall", "hide") and levels.get(mapped[0], 0) < level:
-                    add("build", mapped[0], level, f"missão: {quest.get('title', '')}")
+        for building, level, title in QuestRules.building_goals(ctx.quests, levels):
+            add("build", building, level, f"missão: {title}")
 
-        if levels.get("main", 0) < 20:
+        if levels.get("main", 0) < BuildPacing.main_cap(levels):
             add("build", "main", levels.get("main", 0) + 1, "edifício principal sem parar: acelera todas as obras")
 
         biggest = max(ctx.stock.get(r, 0) for r in ("wood", "clay", "iron"))
@@ -120,15 +119,17 @@ class RulePlanner:
         if village.pop_max and ctx.pop_free < max(20, village.pop_max * 0.15):
             add("build", "farm", levels.get("farm", 0) + 1, "fazenda antes de a população travar")
 
-        pits = sorted(RESOURCES, key=lambda b: levels.get(b, 0))
-        for pit in pits:
+        for pit in BuildPacing.pits(levels):
             if levels.get(pit, 0) < 30:
-                add("build", pit, levels.get(pit, 0) + 1, "minas equilibradas: produção por hora primeiro")
+                add("build", pit, levels.get(pit, 0) + 1, "madeira na frente, ferro 3 abaixo até o estábulo")
 
-        for building, target in self.STABLE_PATH:
-            if levels.get(building, 0) < target:
-                add("build", building, levels.get(building, 0) + 1, "caminho do estábulo: cavalaria leve para saquear")
-                break
+        self._stable_gate(ctx, add)
+
+        for building in BuildPacing.military_due(levels, Protection.active(ctx)):
+            add("build", building, levels.get(building, 0) + 1, "fora da proteção: 2 de quartel e estábulo a cada 3 de EP")
+
+        if Protection.ending(ctx) and levels.get("wall", 0) < self.WALL_AT_PROTECTION_END:
+            add("build", "wall", levels.get("wall", 0) + 1, "fim da proteção: muralha 8")
 
         locked = sorted(o.option_id for o in village.scavenge if o.is_locked and o.unlock_at is None)
         if locked:
@@ -139,14 +140,31 @@ class RulePlanner:
             add("recruit", "light", max(10, light.total + 5), "cavalaria leve é a melhor unidade de saque")
         else:
             spear = ctx.unit("spear")
-            if spear and spear.available and spear.total < 30:
-                add("recruit", "spear", min(30, spear.total + 10), "tropas para saque, coleta e missões")
+            if spear and spear.available and spear.total < 40:
+                add("recruit", "spear", min(40, spear.total + 10), "lanceiros para saque, coleta e a missão dos 40")
 
         if any(c["direction"] == "in" and c["kind"] in ("attack", "noble") for c in ctx.commands):
             add("build", "wall", levels.get("wall", 0) + 1, "ataque chegando: muralha")
 
         summary = (
-            f"Plano automático: {sum(1 for s in steps if s.kind == 'build')} obras — edifício principal contínuo, "
-            "minas equilibradas, armazém e fazenda à frente dos limites, caminho do estábulo."
+            f"Plano automático: {sum(1 for s in steps if s.kind == 'build')} obras — estátua cedo, missões, "
+            "edifício principal até 10, madeira na frente e ferro abaixo, portão da cavalaria leve."
         )
         return summary, steps[:12]
+
+    def _stable_gate(self, ctx: VillageContext, add) -> None:
+        """EP 10, Quartel 5, Ferreiro 5, Estábulo 3, with the storage holding the next cost."""
+        levels = ctx.levels
+        for building, target in self.STABLE_PATH:
+            if levels.get(building, 0) >= target:
+                continue
+
+            nxt = ctx.building(building)
+            cost = max((nxt.next_wood or 0, nxt.next_clay or 0, nxt.next_iron or 0)) if nxt else 0
+            storage = ctx.village.storage or 0
+            wants_storage = levels.get("main", 0) >= 10 and levels.get("storage", 0) < self.STORAGE_FOR_STABLE
+            if storage and (cost > storage * 0.95 or wants_storage):
+                add("build", "storage", levels.get("storage", 0) + 1, "armazém 6-7 comporta o caminho do estábulo")
+
+            add("build", building, levels.get(building, 0) + 1, "portão da cavalaria leve: EP 10, Quartel 5, Ferreiro 5, Estábulo 3")
+            return

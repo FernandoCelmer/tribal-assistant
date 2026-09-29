@@ -3,6 +3,7 @@
 import re
 from typing import TYPE_CHECKING
 
+from tribal_assistant.core.agents.quests import QuestRules
 from tribal_assistant.core.agents.roles.base import VillageAgent
 
 if TYPE_CHECKING:
@@ -16,7 +17,8 @@ class QuartermasterAgent(VillageAgent):
         "Manter as missões em dia para liberar recursos grátis antes dos outros agentes gastarem: "
         "1) concluir com complete_quest cada missão marcada [pronta]; 2) coletar as recompensas prontas "
         "com claim_quest_rewards; 3) abrir os baús do bônus diário com open_daily_bonus (grátis, no máximo "
-        "a cada 4 horas). Nunca gaste pontos premium."
+        "a cada 4 horas). Nunca gaste pontos premium. Nunca ative a milícia nem conclua missão de milícia: ela para a "
+        "produção das minas."
     )
     tools = ("get_quests", "claim_quest_rewards", "complete_quest", "open_daily_bonus")
 
@@ -27,7 +29,7 @@ class QuartermasterAgent(VillageAgent):
         done = []
 
         for quest in box.ctx.quests:
-            if quest["can_complete"]:
+            if quest["can_complete"] and not QuestRules.forbidden(quest):
                 outcome = await box.invoke("complete_quest", {"quest_id": quest["id"], "reason": "metas atingidas"})
                 if outcome.ok:
                     done.append(f"missão {quest['id']}")

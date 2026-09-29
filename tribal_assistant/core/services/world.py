@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.errors import NotFoundError
+from tribal_assistant.core.game.world_config import WorldConfig
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.world import WorldRepository
 from tribal_assistant.core.schemas.world import NearbyVillage, WorldStatus
@@ -27,6 +28,9 @@ class WorldService:
             unit_speed=config.get("unit_speed"),
             **counts,
         )
+
+    async def config(self) -> WorldConfig:
+        return WorldConfig.from_settings(await self.repository.setting("config"), await self.repository.setting("units"))
 
     async def _origin(self, village_id: int | None) -> Village:
         stmt = select(Village).where(Village.is_own.is_(True))

@@ -1,7 +1,6 @@
 """Chooses the village role automatically every round; a manual choice wins; attacks force emergency."""
 
 import json
-from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -12,12 +11,13 @@ from tribal_assistant.core.agents.coordination.estimates import Estimator
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.threat import ThreatScan
 from tribal_assistant.core.agents.learning import LessonBook
+from tribal_assistant.core.agents.noble import MIN_ARMY_POP, MIN_FARM, NobleReadiness
+from tribal_assistant.core.agents.protection import PREPARE_HOURS, Protection
 from tribal_assistant.core.models.command import Command
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.coordination import CoordinationRepository
 
-NOBLE_PATH = (("main", 20), ("smith", 20), ("market", 10))
-PROTECTION_WARNING_HOURS = 48
+PROTECTION_WARNING_HOURS = PREPARE_HOURS
 CONFIRM_ROUNDS = 3
 
 
@@ -75,15 +75,7 @@ class RoleSelector:
 
     @staticmethod
     def protection_hours(ctx: VillageContext) -> float | None:
-        until = (ctx.player or {}).get("protection_until")
-        if not until:
-            return None
-
-        end = datetime.fromisoformat(str(until).replace("Z", "+00:00"))
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=UTC)
-
-        return (end - datetime.now(UTC)).total_seconds() / 3600
+        return Protection.hours(ctx)
 
     @staticmethod
     def decide(ctx: VillageContext, facts: dict[str, Any]) -> tuple[Role, str]:
@@ -100,9 +92,9 @@ class RoleSelector:
         if facts.get("others_under_attack") and facts.get("own_villages", 1) >= 2:
             return Role.SUPPORT, "outra aldeia sua está sob ataque: produzir e mandar defesa"
 
-        progress = sum(min(1.0, levels.get(b, 0) / lvl) for b, lvl in NOBLE_PATH) / len(NOBLE_PATH)
-        if progress >= 0.8:
-            return Role.EXPANSION, f"caminho da academia em {progress:.0%}: preparar nobre"
+        progress = NobleReadiness.path_progress(levels)
+        if progress >= 0.8 and levels.get("farm", 0) >= MIN_FARM and NobleReadiness.army_pop(ctx) >= MIN_ARMY_POP:
+            return Role.EXPANSION, f"caminho da academia em {progress:.0%}, fazenda {levels.get('farm', 0)} e exército: preparar nobre"
 
         if light and light.total >= 20 and facts.get("good_targets", 0) >= 3 and not dangerous:
             return Role.OFFENSIVE, f"{light.total} cavalarias leves e {facts['good_targets']} alvos bons: saque constante"
