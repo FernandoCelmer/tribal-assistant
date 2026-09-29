@@ -7,13 +7,19 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from tribal_assistant.client.scraper.game import GameSnapshot, GameVillage, PlayerSnapshot, ReportSnapshot
+from tribal_assistant.client.scraper.game import (
+    GameSnapshot,
+    GameVillage,
+    PlayerSnapshot,
+    ReportSnapshot,
+)
 from tribal_assistant.models.building import Building
 from tribal_assistant.models.command import Command
 from tribal_assistant.models.player import Player
 from tribal_assistant.models.recruit_order import RecruitOrder
 from tribal_assistant.models.report import Report
 from tribal_assistant.models.scavenge_option import ScavengeOption
+from tribal_assistant.models.snapshot import VillageSnapshot
 from tribal_assistant.models.unit import Unit
 from tribal_assistant.models.village import Village
 
@@ -40,7 +46,43 @@ class GameRepository:
         for village in snapshot.villages:
             await self._upsert_village(village, now)
         await self._upsert_reports(snapshot.reports)
+        await self.session.flush()
+
+        for village in snapshot.villages:
+            await self._record_snapshot(village, now)
+
         await self.session.commit()
+
+    async def _record_snapshot(self, snap: GameVillage, now: datetime | None) -> None:
+        village = await self._find_village(snap)
+        if village is None or now is None:
+            return
+
+        self.session.add(
+            VillageSnapshot(
+                village_id=village.id,
+                taken_at=now,
+                points=snap.points,
+                wood=snap.wood,
+                clay=snap.clay,
+                iron=snap.iron,
+                storage=snap.storage,
+                pop_current=snap.pop_current,
+                pop_max=snap.pop_max,
+                wood_prod=snap.wood_prod,
+                clay_prod=snap.clay_prod,
+                iron_prod=snap.iron_prod,
+                troops_home=sum(u.home for u in snap.units),
+                troops_total=sum(u.total for u in snap.units),
+            )
+        )
+
+    async def snapshots(self, village_id: int | None, since: datetime) -> Sequence[VillageSnapshot]:
+        stmt = select(VillageSnapshot).where(VillageSnapshot.taken_at >= since).order_by(VillageSnapshot.taken_at)
+        if village_id is not None:
+            stmt = stmt.where(VillageSnapshot.village_id == village_id)
+
+        return (await self.session.execute(stmt)).scalars().all()
 
     async def _upsert_player(self, snap: PlayerSnapshot, now: datetime | None) -> None:
         result = await self.session.execute(select(Player).where(Player.game_id == snap.game_id))
