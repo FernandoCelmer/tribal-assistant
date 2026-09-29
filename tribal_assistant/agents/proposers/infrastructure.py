@@ -9,6 +9,7 @@ from tribal_assistant.agents.proposers.base import Proposer
 
 PITS = ("wood", "stone", "iron")
 NON_ECONOMIC = ("wall", "market", "hide", "watchtower", "statue", "garage")
+CAPACITY = ("storage", "farm")
 SCAVENGE_UNLOCK = {2: (250, 300, 250), 3: (1000, 1200, 1000), 4: (10000, 12000, 10000)}
 PIT_RESOURCE = {"wood": "wood", "stone": "clay", "iron": "iron"}
 
@@ -35,6 +36,8 @@ class InfrastructureProposer(Proposer):
             impact = 0.75 - index * 0.08
             if view.role == Role.GROWTH and building in NON_ECONOMIC and building not in quest_buildings:
                 impact = 0.3
+            if building in CAPACITY and not self.capacity_needed(view, building) and building not in quest_buildings:
+                impact = 0.2
 
             items.append(self._build(view, building, f"passo {index + 1} do plano", impact=impact, opportunity=0.3, purpose=f"plan:{building}"))
 
@@ -86,6 +89,14 @@ class InfrastructureProposer(Proposer):
             return missing / max(production[resource], 1)
 
         return max(PITS, key=lambda pit: (pressure(pit), -view.ctx.levels.get(pit, 0)))
+
+    @staticmethod
+    def capacity_needed(view: CoordinationView, building: str) -> bool:
+        """Storage only when it fills within a day; farm only when free population drops under 30%."""
+        if building == "storage":
+            return view.estimator.storage_hours() < 24
+
+        return view.estimator.pop_ratio() < 0.3
 
     @staticmethod
     def _ok(view: CoordinationView, building: str) -> bool:
