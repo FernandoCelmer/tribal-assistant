@@ -117,6 +117,32 @@ asyncio.run(main())
 
 The FastAPI app is `tribal_assistant.server:app`; build your own with `tribal_assistant.server.create_app()`.
 
+## Accounts and PostgreSQL
+
+The assistant plays **several accounts at once**, each with its own browser session, data, settings, strategy and lessons. Public world data (villages, players, tribes) is stored once per world and shared.
+
+- Add accounts on **Contas** (`/contas`) or with `tribal-assistant accounts add --world-url https://br145.tribalwars.com.br --username NAME`. Passwords are encrypted with `APP_SECRET` (or `storage/secret.key`).
+- Pick the account in the sidebar; the API takes `?account=ID`, the `X-Account` header or the `tw_account` cookie; the CLI takes `--account ID`; MCP uses `TRIBAL_ACCOUNT`.
+- Pause an account from `/contas` or `tribal-assistant accounts enable ID --off`.
+- The first start creates account 1 from `TW_*` in `.env`.
+
+Game rule: one person may own only one account per world, and accounts on the same connection must never send troops or resources to each other or to the same target. The assistant never acts between the accounts it runs; the market ignores offers from them.
+
+**Moving to PostgreSQL** (for example on a VPS):
+
+```bash
+# on the VPS: create the database
+sudo -u postgres psql -c "CREATE USER tribal WITH PASSWORD 'SENHA';" -c "CREATE DATABASE tribal OWNER tribal;"
+
+# on the Mac: copy everything from the old SQLite (old rows become account 1)
+tribal-assistant db copy --target postgresql+asyncpg://tribal:SENHA@IP_DA_VPS:5432/tribal
+
+# then point the app at it in .env and start
+DATABASE_URL=postgresql+asyncpg://tribal:SENHA@IP_DA_VPS:5432/tribal
+```
+
+Open port 5432 on the VPS only to your IP (firewall) and set `listen_addresses` and `pg_hba.conf` accordingly.
+
 ## Village agents
 
 Each round has three stages per village:
