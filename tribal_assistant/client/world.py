@@ -7,7 +7,7 @@ from urllib.parse import unquote_plus
 
 import httpx
 
-from tribal_assistant.core.config import settings
+from tribal_assistant.accounts.context import current_account
 
 MAP_FILES = ("village", "player", "ally")
 INTERFACE_FUNCS = {"config": "get_config", "units": "get_unit_info", "buildings": "get_building_info"}
@@ -74,7 +74,7 @@ def parse_xml(text: str) -> dict[str, Any]:
 
 
 async def fetch_world() -> WorldData:
-    base = settings.tw_world_url.rstrip("/")
+    base = current_account().base_url
     async with httpx.AsyncClient(timeout=60, headers={"User-Agent": "Mozilla/5.0"}) as client:
         files = {}
         for name in MAP_FILES:

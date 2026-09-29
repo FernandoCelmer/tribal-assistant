@@ -7,13 +7,13 @@ answered. Guardrails live one layer up (tribal_assistant.agents.guardrails).
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from loguru import logger
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 
+from tribal_assistant.accounts.context import current_account
 from tribal_assistant.agents.guardrails import SCAVENGE_MIN_POP
 from tribal_assistant.agents.knowledge import UNITS
 from tribal_assistant.client.human import human_click, human_delay, reading_pause
@@ -32,7 +32,6 @@ from tribal_assistant.client.scraper.quests import (
 )
 from tribal_assistant.client.screens import ScreenCatalog
 from tribal_assistant.client.session import game_session
-from tribal_assistant.core.config import settings
 
 UNIT_SCREEN = {
     "spear": "barracks",
@@ -170,7 +169,7 @@ class GameActions:
 
     def _capture(self, page_html: str, name: str) -> None:
         """Keep the HTML of screens we act on, so scrapers can be written against real markup."""
-        directory = Path(settings.html_capture_dir)
+        directory = current_account().capture_dir
         directory.mkdir(parents=True, exist_ok=True)
 
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")

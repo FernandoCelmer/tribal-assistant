@@ -13,13 +13,15 @@ from pathlib import Path
 from loguru import logger
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
+from tribal_assistant.accounts.context import AccountContext, current_account
 from tribal_assistant.core.config import settings
 
 VIEWPORTS = ({"width": 1366, "height": 768}, {"width": 1440, "height": 900}, {"width": 1536, "height": 864})
 
 
 class GameSession:
-    def __init__(self) -> None:
+    def __init__(self, account: AccountContext) -> None:
+        self.account = account
         self.lock = asyncio.Lock()
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
@@ -28,7 +30,7 @@ class GameSession:
 
     @property
     def state_file(self) -> Path:
-        return Path(settings.browser_state_path)
+        return self.account.state_path
 
     async def page(self) -> Page:
         alive = (
@@ -47,7 +49,7 @@ class GameSession:
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(
-            headless=settings.headless,
+            headless=self.account.headless or settings.headless,
             args=["--disable-blink-features=AutomationControlled"],
             ignore_default_args=["--enable-automation"],
         )
@@ -58,7 +60,7 @@ class GameSession:
             timezone_id="America/Sao_Paulo",
         )
         self._page = await self._context.new_page()
-        logger.info("Browser session started")
+        logger.info("Browser session started for account {}", self.account.name)
 
     async def save_state(self) -> None:
         if self._context is not None:
@@ -78,4 +80,34 @@ class GameSession:
             self._playwright = self._browser = self._context = self._page = None
 
 
-game_session = GameSession()
+class SessionPool:
+    """One browser per account; `game_session` resolves to the session of the current account."""
+
+    def __init__(self) -> None:
+        self.sessions: dict[int, GameSession] = {}
+
+    def get(self, account: AccountContext | None = None) -> GameSession:
+        account = account or current_account()
+        session = self.sessions.get(account.id)
+        if session is None or session.account != account:
+            session = GameSession(account)
+            self.sessions[account.id] = session
+
+        return session
+
+    @property
+    def lock(self) -> asyncio.Lock:
+        return self.get().lock
+
+    async def page(self) -> Page:
+        return await self.get().page()
+
+    async def save_state(self) -> None:
+        await self.get().save_state()
+
+    async def close(self) -> None:
+        for session in list(self.sessions.values()):
+            await session.close()
+
+
+game_session = SessionPool()

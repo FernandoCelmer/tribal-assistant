@@ -9,7 +9,7 @@ from typing import ClassVar
 from loguru import logger
 from playwright.async_api import Page
 
-from tribal_assistant.core.config import settings
+from tribal_assistant.accounts.context import current_account
 
 WATCHED = ("smith", "market", "snob", "stable", "garage", "statue")
 
@@ -55,7 +55,7 @@ class ScreenCatalog:
     REFRESH: ClassVar[timedelta] = timedelta(hours=6)
 
     def __init__(self, directory: Path | None = None) -> None:
-        self.directory = directory or Path(settings.html_capture_dir) / "screens"
+        self.directory = directory or current_account().capture_dir / "screens"
 
     def path(self, screen: str) -> Path:
         return self.directory / f"{screen}.html"

@@ -4,8 +4,8 @@ from loguru import logger
 from playwright.async_api import Page
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
+from tribal_assistant.accounts.context import current_account
 from tribal_assistant.client.human import human_delay
-from tribal_assistant.core.config import settings
 from tribal_assistant.core.errors import UpstreamError
 
 LOGIN_URL = "https://www.tribalwars.com.br/"
@@ -33,9 +33,9 @@ async def login(page: Page) -> None:
 
 async def _submit_credentials(page: Page) -> None:
     logger.info("Filling credentials")
-    await page.fill("#user", settings.tw_username)
+    await page.fill("#user", current_account().username)
     await human_delay(400, 900)
-    await page.fill("#password", settings.tw_password)
+    await page.fill("#password", current_account().password)
     await human_delay(400, 900)
     await page.click("a.btn-login")
 
@@ -53,7 +53,7 @@ async def _enter_world(page: Page) -> None:
     if await page.locator(VILLAGE_MENU_SELECTOR).count():
         return
 
-    server = settings.tw_server
+    server = current_account().server
     logger.info("Entering world {}", server)
     await page.goto(PLAY_URL.format(server=server), wait_until="domcontentloaded")
     try:

@@ -11,4 +11,23 @@ class SessionState:
     last_error: str | None = None
 
 
-session_state = SessionState()
+class SessionStates:
+    """Per-account session state; attribute access goes to the current account's state."""
+
+    def __init__(self) -> None:
+        object.__setattr__(self, "states", {})
+
+    def get(self) -> SessionState:
+        from tribal_assistant.accounts.context import current_account_id
+
+        key = current_account_id() or 0
+        return self.states.setdefault(key, SessionState())
+
+    def __getattr__(self, name: str):
+        return getattr(self.get(), name)
+
+    def __setattr__(self, name: str, value) -> None:
+        setattr(self.get(), name, value)
+
+
+session_state = SessionStates()

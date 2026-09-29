@@ -8,6 +8,7 @@ from loguru import logger
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 
+from tribal_assistant.accounts.context import current_account
 from tribal_assistant.client.human import human_click, reading_pause
 from tribal_assistant.client.login import VILLAGE_MENU_SELECTOR, login
 from tribal_assistant.client.scraper.game import (
@@ -175,7 +176,7 @@ def _url(screen: str, village_id: str | None = None, **params: str) -> str:
     query = {"screen": screen, **params}
     if village_id:
         query = {"village": village_id, **query}
-    return f"{settings.tw_world_url.rstrip('/')}/game.php?" + "&".join(
+    return f"{current_account().base_url}/game.php?" + "&".join(
         f"{k}={v}" for k, v in query.items()
     )
 
@@ -183,7 +184,7 @@ def _url(screen: str, village_id: str | None = None, **params: str) -> str:
 async def _open(page: Page, screen: str, village_id: str | None = None, **params: str) -> None:
     """Reach a screen the way a player would: click its link when one is on the page."""
     found = False
-    if village_id and page.url.startswith(settings.tw_world_url.rstrip("/")):
+    if village_id and page.url.startswith(current_account().base_url):
         want = {"screen": screen, "village": village_id, **params}
         try:
             found = bool(await page.evaluate(FIND_LINK_JS, want))
@@ -228,7 +229,7 @@ async def _game_data(page: Page) -> dict[str, Any]:
 
 
 async def _ensure_in_game(page: Page) -> None:
-    if page.url.startswith(settings.tw_world_url.rstrip("/")) and await page.locator(
+    if page.url.startswith(current_account().base_url) and await page.locator(
         VILLAGE_MENU_SELECTOR
     ).count():
         return
