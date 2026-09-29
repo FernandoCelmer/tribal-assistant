@@ -149,3 +149,20 @@ class StateTools(ToolGroup):
                 return Knowledge(guide=id, text=await self.api.get(f"/knowledge/guides/{id}"))
 
             return Knowledge(**await self.api.get(f"/knowledge/{kind}s/{id}"))
+
+        @GuardedTool(mcp, title="Search the docs", annotations=READ_ONLY)
+        async def search_docs(
+            query: Annotated[str, Field(min_length=2, description="Question or keywords in Portuguese, e.g. 'custo da academia' or 'como dividir a coleta'.")],
+            category: Annotated[str | None, Field(description="Optional: help, forum, guides or search.")] = None,
+            limit: Annotated[int, Field(ge=1, le=20, description="How many sections to return.")] = 5,
+        ) -> dict[str, Any]:
+            """Full-text search over the local library (official help, guides, forum tutorials), best
+            sections first, each with the document path. Read a whole document with read_doc."""
+            return {"hits": await self.api.get("/docs/search", q=query, category=category, limit=limit)}
+
+        @GuardedTool(mcp, title="Read a doc", annotations=READ_ONLY)
+        async def read_doc(
+            path: Annotated[str, Field(min_length=3, description="Document path returned by search_docs, e.g. help/academia.md.")],
+        ) -> dict[str, Any]:
+            """One whole document of the local library, all sections in order."""
+            return await self.api.get("/docs/read", path=path)

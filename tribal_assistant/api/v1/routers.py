@@ -7,6 +7,7 @@ from tribal_assistant.api.v1.accounts import accounts_router
 from tribal_assistant.api.v1.agents import agents_router
 from tribal_assistant.api.v1.assistant import assistant_router
 from tribal_assistant.api.v1.challenges import challenges_router
+from tribal_assistant.api.v1.docs import docs_router
 from tribal_assistant.api.v1.game import game_router
 from tribal_assistant.api.v1.knowledge import knowledge_router
 from tribal_assistant.api.v1.observability import observability_router
@@ -22,4 +23,5 @@ v1_router.include_router(world_router, prefix="/world", tags=["World"])
 v1_router.include_router(observability_router, tags=["Observability"])
 v1_router.include_router(agents_router, prefix="/agents", tags=["Agents"])
 v1_router.include_router(challenges_router, prefix="/challenges", tags=["Challenges"])
+v1_router.include_router(docs_router, prefix="/docs", tags=["Docs"])
 v1_router.include_router(system_router, prefix="/system", tags=["System"])

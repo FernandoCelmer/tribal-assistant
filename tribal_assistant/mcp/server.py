@@ -24,7 +24,8 @@ Reading, cheapest first:
 - get_overview lists every own village with its id; every other tool takes that id, never coords.
 - get_village_state gives one village in a few hundred tokens; prefer it over get_overview.
 - get_quests, get_plans, get_agent_decisions and get_agents_config explain progress and past actions.
-- lookup_knowledge answers building requirements and unit stats from the official help pages.
+- lookup_knowledge answers building requirements and unit stats from the official help pages;
+  search_docs and read_doc search the whole local library (help, guides, forum tutorials).
 - list_barbarians gives loot targets that the guardrails accept; list_nearby scouts the map.
 - Data is as fresh as the last sync_account (game) and sync_world (public map); sync once per
   session or after acting, not before every read.

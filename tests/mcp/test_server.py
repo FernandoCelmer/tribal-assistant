@@ -15,6 +15,8 @@ READ_ONLY_TOOLS = {
     "get_world_status",
     "list_nearby",
     "get_coordination",
+    "search_docs",
+    "read_doc",
 }
 GAME_ACTIONS = {
     "run_agents",
@@ -50,7 +52,7 @@ async def test_tool_surface(server) -> None:
     tools = await _tools(server)
 
     assert set(tools) == READ_ONLY_TOOLS | GAME_ACTIONS | LOCAL_WRITES | {"sync_account", "sync_world"}
-    assert len(tools) == 26
+    assert len(tools) == 28
     for tool in tools.values():
         assert tool.description
         assert tool.title

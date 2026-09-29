@@ -13,6 +13,7 @@ from tribal_assistant.core.services.accounts import AccountService
 from tribal_assistant.core.services.agents import AgentService
 from tribal_assistant.core.services.assistant import AssistantService
 from tribal_assistant.core.services.challenges import ChallengeService
+from tribal_assistant.core.services.docs import DocsService
 from tribal_assistant.core.services.game import GameService
 from tribal_assistant.core.services.observability import ObservabilityService
 from tribal_assistant.core.services.world import WorldService
@@ -61,6 +62,7 @@ AccountServiceDep = Annotated[AccountService, Depends(provide(AccountService))]
 AgentServiceDep = Annotated[AgentService, Depends(provide(AgentService))]
 AssistantServiceDep = Annotated[AssistantService, Depends(provide(AssistantService))]
 ChallengeServiceDep = Annotated[ChallengeService, Depends(provide(ChallengeService))]
+DocsServiceDep = Annotated[DocsService, Depends(provide(DocsService))]
 GameServiceDep = Annotated[GameService, Depends(provide(GameService))]
 ObservabilityServiceDep = Annotated[ObservabilityService, Depends(provide(ObservabilityService))]
 WorldServiceDep = Annotated[WorldService, Depends(provide(WorldService))]
