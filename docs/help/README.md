@@ -76,8 +76,15 @@ Cópia local da wiki de ajuda, convertida para Markdown. Organizada pelo menu de
 - [Nobres](nobres.md)
 - [Oficina](oficina.md)
 - [Paladino](paladino.md)
+- [Poço de Argila](poco-de-argila.md)
+- [Praça de Reunião](praca-de-reuniao.md)
+- [Quartel](quartel.md)
+- [Torre de Vigia](torre-de-vigia.md)
 
-## Falhas no download
+## Validação (2026-09-29)
 
-- Praça de Reunião (https://help.tribalwars.com.br/index.php?title=Pra%C3%A7a_de_Reuni%C3%A3o): timeout (servidor não respondeu)
-- Primeira Igreja (https://help.tribalwars.com.br/index.php?title=Primeira_Igreja): timeout (servidor não respondeu)
+- Unidades (custo, ataque, defesa, carga, população, velocidade) e nível máximo dos edifícios conferidos com os dados oficiais do mundo br144: todos batem.
+- Tabelas de custo por nível de 14 edifícios conferidas com a fórmula oficial do mundo (`custo base × fator^(nível-1)`): todas batem.
+- Quartel, Poço de Argila, Praça de Reunião e Torre de Vigia faltavam; foram geradas a partir dos dados oficiais do br144. A Árvore Tecnológica, que só tinha uma imagem, virou tabela de requisitos.
+- A Igreja e a Primeira Igreja não existem no br144.
+- A wiki de ajuda e o fórum bloqueiam robôs de IA no robots.txt, por isso não são mais consultados diretamente.
