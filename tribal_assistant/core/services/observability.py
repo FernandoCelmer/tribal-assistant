@@ -88,6 +88,13 @@ class ObservabilityService:
 class EventStream:
     """Server-Sent Events: every bus event as it happens, with heartbeats to keep the connection open."""
 
+    def __init__(self, account_id: int | None = None) -> None:
+        self.account_id = account_id
+
+    def visible(self, data: dict) -> bool:
+        owner = data.get("account_id")
+        return self.account_id is None or owner is None or owner == self.account_id
+
     async def __call__(self) -> AsyncIterator[str]:
         queue = event_bus.subscribe()
 
@@ -99,6 +106,9 @@ class EventStream:
                     event = await asyncio.wait_for(queue.get(), timeout=HEARTBEAT_SECONDS)
                 except TimeoutError:
                     yield ": ping\n\n"
+                    continue
+
+                if not self.visible(event.data):
                     continue
 
                 payload = json.dumps({"at": event.at, **event.data}, ensure_ascii=False, default=str)

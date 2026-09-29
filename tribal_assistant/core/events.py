@@ -39,6 +39,9 @@ class EventBus:
             self._subscribers.discard(queue)
 
     def publish(self, kind: str, data: dict[str, Any]) -> None:
+        from tribal_assistant.core.accounts.context import current_account_id
+
+        data = {"account_id": current_account_id(), **data}
         event = Event(kind, data)
         loop = self._loop
 

@@ -75,8 +75,10 @@ async def history(
 
 @observability_router.get("/events")
 async def events() -> StreamingResponse:
+    from tribal_assistant.core.accounts.context import current_account_id
+
     return StreamingResponse(
-        EventStream()(),
+        EventStream(current_account_id())(),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
