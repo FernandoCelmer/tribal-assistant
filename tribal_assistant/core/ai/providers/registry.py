@@ -21,6 +21,12 @@ PROVIDERS = {
         "GEMINI_API_KEY",
         "gemini-2.5-pro",
     ),
+    "vertex": Provider(
+        "vertex",
+        "https://aiplatform.googleapis.com/v1/publishers/google/models",
+        "GOOGLE_API_KEY",
+        "gemini-2.5-flash",
+    ),
     "ollama": Provider("openai", "http://localhost:11434/v1", None, "llama3.1"),
     "openai-compatible": Provider("openai", None, "OPENAI_API_KEY", None),
 }

@@ -52,6 +52,11 @@ class LLMFactory:
 
                 return AnthropicLLM(model, key, settings.ai_max_tokens)
 
+            if spec.kind == "vertex":
+                from tribal_assistant.core.ai.providers.vertex import VertexLLM
+
+                return VertexLLM(model, key, url or "", settings.ai_max_tokens)
+
             from tribal_assistant.core.ai.providers.openai_compatible import OpenAICompatibleLLM
 
             return OpenAICompatibleLLM(self.name, model, key, url, settings.ai_max_tokens)
