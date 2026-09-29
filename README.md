@@ -25,7 +25,7 @@ Use it three ways: as a **CLI** (`tribal-assistant`), as a **Python library** (`
 
 - **Account sync** — player, points, ranking, villages, resources and production, storage, population, troops, recruitment queue, buildings, incoming and outgoing commands, battle reports.
 - **Build advisor** — ranks the next building upgrades by priority, cost and time until resources are available.
-- **Farm assistant** — farm targets with templates A/B/C, wall level tracking and scheduled farm ticks.
+- **Raids** — the attack agent picks nearby barbarian villages from the world data, sizes each squad by the average haul and skips targets that keep coming back yellow.
 - **World data** — downloads the public world files and lists nearby barbarian or player villages with travel times per unit.
 - **Scavenging** — shows each scavenge option, its return time and unlock state.
 - **Incoming attack alerts** — highlights attacks and nobles heading to your villages.
@@ -65,7 +65,6 @@ Settings come from environment variables or `.env`:
 | `QUIET_HOURS` | empty | Pause syncing, e.g. `23:30-07:00` |
 | `AI_PROVIDER` / `AI_MODEL` / `AI_API_KEY` / `AI_BASE_URL` | `none` | AI provider for the agents |
 | `AI_MAX_TOKENS` | `2048` | Max tokens per AI answer |
-| `FARM_ENABLED` | `true` | Enable farm ticks |
 
 See [.env.example](.env.example) for the full list.
 
@@ -81,11 +80,6 @@ tribal-assistant status --json
 tribal-assistant world sync                 # download public world data
 tribal-assistant world status
 tribal-assistant world nearby --radius 20 --kind barbarian
-
-tribal-assistant farm list --all
-tribal-assistant farm add "512|488" --template B --wall 1
-tribal-assistant farm remove 3
-tribal-assistant farm tick
 ```
 
 `python -m tribal_assistant` works too.
@@ -228,9 +222,9 @@ tribal-assistant mcp --http     # streamable HTTP on 127.0.0.1:8765
 
 The repository ships a `.mcp.json`, so Claude Code picks the server up when opened in this folder. It exposes 29 tools and 5 prompts (`grow_village`, `farm_round`, `first_noble_plan`, `agent_round`, `daily_routine`), including `get_coordination` and `set_village_role`:
 
-- **read-only:** `get_overview`, `get_quests`, `get_plans`, `get_agent_decisions`, `get_agents_config`, `lookup_knowledge`, `get_world_status`, `list_nearby`, `list_farm_targets`
+- **read-only:** `get_overview`, `get_quests`, `get_plans`, `get_agent_decisions`, `get_agents_config`, `lookup_knowledge`, `get_world_status`, `list_nearby`
 - **game actions:** `upgrade_building`, `recruit_units`, `send_farm_attack`, `claim_quest_rewards`, `complete_quest` and `run_agents`. They pass the guardrails and default to `dry_run=true`.
-- **other:** `sync_account`, `sync_world`, `add_farm_target`, `remove_farm_target`, `set_village_goal`, `update_agent_settings`
+- **other:** `sync_account`, `sync_world`, `set_village_goal`, `update_agent_settings`
 
 ## Web dashboard and API
 
@@ -244,9 +238,8 @@ Each topic is its own page, reached from the sidebar (a drawer on phones):
 |------|---------------|
 | `/` Visão geral | assistant status, account, village resources, what to upgrade, scavenging, quests, troop movements |
 | `/aldeia` | troops and buildings |
-| `/arredores` | nearby villages, add farm targets |
+| `/arredores` | nearby villages with travel times |
 | `/relatorios` | battle reports with loot |
-| `/farm` | farm targets |
 | `/estrategia` | per village: role and mode, next best action with reason, cost and confidence, the executed sequence, deferred proposals and why, reservations, vetoes, insights, the specialists |
 | `/agentes` | live status of the agents, village plan, rounds, the full reasoning of each round, live feed |
 | `/graficos` | agent metrics (actions per hour, refusals, tokens) and village evolution |
