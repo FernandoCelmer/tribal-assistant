@@ -15,6 +15,7 @@ from playwright.async_api import Browser, BrowserContext, Page, Playwright, asyn
 
 from tribal_assistant.core.accounts.context import AccountContext, current_account
 from tribal_assistant.core.config import settings
+from tribal_assistant.core.errors import ConflictError
 
 VIEWPORTS = ({"width": 1366, "height": 768}, {"width": 1440, "height": 900}, {"width": 1536, "height": 864})
 
@@ -46,6 +47,9 @@ class GameSession:
         return self._page
 
     async def _start(self) -> None:
+        if not settings.play:
+            raise ConflictError("Este servidor não joga (PLAY=false): use o servidor que está jogando")
+
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(

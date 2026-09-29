@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     app_secret: str | None = None
     storage_dir: str = "./storage"
 
+    play: bool = True
     headless: bool = False
     browser_state_path: str = "./storage/playwright-state.json"
     min_delay_ms: int = 1200
