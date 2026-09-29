@@ -9,6 +9,7 @@ services:
     expose: ["8000"]
     shm_size: 1gb
     environment:
+      PLAY: ${PLAY:-true}
       DATABASE_URL: ${DATABASE_URL:?defina DATABASE_URL}
       APP_SECRET: ${APP_SECRET:?defina APP_SECRET}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
