@@ -40,12 +40,3 @@ export function AgentMark({ agent, size = "md", className }: { agent: string; si
     </span>
   );
 }
-
-export function AgentName({ agent, className }: { agent: string; className?: string }) {
-  return (
-    <span className={cn("inline-flex min-w-0 items-center gap-2", className)}>
-      <AgentMark agent={agent} size="sm" />
-      <span className="truncate font-medium">{agentLabel(agent)}</span>
-    </span>
-  );
-}

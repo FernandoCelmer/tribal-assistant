@@ -1,5 +1,5 @@
 export { AgentCards } from "./agent-cards";
-export { AgentMark, AgentName, agentIcon } from "./agent-mark";
+export { AgentMark, agentIcon } from "./agent-mark";
 export { Decisions } from "./decisions";
 export { LiveFeed, levelTone } from "./live-feed";
 export { LiveStatus } from "./live-status";
