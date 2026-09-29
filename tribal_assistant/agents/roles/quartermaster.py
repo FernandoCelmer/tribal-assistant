@@ -42,7 +42,8 @@ class QuartermasterAgent(VillageAgent):
 
         from tribal_assistant.agents.tools.act import OpenDailyBonus
 
-        if OpenDailyBonus.due():
+        if OpenDailyBonus.due() and await box.lessons.due(f"daily_bonus:{box.ctx.game_id}", OpenDailyBonus.COOLDOWN_HOURS):
+            await box.lessons.mark(f"daily_bonus:{box.ctx.game_id}")
             outcome = await box.invoke("open_daily_bonus", {"reason": "baús diários grátis"})
             if outcome.ok:
                 done.append(outcome.text)

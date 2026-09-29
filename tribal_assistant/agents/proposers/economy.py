@@ -37,7 +37,8 @@ class EconomyProposer(Proposer):
                 continue
 
             hours = view.estimator.hours_to_afford(cost)
-            if hours <= 1.5:
+            idle = not ctx.queue
+            if hours <= (0.25 if idle else 1.5):
                 items.append(
                     Reservation(
                         f"plan:{building}",
