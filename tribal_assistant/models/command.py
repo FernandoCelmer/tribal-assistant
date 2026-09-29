@@ -6,9 +6,10 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tribal_assistant.db.base import Base, TimestampMixin
+from tribal_assistant.db.scoping import AccountScoped
 
 
-class Command(Base, TimestampMixin):
+class Command(AccountScoped, Base, TimestampMixin):
     __tablename__ = "commands"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

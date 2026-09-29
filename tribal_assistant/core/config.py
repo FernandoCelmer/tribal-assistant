@@ -22,10 +22,12 @@ class Settings(BaseSettings):
 
     database_url: str = Field(default="sqlite+aiosqlite:///./storage/tw.db")
 
-    tw_world_url: str
-    tw_username: str
-    tw_password: str
+    tw_world_url: str | None = None
+    tw_username: str | None = None
+    tw_password: str | None = None
     tw_server: str = "brxx"
+    app_secret: str | None = None
+    storage_dir: str = "./storage"
 
     headless: bool = False
     browser_state_path: str = "./storage/playwright-state.json"

@@ -17,3 +17,4 @@ class AppLog(Base):
     source: Mapped[str] = mapped_column(String(160), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     process: Mapped[str] = mapped_column(String(24), default="", nullable=False)
+    account_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)

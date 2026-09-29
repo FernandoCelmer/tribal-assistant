@@ -6,9 +6,10 @@ from sqlalchemy import DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from tribal_assistant.db.base import Base
+from tribal_assistant.db.scoping import WorldScoped
 
 
-class WorldVillage(Base):
+class WorldVillage(WorldScoped, Base):
     __tablename__ = "world_villages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
@@ -20,7 +21,7 @@ class WorldVillage(Base):
     bonus_id: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
 
-class WorldPlayer(Base):
+class WorldPlayer(WorldScoped, Base):
     __tablename__ = "world_players"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
@@ -31,7 +32,7 @@ class WorldPlayer(Base):
     rank: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
-class WorldAlly(Base):
+class WorldAlly(WorldScoped, Base):
     __tablename__ = "world_allies"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
@@ -44,7 +45,7 @@ class WorldAlly(Base):
     rank: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
-class WorldSetting(Base):
+class WorldSetting(WorldScoped, Base):
     __tablename__ = "world_settings"
 
     key: Mapped[str] = mapped_column(String(40), primary_key=True)

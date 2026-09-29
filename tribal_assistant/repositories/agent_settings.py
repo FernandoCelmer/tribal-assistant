@@ -3,12 +3,11 @@
 import json
 from datetime import UTC, datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.models.agent import AgentSettingsRow
 from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
-
-ROW_ID = 1
 
 
 class AgentSettingsRepository:
@@ -16,10 +15,10 @@ class AgentSettingsRepository:
         self.session = session
 
     async def _row(self) -> AgentSettingsRow:
-        row = await self.session.get(AgentSettingsRow, ROW_ID)
+        row = (await self.session.execute(select(AgentSettingsRow).limit(1))).scalar_one_or_none()
 
         if row is None:
-            row = AgentSettingsRow(id=ROW_ID, data=AgentSettings().model_dump_json())
+            row = AgentSettingsRow(data=AgentSettings().model_dump_json())
             self.session.add(row)
             await self.session.commit()
 

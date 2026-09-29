@@ -3,10 +3,11 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import Boolean, DateTime, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tribal_assistant.db.base import Base, TimestampMixin
+from tribal_assistant.db.scoping import AccountScoped
 
 if TYPE_CHECKING:
     from tribal_assistant.models.building import Building
@@ -16,11 +17,12 @@ if TYPE_CHECKING:
     from tribal_assistant.models.unit import Unit
 
 
-class Village(Base, TimestampMixin):
+class Village(AccountScoped, Base, TimestampMixin):
     __tablename__ = "villages"
+    __table_args__ = (UniqueConstraint("account_id", "game_id", name="uq_villages_account_game"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    game_id: Mapped[str | None] = mapped_column(String(32), unique=True, index=True, nullable=True)
+    game_id: Mapped[str | None] = mapped_column(String(32), index=True, nullable=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     coords: Mapped[str] = mapped_column(String(16), index=True, nullable=False)
     is_own: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

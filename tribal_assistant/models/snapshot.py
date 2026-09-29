@@ -6,9 +6,10 @@ from sqlalchemy import DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from tribal_assistant.db.base import Base
+from tribal_assistant.db.scoping import AccountScoped
 
 
-class VillageSnapshot(Base):
+class VillageSnapshot(AccountScoped, Base):
     __tablename__ = "village_snapshots"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

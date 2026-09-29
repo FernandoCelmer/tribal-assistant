@@ -6,9 +6,10 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from tribal_assistant.db.base import Base
+from tribal_assistant.db.scoping import AccountScoped
 
 
-class VillageStrategy(Base):
+class VillageStrategy(AccountScoped, Base):
     __tablename__ = "village_strategies"
 
     village_id: Mapped[int] = mapped_column(ForeignKey("villages.id"), primary_key=True)
@@ -18,7 +19,7 @@ class VillageStrategy(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
-class CoordinationRound(Base):
+class CoordinationRound(AccountScoped, Base):
     __tablename__ = "coordination_rounds"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.accounts.context import current_world
 from tribal_assistant.client.world import WorldData
 from tribal_assistant.models.world import WorldAlly, WorldPlayer, WorldSetting, WorldVillage
 
@@ -19,6 +20,7 @@ class WorldRepository:
         self.session = session
 
     async def replace(self, data: WorldData) -> None:
+        world = current_world() or "default"
         for model, rows in (
             (WorldVillage, data.villages),
             (WorldPlayer, data.players),
@@ -26,14 +28,15 @@ class WorldRepository:
         ):
             await self.session.execute(delete(model))
             for start in range(0, len(rows), _CHUNK):
-                await self.session.execute(insert(model), rows[start : start + _CHUNK])
+                chunk = [{**row, "world": world} for row in rows[start : start + _CHUNK]]
+                await self.session.execute(insert(model), chunk)
         now = datetime.now(UTC).replace(tzinfo=None)
         for key, value in data.settings.items():
-            await self.session.merge(WorldSetting(key=key, data=json.dumps(value), fetched_at=now))
+            await self.session.merge(WorldSetting(world=world, key=key, data=json.dumps(value), fetched_at=now))
         await self.session.commit()
 
     async def setting(self, key: str) -> dict[str, Any]:
-        row = await self.session.get(WorldSetting, key)
+        row = await self.session.get(WorldSetting, {"world": current_world() or "default", "key": key})
         return json.loads(row.data) if row else {}
 
     async def fetched_at(self) -> datetime | None:

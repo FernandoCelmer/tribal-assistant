@@ -2,13 +2,14 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from tribal_assistant.db.base import Base, TimestampMixin
+from tribal_assistant.db.scoping import AccountScoped
 
 
-class AgentDecision(Base, TimestampMixin):
+class AgentDecision(AccountScoped, Base, TimestampMixin):
     __tablename__ = "agent_decisions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -23,7 +24,7 @@ class AgentDecision(Base, TimestampMixin):
     result: Mapped[str] = mapped_column(Text, default="", nullable=False)
 
 
-class AgentGoal(Base, TimestampMixin):
+class AgentGoal(AccountScoped, Base, TimestampMixin):
     __tablename__ = "agent_goals"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -31,11 +32,12 @@ class AgentGoal(Base, TimestampMixin):
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
 
-class QuestState(Base, TimestampMixin):
+class QuestState(AccountScoped, Base, TimestampMixin):
     __tablename__ = "quests"
+    __table_args__ = (UniqueConstraint("account_id", "quest_id", name="uq_quests_account_quest"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    quest_id: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
+    quest_id: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     line_id: Mapped[str] = mapped_column(String(32), default="", nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     state: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -45,24 +47,26 @@ class QuestState(Base, TimestampMixin):
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
-class QuestRewardState(Base, TimestampMixin):
+class QuestRewardState(AccountScoped, Base, TimestampMixin):
     __tablename__ = "quest_rewards"
+    __table_args__ = (UniqueConstraint("account_id", "reward_id", name="uq_quest_rewards_account_reward"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    reward_id: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
+    reward_id: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     claimed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
-class AgentSettingsRow(Base, TimestampMixin):
+class AgentSettingsRow(AccountScoped, Base, TimestampMixin):
     __tablename__ = "agent_settings"
+    __table_args__ = (UniqueConstraint("account_id", name="uq_agent_settings_account"),)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     data: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
-class AgentRun(Base, TimestampMixin):
+class AgentRun(AccountScoped, Base, TimestampMixin):
     __tablename__ = "agent_runs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -84,7 +88,7 @@ class AgentRun(Base, TimestampMixin):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
-class AgentStep(Base, TimestampMixin):
+class AgentStep(AccountScoped, Base, TimestampMixin):
     __tablename__ = "agent_steps"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -98,7 +102,7 @@ class AgentStep(Base, TimestampMixin):
     is_error: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
-class VillagePlan(Base, TimestampMixin):
+class VillagePlan(AccountScoped, Base, TimestampMixin):
     __tablename__ = "village_plans"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

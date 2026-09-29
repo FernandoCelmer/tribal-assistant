@@ -1,5 +1,6 @@
 """SQLAlchemy ORM models."""
 
+from tribal_assistant.models.account import Account
 from tribal_assistant.models.agent import (
     AgentDecision,
     AgentGoal,
@@ -26,6 +27,7 @@ from tribal_assistant.models.village import Village
 from tribal_assistant.models.world import WorldAlly, WorldPlayer, WorldSetting, WorldVillage
 
 __all__ = [
+    "Account",
     "AgentDecision",
     "AgentGoal",
     "AgentRun",

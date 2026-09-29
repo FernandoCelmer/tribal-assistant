@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import create_engine, delete, insert
 from sqlalchemy.engine import Engine
 
+from tribal_assistant.accounts.context import current_account_id
 from tribal_assistant.core.events import event_bus
 from tribal_assistant.models.log import AppLog
 
@@ -65,6 +66,7 @@ class LogStore:
             "source": f"{record['name']}:{record['function']}:{record['line']}"[:160],
             "message": record["message"],
             "process": self.process,
+            "account_id": current_account_id(),
         }
 
         try:

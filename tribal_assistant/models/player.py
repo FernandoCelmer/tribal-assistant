@@ -2,17 +2,19 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import Boolean, DateTime, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from tribal_assistant.db.base import Base, TimestampMixin
+from tribal_assistant.db.scoping import AccountScoped
 
 
-class Player(Base, TimestampMixin):
+class Player(AccountScoped, Base, TimestampMixin):
     __tablename__ = "players"
+    __table_args__ = (UniqueConstraint("account_id", "game_id", name="uq_players_account_game"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    game_id: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)
+    game_id: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     world: Mapped[str] = mapped_column(String(32), nullable=False)
     ally_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
