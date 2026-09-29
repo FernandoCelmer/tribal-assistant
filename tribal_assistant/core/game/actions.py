@@ -7,7 +7,7 @@ answered. Guardrails live one layer up (tribal_assistant.core.agents.guardrails)
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from playwright.async_api import Error as PlaywrightError
@@ -32,6 +32,9 @@ from tribal_assistant.core.game.scraper.quests import (
 )
 from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
+
+if TYPE_CHECKING:
+    from tribal_assistant.core.game.forge import Forge
 
 UNIT_SCREEN = {
     "spear": "barracks",
@@ -166,6 +169,12 @@ class ActionResult:
 
 class GameActions:
     """Every state-changing action a player can take, driven through the real game UI."""
+
+    @property
+    def forge(self) -> "Forge":
+        from tribal_assistant.core.game.forge import Forge
+
+        return Forge(self)
 
     def _capture(self, page_html: str, name: str) -> None:
         """Keep the HTML of screens we act on, so scrapers can be written against real markup."""

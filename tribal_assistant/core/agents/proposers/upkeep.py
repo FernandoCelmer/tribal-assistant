@@ -13,7 +13,7 @@ TRAINING_COST = {21: 100, 22: 200, 23: 400, 24: 700, 25: 1000}
 class UpkeepProposer(Proposer):
     key = "steward"
     title = "Mordomo"
-    observes = "relíquias, bandeiras, paladino, inventário e missões simples"
+    observes = "relíquias, bandeiras, paladino, inventário, forja do evento e missões simples"
     delivers = "bônus grátis aplicados sem gastar pontos premium"
 
     RELIC_PRODUCTION: ClassVar[int] = 2
@@ -26,7 +26,7 @@ class UpkeepProposer(Proposer):
             return []
 
         items: list[Proposal] = []
-        for step in (self._relic, self._flag, self._knight, self._items, self._name):
+        for step in (self._relic, self._flag, self._knight, self._items, self._forge, self._name):
             try:
                 items += await step(view)
             except Exception as exc:
@@ -47,6 +47,25 @@ class UpkeepProposer(Proposer):
             confidence=0.9,
             key=key,
         )
+
+    async def _forge(self, view: CoordinationView) -> list[Proposal]:
+        from tribal_assistant.core.game.forge import Forge
+
+        if not await view.cooldown("forge", 3):
+            return []
+
+        state = await view.actions.forge.state(view.ctx.game_id)
+        if not state.get("active"):
+            return []
+
+        amounts = {m: int(v.get("amount", 0)) for m, v in state.get("materials", {}).items()}
+        materials = Forge.pick(amounts, state.get("recipes", {}))
+        if materials is None:
+            return []
+
+        new = "-".join(materials) not in state.get("recipes", {})
+        reason = "fórmula nova na forja do evento" if new else "material grátis parado na forja"
+        return [self._free("craft_event_item", {"materials": materials}, reason, "item do evento, ranking diário e conquista da Antiga Forja", 0.5)]
 
     async def _relic(self, view: CoordinationView) -> list[Proposal]:
         if not await view.cooldown("relic", 6):

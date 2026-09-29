@@ -686,6 +686,33 @@ class TrainKnight(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class CraftEventItem(AgentTool):
+    name = "craft_event_item"
+    description = (
+        "Trabalha um item na forja do evento com 3 materiais grátis do estoque (ids 1-7: Chumbo, Estanho, Cobre, "
+        "Ferro, Bronze, Prata, Ouro). Nunca compra material nem usa o passe do evento. Combinação nova descobre fórmula."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "materials": {"type": "array", "items": {"type": "string", "enum": ["1", "2", "3", "4", "5", "6", "7"]}, "minItems": 3, "maxItems": 3},
+            "reason": REASON,
+        },
+        "required": ["materials", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        materials = [str(m) for m in args["materials"]]
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) trabalhar item com {materials}")
+
+        result = await box.actions.forge.craft(box.ctx.game_id, materials)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class AcceptMarketOffer(AgentTool):
     name = "accept_market_offer"
     description = (

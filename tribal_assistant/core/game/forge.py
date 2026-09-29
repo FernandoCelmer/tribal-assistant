@@ -1,0 +1,107 @@
+"""Crafting event (Bigorna do Rei Mercenário): read the free materials and craft with them, never buying any."""
+
+from __future__ import annotations
+
+from itertools import combinations_with_replacement
+from typing import TYPE_CHECKING, Any
+
+from loguru import logger
+
+from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.session import game_session
+
+if TYPE_CHECKING:
+    from tribal_assistant.core.game.actions import ActionResult, GameActions
+
+SCREEN = "event_crafting"
+SLOTS = 3
+
+STATE_JS = """() => {
+  const materials = Object.fromEntries([...document.querySelectorAll('.material-list li[data-material-id]')].map(li => [
+    li.dataset.materialId,
+    { amount: Number((li.querySelector('.amount')?.textContent || '0').replace(/\\D/g, '')) || 0, label: (li.dataset.title || '').replace(/^\\d+\\s*/, '') },
+  ]));
+  const html = document.documentElement.innerHTML;
+  const found = html.match(/\\]\\s*,\\s*\\d+\\s*,\\s*(\\{[^{}]*\\})\\s*\\)\\s*;?\\s*\\}\\s*\\)/);
+  let recipes = {};
+  try { recipes = found ? JSON.parse(found[1]) : {}; } catch (e) { recipes = {}; }
+  return { active: !!document.querySelector('.material-craft-form'), materials, recipes };
+}"""
+
+SELECTED_JS = "() => [...document.querySelectorAll('.material-craft-form input[name=\"material[]\"]')].map(i => i.value).filter(Boolean)"
+
+
+class Forge:
+    def __init__(self, actions: GameActions) -> None:
+        self.actions = actions
+
+    @staticmethod
+    def pick(amounts: dict[str, int], recipes: dict[str, Any]) -> list[str] | None:
+        """Three materials to craft with: a combination not in the formula book first, then a known one."""
+        owned = sorted((m for m, n in amounts.items() if n > 0), key=int)
+        options = []
+        for combo in combinations_with_replacement(owned, SLOTS):
+            if all(combo.count(m) <= amounts[m] for m in set(combo)):
+                options.append(list(combo))
+
+        if not options:
+            return None
+
+        options.sort(key=lambda combo: ("-".join(combo) in recipes, combo))
+        return options[0]
+
+    async def state(self, village_id: str) -> dict[str, Any]:
+        async with game_session.lock:
+            page = await self.actions._in_game(village_id, SCREEN)
+            await page.wait_for_timeout(800)
+            return await page.evaluate(STATE_JS)
+
+    async def craft(self, village_id: str, materials: list[str]) -> ActionResult:
+        from tribal_assistant.core.game.actions import ActionResult
+
+        async with game_session.lock:
+            page = await self.actions._in_game(village_id, SCREEN)
+            await page.wait_for_timeout(800)
+            before = await page.evaluate(STATE_JS)
+            if not before["active"]:
+                return ActionResult(False, "craft_event_item", "forja do evento indisponível")
+
+            for material in materials:
+                if before["materials"].get(material, {}).get("amount", 0) < materials.count(material):
+                    return ActionResult(False, "craft_event_item", f"material {material} insuficiente")
+
+            for material in materials:
+                await human_click(page, page.locator(f'.material-list li[data-material-id="{material}"]').first)
+                await human_delay(400, 900)
+
+            if sorted(await page.evaluate(SELECTED_JS), key=int) != sorted(materials, key=int):
+                return ActionResult(False, "craft_event_item", "a forja não aceitou os materiais escolhidos")
+
+            button = page.locator(".material-craft-form .craft-button:not([disabled])").first
+            if not await button.count():
+                return ActionResult(False, "craft_event_item", "botão Trabalhe desativado")
+
+            await human_click(page, button)
+            await page.wait_for_timeout(3_000)
+
+            messages = await self.actions.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "craft_event_item", " | ".join(messages["errors"]))
+
+            await self.actions._in_game(village_id, SCREEN)
+            after = await page.evaluate(STATE_JS)
+
+        spent = sum(before["materials"][m]["amount"] - after["materials"].get(m, {}).get("amount", 0) for m in set(materials))
+        if spent < SLOTS:
+            return ActionResult(False, "craft_event_item", "a forja não consumiu os materiais")
+
+        key = "-".join(sorted(materials, key=int))
+        labels = ", ".join(before["materials"][m]["label"] for m in materials)
+        new = key not in before["recipes"] and key in after["recipes"]
+        logger.info("Crafted with {} ({})", labels, "new formula" if new else key)
+        return ActionResult(
+            True,
+            "craft_event_item",
+            f"item trabalhado com {labels}" + (" · fórmula nova" if new else ""),
+            {"materials": materials, "formula": key, "new_formula": new, "notices": messages["notices"]},
+        )
