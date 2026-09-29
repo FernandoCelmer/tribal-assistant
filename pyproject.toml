@@ -39,6 +39,9 @@ dependencies = [
     "loguru>=0.7.2",
     "python-dotenv>=1.0.0",
     "typer>=0.12.0",
+    "jinja2>=3.1.6",
+    "anthropic>=1.9.0",
+    "openai>=3.20.0",
 ]
 
 [project.urls]
@@ -47,6 +50,9 @@ Repository = "https://github.com/FernandoCelmer/tribal-assistant"
 Issues = "https://github.com/FernandoCelmer/tribal-assistant/issues"
 
 [project.optional-dependencies]
+mcp = [
+    "mcp>=2.2.0",
+]
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
@@ -57,6 +63,7 @@ dev = [
 
 [project.scripts]
 tribal-assistant = "tribal_assistant.cli:main"
+tribal-assistant-mcp = "tribal_assistant.mcp.server:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -67,7 +74,7 @@ where = ["."]
 include = ["tribal_assistant*"]
 
 [tool.setuptools.package-data]
-tribal_assistant = ["web/*.html", "web/static/*"]
+tribal_assistant = ["web/templates/*.html", "web/templates/pages/*.html", "web/static/*", "web/static/js/*"]
 
 [tool.poetry]
 packages = [{ include = "tribal_assistant" }]
@@ -88,3 +95,6 @@ ignore = ["E501"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
