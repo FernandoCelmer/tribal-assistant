@@ -8,26 +8,37 @@ from tribal_assistant.agents.tools.base import AgentTool, ToolOutcome
 if TYPE_CHECKING:
     from tribal_assistant.agents.toolbox import Toolbox
 
-REASON = {"type": "string", "description": "Motivo curto (até 8 palavras), registrado no log. Ex.: \"missão: Bosque 5\"."}
+REASON = {
+    "type": "string",
+    "description": 'Motivo curto (até 8 palavras), registrado no log. Ex.: "missão: Bosque 5".',
+}
 UNITS = {
     "type": "object",
-    "description": "Tropas por id de unidade, só as que estão em casa. Ex.: {\"light\": 5} ou {\"spear\": 10}.",
+    "description": 'Tropas por id de unidade, só as que estão em casa. Ex.: {"light": 5} ou {"spear": 10}.',
     "additionalProperties": {"type": "integer", "minimum": 1},
 }
-TIER = {"type": "integer", "minimum": 1, "maximum": 4, "description": "Nível de coleta: 1 Pequena, 2 Média, 3 Grande, 4 Extrema."}
+TIER = {
+    "type": "integer",
+    "minimum": 1,
+    "maximum": 4,
+    "description": "Nível de coleta: 1 Pequena, 2 Média, 3 Grande, 4 Extrema.",
+}
 
 
 class UpgradeBuilding(AgentTool):
     name = "upgrade_building"
     description = (
         "Coloca o próximo nível (um por chamada) de um edifício na fila de construção. Use só edifícios "
-        "marcados \"pode\" no estado. RECUSADO se já estiver na fila, a fila estiver cheia, estiver no "
+        'marcados "pode" no estado. RECUSADO se já estiver na fila, a fila estiver cheia, estiver no '
         "nível máximo, faltar requisito, recurso ou população, ou o edifício não for da sua área nem do plano."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
-            "building": {"type": "string", "description": "Id do edifício: main, barracks, stable, garage, smith, snob, market, wood, stone, iron, farm, storage, hide, wall, statue, watchtower."},
+            "building": {
+                "type": "string",
+                "description": "Id do edifício: main, barracks, stable, garage, smith, snob, market, wood, stone, iron, farm, storage, hide, wall, statue, watchtower.",
+            },
             "reason": REASON,
         },
         "required": ["building", "reason"],
@@ -53,11 +64,18 @@ class UpgradeBuilding(AgentTool):
         if box.dry_run:
             result_ok, detail = True, f"(simulação) {building} → nível {current.next_level}"
         else:
-            result = await box.actions.upgrade_building(box.ctx.game_id, building, box.config.auto_finish_free)
+            result = await box.actions.upgrade_building(
+                box.ctx.game_id, building, box.config.auto_finish_free
+            )
             result_ok, detail = result.ok, result.detail
 
         if result_ok:
-            box.ctx.spend(current.next_wood or 0, current.next_clay or 0, current.next_iron or 0, current.next_pop or 0)
+            box.ctx.spend(
+                current.next_wood or 0,
+                current.next_clay or 0,
+                current.next_iron or 0,
+                current.next_pop or 0,
+            )
             current.queued_level = current.next_level
 
         return ToolOutcome(result_ok, detail, {"building": building, "level": current.next_level})
@@ -75,10 +93,25 @@ class RecruitUnits(AgentTool):
         "properties": {
             "unit": {
                 "type": "string",
-                "enum": ["spear", "sword", "axe", "archer", "spy", "light", "marcher", "heavy", "ram", "catapult"],
+                "enum": [
+                    "spear",
+                    "sword",
+                    "axe",
+                    "archer",
+                    "spy",
+                    "light",
+                    "marcher",
+                    "heavy",
+                    "ram",
+                    "catapult",
+                ],
                 "description": "Id da unidade; só as marcadas como recrutáveis no estado.",
             },
-            "count": {"type": "integer", "minimum": 1, "description": "Quantidade desejada; pode ser reduzida."},
+            "count": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Quantidade desejada; pode ser reduzida.",
+            },
             "reason": REASON,
         },
         "required": ["unit", "count", "reason"],
@@ -152,7 +185,9 @@ class SendFarmAttack(AgentTool):
                 current.home -= count
                 current.away += count
 
-        return ToolOutcome(result_ok, detail, {"target": target, "units": units, "arrival": arrival})
+        return ToolOutcome(
+            result_ok, detail, {"target": target, "units": units, "arrival": arrival}
+        )
 
 
 class UnlockScavenge(AgentTool):
@@ -181,7 +216,9 @@ class UnlockScavenge(AgentTool):
             return ToolOutcome(False, f"RECUSADO: {refusal}")
 
         if box.dry_run:
-            return ToolOutcome(True, f"(simulação) desbloquear coleta {option_id}", {"option_id": option_id})
+            return ToolOutcome(
+                True, f"(simulação) desbloquear coleta {option_id}", {"option_id": option_id}
+            )
 
         result = await box.actions.unlock_scavenge(box.ctx.game_id, option_id)
         if result.ok:
@@ -196,7 +233,7 @@ class UnlockScavenge(AgentTool):
 class SendScavenge(AgentTool):
     name = "send_scavenge"
     description = (
-        "Manda tropas coletar recursos num nível de coleta desbloqueado e livre (\"livre\" no estado). "
+        'Manda tropas coletar recursos num nível de coleta desbloqueado e livre ("livre" no estado). '
         "Não há perdas, mas as tropas não voltam até terminar. Use o nível mais alto livre e deixe tropas "
         "para saque e defesa. RECUSADO com ataque chegando, nível ocupado ou bloqueado, ou tropas insuficientes."
     )
@@ -241,7 +278,7 @@ class SendScavenge(AgentTool):
 class ClaimQuestRewards(AgentTool):
     name = "claim_quest_rewards"
     description = (
-        "Coleta todas as recompensas de missão prontas (\"recompensas prontas\" no estado); os recursos "
+        'Coleta todas as recompensas de missão prontas ("recompensas prontas" no estado); os recursos '
         "entram nesta aldeia. Chame depois de complete_quest. Falha se não houver recompensa pendente."
     )
     parameters: ClassVar[dict[str, Any]] = {
@@ -285,7 +322,10 @@ class OpenDailyBonus(AgentTool):
     @classmethod
     def due(cls) -> bool:
         now = datetime.now(UTC)
-        return cls.last_check is None or (now - cls.last_check).total_seconds() >= cls.COOLDOWN_HOURS * 3600
+        return (
+            cls.last_check is None
+            or (now - cls.last_check).total_seconds() >= cls.COOLDOWN_HOURS * 3600
+        )
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
         if not self.due():
@@ -309,7 +349,10 @@ class CompleteQuest(AgentTool):
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
-            "quest_id": {"type": "string", "description": "Id da missão, o primeiro campo de cada missão no estado."},
+            "quest_id": {
+                "type": "string",
+                "description": "Id da missão, o primeiro campo de cada missão no estado.",
+            },
             "reason": REASON,
         },
         "required": ["quest_id", "reason"],
@@ -356,9 +399,19 @@ class SetVillagePlan(AgentTool):
                     "type": "object",
                     "properties": {
                         "kind": {"type": "string", "enum": ["build", "recruit", "unlock_scavenge"]},
-                        "target": {"type": "string", "description": "Id do edifício, id da unidade ou nível de coleta \"1\"-\"4\"."},
-                        "amount": {"type": "integer", "minimum": 1, "description": "Nível a atingir, total de tropas ou 1."},
-                        "reason": {"type": "string", "description": "Por que este passo, poucas palavras."},
+                        "target": {
+                            "type": "string",
+                            "description": 'Id do edifício, id da unidade ou nível de coleta "1"-"4".',
+                        },
+                        "amount": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Nível a atingir, total de tropas ou 1.",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "Por que este passo, poucas palavras.",
+                        },
                     },
                     "required": ["kind", "target", "amount"],
                     "additionalProperties": False,
@@ -378,26 +431,48 @@ class SetVillagePlan(AgentTool):
 
         steps, rejected = [], []
         for raw in list(args.get("steps", []))[:12]:
-            kind, target, amount = raw.get("kind"), str(raw.get("target", "")), int(raw.get("amount", 0))
+            kind, target, amount = (
+                raw.get("kind"),
+                str(raw.get("target", "")),
+                int(raw.get("amount", 0)),
+            )
             valid = (
-                (kind == "build" and target in GameKnowledge.buildings and 1 <= amount <= GameKnowledge.buildings[target].max_level)
+                (
+                    kind == "build"
+                    and target in GameKnowledge.buildings
+                    and 1 <= amount <= GameKnowledge.buildings[target].max_level
+                )
                 or (kind == "recruit" and target in GameKnowledge.units and 1 <= amount <= 50_000)
                 or (kind == "unlock_scavenge" and target in {"1", "2", "3", "4"})
             )
             if valid:
-                steps.append(PlanStep(kind=kind, target=target, amount=amount, reason=str(raw.get("reason", ""))[:200]))
+                steps.append(
+                    PlanStep(
+                        kind=kind,
+                        target=target,
+                        amount=amount,
+                        reason=str(raw.get("reason", ""))[:200],
+                    )
+                )
             else:
                 rejected.append(f"{kind} {target} {amount}")
 
         if not steps:
-            return ToolOutcome(False, "RECUSADO: nenhum passo válido" + (f" ({'; '.join(rejected)})" if rejected else ""))
+            return ToolOutcome(
+                False,
+                "RECUSADO: nenhum passo válido" + (f" ({'; '.join(rejected)})" if rejected else ""),
+            )
 
         summary = str(args.get("summary", "")).strip()[:500]
-        await PlanRepository(box.session).save(box.ctx.id, steps, summary=summary, source=box.brain_name, refreshed=True)
+        await PlanRepository(box.session).save(
+            box.ctx.id, steps, summary=summary, source=box.brain_name, refreshed=True
+        )
 
         box.ctx.plan = PlanTracker().evaluate(box.ctx, steps)
         box.ctx.plan_summary = summary
-        text = f"plano gravado com {len(steps)} passo(s)" + (f"; ignorados: {'; '.join(rejected)}" if rejected else "")
+        text = f"plano gravado com {len(steps)} passo(s)" + (
+            f"; ignorados: {'; '.join(rejected)}" if rejected else ""
+        )
 
         return ToolOutcome(True, text, {"steps": len(steps), "summary": summary})
 
@@ -440,7 +515,10 @@ class UseItem(AgentTool):
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
-        "properties": {"key": {"type": "string", "description": "Chave do item, ex.: 3057_0."}, "reason": REASON},
+        "properties": {
+            "key": {"type": "string", "description": "Chave do item, ex.: 3057_0."},
+            "reason": REASON,
+        },
         "required": ["key", "reason"],
         "additionalProperties": False,
     }
@@ -482,7 +560,9 @@ class ChooseRelic(AgentTool):
 
 class EquipRelic(AgentTool):
     name = "equip_relic"
-    description = "Equipa a primeira relíquia da Tesouraria no espaço livre desta aldeia (bônus em raio)."
+    description = (
+        "Equipa a primeira relíquia da Tesouraria no espaço livre desta aldeia (bônus em raio)."
+    )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {"reason": REASON},
@@ -558,7 +638,10 @@ class LearnKnightSkill(AgentTool):
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
-        "properties": {"skill_id": {"type": "integer", "minimum": 1, "maximum": 12}, "reason": REASON},
+        "properties": {
+            "skill_id": {"type": "integer", "minimum": 1, "maximum": 12},
+            "reason": REASON,
+        },
         "required": ["skill_id", "reason"],
         "additionalProperties": False,
     }
@@ -583,7 +666,10 @@ class TrainKnight(AgentTool):
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
-        "properties": {"regimen": {"type": "integer", "minimum": 21, "maximum": 25}, "reason": REASON},
+        "properties": {
+            "regimen": {"type": "integer", "minimum": 21, "maximum": 25},
+            "reason": REASON,
+        },
         "required": ["regimen", "reason"],
         "additionalProperties": False,
     }
@@ -599,6 +685,60 @@ class TrainKnight(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class AcceptMarketOffer(AgentTool):
+    name = "accept_market_offer"
+    description = (
+        "Aceita uma oferta de outro jogador no mercado: você paga `amount` de `pay` e recebe `receive`. "
+        "Recusado se a razão passar de 1, se esvaziar o recurso pago ou se estourar o armazém. Nunca usa a troca premium."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "receive": {"type": "string", "enum": ["wood", "stone", "iron"]},
+            "receive_amount": {"type": "integer", "minimum": 1},
+            "pay": {"type": "string", "enum": ["wood", "stone", "iron"]},
+            "amount": {"type": "integer", "minimum": 1},
+            "player": {"type": "string"},
+            "reason": REASON,
+        },
+        "required": ["receive", "receive_amount", "pay", "amount", "player", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        receive, pay = str(args["receive"]), str(args["pay"])
+        amount, receive_amount = int(args["amount"]), int(args["receive_amount"])
+        stock = {
+            "wood": box.ctx.stock.get("wood", 0),
+            "stone": box.ctx.stock.get("clay", 0),
+            "iron": box.ctx.stock.get("iron", 0),
+        }
+        storage = box.ctx.village.storage or 0
+
+        if receive == pay:
+            return ToolOutcome(False, "RECUSADO: troca do mesmo recurso")
+
+        if amount > receive_amount:
+            return ToolOutcome(False, f"RECUSADO: razão ruim ({amount} por {receive_amount})")
+
+        if stock[pay] - amount < storage * 0.2:
+            return ToolOutcome(False, f"RECUSADO: pagar {amount} deixaria pouco de {pay}")
+
+        if stock[receive] + receive_amount > storage:
+            return ToolOutcome(False, f"RECUSADO: {receive} estouraria o armazém")
+
+        if box.dry_run:
+            return ToolOutcome(
+                True, f"(simulação) trocar {amount} {pay} por {receive_amount} {receive}"
+            )
+
+        result = await box.actions.accept_offer(
+            box.ctx.game_id, receive, pay, amount, str(args["player"])
+        )
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (
@@ -607,7 +747,9 @@ class SetVillageGoal(AgentTool):
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
-        "properties": {"goal": {"type": "string", "description": "Objetivo em 1-3 frases, com prioridades."}},
+        "properties": {
+            "goal": {"type": "string", "description": "Objetivo em 1-3 frases, com prioridades."}
+        },
         "required": ["goal"],
         "additionalProperties": False,
     }

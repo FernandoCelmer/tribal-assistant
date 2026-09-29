@@ -23,3 +23,15 @@ def test_items_use_construction_bonus_while_building_and_packs_only_when_they_fi
     assert StewardAgent.item_decision(pack, stock, 2285, building=True) is None
     assert StewardAgent.item_decision(pack, stock, 8000, building=True)
     assert StewardAgent.item_decision(pack, {"wood": 7900, "clay": 1, "iron": 1}, 8000, building=True) is None
+
+
+def test_market_offer_only_trades_surplus_for_the_lowest_resource():
+    stock = {"wood": 400, "stone": 2100, "iron": 500}
+    offers = [
+        {"receive": "wood", "receive_amount": 1000, "pay": "stone", "pay_amount": 1000, "player": "a", "minutes": 331, "can_accept": True},
+        {"receive": "iron", "receive_amount": 1000, "pay": "stone", "pay_amount": 1000, "player": "b", "minutes": 157, "can_accept": True},
+        {"receive": "wood", "receive_amount": 800, "pay": "stone", "pay_amount": 1000, "player": "c", "minutes": 10, "can_accept": True},
+    ]
+
+    assert StewardAgent.pick_offer(offers, stock, 3000)["player"] == "a"
+    assert StewardAgent.pick_offer(offers, {"wood": 400, "stone": 850, "iron": 360}, 2285) is None

@@ -26,6 +26,7 @@ class StewardAgent(VillageAgent):
         "recruit_knight",
         "use_item",
         "rename_village",
+        "accept_market_offer",
     )
 
     RELIC_PRODUCTION: ClassVar[int] = 2
@@ -45,7 +46,7 @@ class StewardAgent(VillageAgent):
     async def rules(self, box: "Toolbox") -> str:
         done = []
 
-        for step in (self._relic, self._flag, self._knight, self._items, self._name):
+        for step in (self._relic, self._flag, self._knight, self._items, self._name, self._market):
             try:
                 note = await step(box)
             except Exception as exc:
@@ -202,3 +203,62 @@ class StewardAgent(VillageAgent):
             "rename_village", {"name": f"{player} 001", "reason": "missão: Um nome digno"}
         )
         return outcome.text if outcome.ok else ""
+
+    async def _market(self, box: "Toolbox") -> str:
+        ctx = box.ctx
+        if ctx.levels.get("market", 0) < 1 or box.dry_run:
+            return ""
+
+        stock = {
+            "wood": ctx.stock.get("wood", 0),
+            "stone": ctx.stock.get("clay", 0),
+            "iron": ctx.stock.get("iron", 0),
+        }
+        high = max(stock, key=stock.get)
+        low = min(stock, key=stock.get)
+        if stock[high] - stock[low] < 500 or not await self._once(box, "market", 0.5):
+            return ""
+
+        offers = await box.actions.market_offers(ctx.game_id)
+        choice = self.pick_offer(offers, stock, ctx.village.storage or 0)
+        if choice is None:
+            return ""
+
+        outcome = await box.invoke(
+            "accept_market_offer",
+            {
+                "receive": choice["receive"],
+                "receive_amount": choice["receive_amount"],
+                "pay": choice["pay"],
+                "amount": choice["pay_amount"],
+                "player": choice["player"],
+                "reason": f"trocar excedente de {choice['pay']} por {choice['receive']}",
+            },
+        )
+        return outcome.text
+
+    @staticmethod
+    def pick_offer(
+        offers: list[dict[str, Any]], stock: dict[str, int], storage: int, max_minutes: int = 360
+    ) -> dict[str, Any] | None:
+        fits = [
+            o
+            for o in offers
+            if o.get("can_accept")
+            and o.get("receive")
+            and o.get("pay")
+            and o["receive"] != o["pay"]
+            and o["pay_amount"] <= o["receive_amount"]
+            and (o.get("minutes") or 0) <= max_minutes
+            and stock[o["pay"]] - o["pay_amount"] >= storage * 0.2
+            and stock[o["receive"]] + o["receive_amount"] <= storage
+            and stock[o["pay"]] - o["pay_amount"] >= stock[o["receive"]]
+        ]
+        fits.sort(
+            key=lambda o: (
+                min(stock, key=stock.get) != o["receive"],
+                -o["receive_amount"],
+                o.get("minutes") or 0,
+            )
+        )
+        return fits[0] if fits else None

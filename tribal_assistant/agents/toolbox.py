@@ -9,6 +9,7 @@ from tribal_assistant.agents.context import VillageContext
 from tribal_assistant.agents.guardrails import Guardrails
 from tribal_assistant.agents.learning import LessonBook
 from tribal_assistant.agents.tools.act import (
+    AcceptMarketOffer,
     AssignFlag,
     ChooseRelic,
     ClaimQuestRewards,
@@ -68,6 +69,7 @@ class Toolbox:
         AssignFlag,
         LearnKnightSkill,
         TrainKnight,
+        AcceptMarketOffer,
         SetVillageGoal,
         SetVillagePlan,
         UnlockScavenge,
