@@ -152,3 +152,15 @@ def test_unit_bonus_items_wait_for_an_incoming_attack():
     assert UpkeepProposer.item_decision(sword, stock, 5222, False) is None
     assert UpkeepProposer.item_decision(sword, stock, 5222, False, attacked=True, home={"sword": 40})
     assert UpkeepProposer.item_decision(sword, stock, 5222, False, attacked=True, home={"sword": 5}) is None
+
+
+def test_next_build_reservation_lets_small_recruit_batches_through_while_the_queue_runs():
+    from tests.agents.builders import context
+    from tribal_assistant.core.agents.coordination.budget import Budget, Reservation
+
+    ctx = context(stock=500)
+    budget = Budget(ctx)
+    budget.reserve(Reservation("plan:barracks", "operation", "próxima obra", {"wood": 500, "clay": 500, "iron": 500}, exempt=("recruit_units",)))
+
+    assert budget.affordable({"wood": 250, "clay": 150, "iron": 50}, "scavenge", "recruit_units")
+    assert not budget.affordable({"wood": 250, "clay": 150, "iron": 50}, "", "upgrade_building")

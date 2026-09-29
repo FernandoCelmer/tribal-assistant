@@ -16,9 +16,10 @@ class Reservation:
     cost: dict[str, int] = field(default_factory=dict)
     troops: dict[str, int] = field(default_factory=dict)
     applies_to: tuple[str, ...] = ()
+    exempt: tuple[str, ...] = ()
 
     def covers(self, action: str) -> bool:
-        return not self.applies_to or action in self.applies_to
+        return action not in self.exempt and (not self.applies_to or action in self.applies_to)
 
     def to_dict(self) -> dict[str, Any]:
         return {"purpose": self.purpose, "kind": self.kind, "reason": self.reason, "cost": self.cost, "troops": self.troops}

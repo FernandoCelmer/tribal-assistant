@@ -104,6 +104,7 @@ class EconomyProposer(Proposer):
                         "operation",
                         f"próxima obra do plano ({building}) em ~{hours:.1f}h",
                         {k: v for k, v in cost.items() if k != "pop"},
+                        exempt=() if idle else ("recruit_units",),
                     )
                 )
 
