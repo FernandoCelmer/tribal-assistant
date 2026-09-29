@@ -3,7 +3,6 @@
 LOT = 100
 MIN_GAP = 2 * LOT
 MAX_LOT = 1000
-FLOOR = 0.05
 
 
 class MarketRule:
@@ -18,9 +17,6 @@ class MarketRule:
             return f"razão ruim ({amount} por {receive_amount})"
 
         left = stock[pay] - amount
-        if left < storage * FLOOR:
-            return f"pagar {amount} deixaria pouco de {pay}"
-
         if stock[receive] + receive_amount > storage:
             return f"{receive} estouraria o armazém"
 

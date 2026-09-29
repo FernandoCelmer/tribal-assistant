@@ -8,7 +8,7 @@ from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 
 MARKET_MINUTES = 360
-SPENDING = ("recruit_units", "train_knight", "accept_market_offer", "create_market_offer", "use_item", "research_unit")
+SPENDING = ("recruit_units", "train_knight", "use_item", "research_unit")
 
 
 class EconomyProposer(Proposer):
