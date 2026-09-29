@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, Query
 
 from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
 from tribal_assistant.schemas.agents import (
+    AgentActOut,
+    AgentActRequest,
     AgentConfigOut,
     AgentDecisionOut,
     AgentRunOut,
@@ -55,3 +57,8 @@ async def quests(service: AgentService = Depends(AgentService)) -> QuestsOut:
 @agents_router.post("/run", response_model=AgentRunOut)
 async def run(body: AgentRunRequest, service: AgentService = Depends(AgentService)) -> AgentRunOut:
     return await service.run(body.dry_run, body.village_ids)
+
+
+@agents_router.post("/act", response_model=AgentActOut)
+async def act(body: AgentActRequest, service: AgentService = Depends(AgentService)) -> AgentActOut:
+    return await service.act(body)

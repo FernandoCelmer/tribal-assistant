@@ -60,6 +60,20 @@ class AgentRunRequest(BaseModel):
     village_ids: list[int] | None = None
 
 
+class AgentActRequest(BaseModel):
+    village_id: int
+    tool: str
+    arguments: dict[str, Any] = {}
+    dry_run: bool = True
+
+
+class AgentActOut(BaseModel):
+    ok: bool
+    dry_run: bool
+    detail: str
+    data: dict[str, Any] = {}
+
+
 class VillageRunOut(BaseModel):
     village: str
     summaries: dict[str, str]

@@ -2,16 +2,23 @@
 
 import json
 from dataclasses import asdict
+from uuid import uuid4
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.agents.context import ContextLoader
+from tribal_assistant.agents.roles.operator import OperatorAgent
 from tribal_assistant.agents.runner import AgentRunner
+from tribal_assistant.agents.toolbox import Toolbox
+from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.db.session import get_session
 from tribal_assistant.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.repositories.agents import AgentRepository
 from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
 from tribal_assistant.schemas.agents import (
+    AgentActOut,
+    AgentActRequest,
     AgentConfigOut,
     AgentDecisionOut,
     AgentRunOut,
@@ -24,12 +31,30 @@ from tribal_assistant.schemas.plan import VillagePlanOut
 
 class AgentService:
     def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
+        self.session = session
         self.repository = AgentRepository(session)
         self.settings_repository = AgentSettingsRepository(session)
 
     async def run(self, dry_run: bool | None = None, village_ids: list[int] | None = None) -> AgentRunOut:
         report = await AgentRunner(dry_run=dry_run, trigger="dashboard").run(village_ids)
         return AgentRunOut.model_validate(asdict(report))
+
+    async def act(self, request: AgentActRequest) -> AgentActOut:
+        contexts = await ContextLoader(self.session).load([request.village_id])
+        if not contexts:
+            raise NotFoundError(f"aldeia {request.village_id} não sincronizada")
+
+        box = Toolbox(
+            agent=OperatorAgent(),
+            ctx=contexts[0],
+            session=self.session,
+            config=await self.settings_repository.get(),
+            run_id=f"api-{uuid4().hex[:8]}",
+            dry_run=request.dry_run,
+        )
+        outcome = await box.invoke(request.tool, request.arguments)
+
+        return AgentActOut(ok=outcome.ok, dry_run=request.dry_run, detail=outcome.text, data=outcome.data)
 
     async def decisions(self, village_id: int | None = None, limit: int = 50) -> list[AgentDecisionOut]:
         rows = await self.repository.decisions(village_id=village_id, limit=limit)
