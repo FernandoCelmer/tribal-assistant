@@ -703,6 +703,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/knobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Knobs */
+        get: operations["knobs_api_v1_knobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/knobs/tune": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tune */
+        post: operations["tune_api_v1_knobs_tune_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/knobs/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Knob */
+        put: operations["set_knob_api_v1_knobs__name__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/challenges": {
         parameters: {
             query?: never;
@@ -1398,6 +1449,62 @@ export interface components {
             can_recruit: boolean;
             /** Can Train */
             can_train: boolean;
+        };
+        /** KnobChangeOut */
+        KnobChangeOut: {
+            /** At */
+            at: string;
+            /** From */
+            from?: number | null;
+            /** To */
+            to: number;
+            /** Why */
+            why: string;
+        };
+        /** KnobIn */
+        KnobIn: {
+            /**
+             * Value
+             * @description New value; a share is a fraction up to 1.
+             */
+            value: number;
+        };
+        /** KnobOut */
+        KnobOut: {
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Default */
+            default: number;
+            /** Value */
+            value: number;
+            /** Reason */
+            reason: string;
+            /** Updated At */
+            updated_at?: string | null;
+            /** History */
+            history: components["schemas"]["KnobChangeOut"][];
+            /** Self Tuning */
+            self_tuning: boolean;
+            /** Share */
+            share: boolean;
+            /** Integer */
+            integer: boolean;
+        };
+        /** KnobTuneChange */
+        KnobTuneChange: {
+            /** Name */
+            name: string;
+            /** Value */
+            value: number;
+            /** Reason */
+            reason: string;
+        };
+        /** KnobTuneOut */
+        KnobTuneOut: {
+            /** Changes */
+            changes: components["schemas"]["KnobTuneChange"][];
         };
         /** LessonOut */
         LessonOut: {
@@ -3291,6 +3398,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProposerOut"][];
+                };
+            };
+        };
+    };
+    knobs_api_v1_knobs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnobOut"][];
+                };
+            };
+        };
+    };
+    tune_api_v1_knobs_tune_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnobTuneOut"];
+                };
+            };
+        };
+    };
+    set_knob_api_v1_knobs__name__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KnobIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
