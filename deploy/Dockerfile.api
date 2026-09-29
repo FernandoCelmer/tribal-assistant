@@ -19,8 +19,6 @@ RUN pip install "poetry>=2" poetry-plugin-export \
  && pip uninstall -y poetry poetry-plugin-export \
  && playwright install --with-deps chromium
 
-COPY alembic.ini ./
-COPY alembic ./alembic
 COPY tribal_assistant ./tribal_assistant
 RUN pip install --no-deps . \
  && mkdir -p /app/storage && chown -R app:app /app/storage

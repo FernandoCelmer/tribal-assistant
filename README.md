@@ -317,7 +317,6 @@ tribal_assistant/
 make test        # pytest
 make lint        # ruff
 make typecheck   # mypy
-make migrate     # alembic upgrade head
 ```
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).

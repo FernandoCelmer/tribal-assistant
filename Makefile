@@ -1,4 +1,4 @@
-.PHONY: install venv playwright run test lint typecheck migrate revision fmt web web-install web-types web-check
+.PHONY: install venv playwright run test lint typecheck fmt web web-install web-types web-check
 
 VENV=.venv
 PY=$(VENV)/bin/python
@@ -26,12 +26,6 @@ fmt:
 
 typecheck:
 	$(VENV)/bin/mypy tribal_assistant
-
-migrate:
-	$(VENV)/bin/alembic upgrade head
-
-revision:
-	$(VENV)/bin/alembic revision --autogenerate -m "$(m)"
 
 web-install:
 	cd apps/web && npm install
