@@ -1,18 +1,16 @@
 """Create, list and toggle game accounts."""
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.accounts.registry import AccountRegistry
 from tribal_assistant.core.crypto import vault
-from tribal_assistant.core.db.session import get_session
 from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.core.repositories.accounts import AccountRepository
 from tribal_assistant.core.schemas.accounts import AccountIn, AccountOut, AccountUpdate
 
 
 class AccountService:
-    def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.repo = AccountRepository(session)
         self.registry = AccountRegistry(session)
 

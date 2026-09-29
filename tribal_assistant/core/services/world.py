@@ -2,11 +2,9 @@
 
 import math
 
-from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tribal_assistant.core.db.session import get_session
 from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.core.models.farm_target import FarmTarget
 from tribal_assistant.core.models.village import Village
@@ -17,7 +15,7 @@ TRAVEL_UNITS = ("spear", "axe", "spy", "light", "heavy", "ram", "snob")
 
 
 class WorldService:
-    def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.repository = WorldRepository(session)
 

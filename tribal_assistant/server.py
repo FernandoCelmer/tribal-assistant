@@ -8,12 +8,12 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from tribal_assistant.api.errors import install_error_handlers
 from tribal_assistant.api.health import health_router
 from tribal_assistant.api.pages import WebPages
 from tribal_assistant.api.v1 import v1_router
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.session import init_db
-from tribal_assistant.core.errors import install_error_handlers
 from tribal_assistant.core.events import event_bus
 from tribal_assistant.core.game.session import game_session
 from tribal_assistant.core.logging import configure_logging

@@ -3,10 +3,8 @@
 from dataclasses import asdict
 from datetime import UTC, datetime
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tribal_assistant.core.db.session import get_session
 from tribal_assistant.core.models.player import Player
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.game import GameRepository
@@ -129,7 +127,7 @@ def _village(v: Village) -> VillageOverview:
 
 
 class GameService:
-    def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.repository = GameRepository(session)
 
     async def overview(self) -> GameOverview:

@@ -2,12 +2,10 @@
 
 from collections.abc import Sequence
 
-from fastapi import Depends
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.config import settings
-from tribal_assistant.core.db.session import get_session
 from tribal_assistant.core.errors import ConflictError, NotFoundError
 from tribal_assistant.core.models.farm_target import FarmTarget
 from tribal_assistant.core.repositories.farm import FarmTargetRepository
@@ -15,7 +13,7 @@ from tribal_assistant.core.schemas.farm import FarmTargetCreate, FarmTickResult
 
 
 class FarmService:
-    def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.repository = FarmTargetRepository(session)
 
     async def list(self) -> Sequence[FarmTarget]:

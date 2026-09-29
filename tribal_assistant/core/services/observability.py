@@ -5,11 +5,9 @@ import json
 from collections.abc import AsyncIterator
 from datetime import timedelta
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.trace import RunTrace
-from tribal_assistant.core.db.session import get_session
 from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.core.events import event_bus
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
@@ -31,7 +29,7 @@ HEARTBEAT_SECONDS = 15
 
 
 class ObservabilityService:
-    def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.repository = ObservabilityRepository(session)
         self.settings = AgentSettingsRepository(session)
         self.game = GameRepository(session)

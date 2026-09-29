@@ -1,8 +1,5 @@
 """Domain errors. Services raise them; the app translates to one JSON shape."""
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-
 
 class DomainError(Exception):
     status_code = 400
@@ -38,9 +35,3 @@ class ConflictError(DomainError):
 class UpstreamError(DomainError):
     status_code = 502
     code = "upstream_error"
-
-
-def install_error_handlers(application: FastAPI) -> None:
-    @application.exception_handler(DomainError)
-    async def _handle(_: Request, exc: DomainError) -> JSONResponse:
-        return JSONResponse(status_code=exc.status_code, content={"detail": exc.as_detail()})

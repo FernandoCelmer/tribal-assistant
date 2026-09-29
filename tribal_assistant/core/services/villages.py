@@ -2,10 +2,8 @@
 
 from collections.abc import Sequence
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tribal_assistant.core.db.session import get_session
 from tribal_assistant.core.errors import NotFoundError
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.villages import VillageRepository
@@ -13,7 +11,7 @@ from tribal_assistant.core.schemas.village import VillageCreate, VillageUpdate
 
 
 class VillageService:
-    def __init__(self, session: AsyncSession = Depends(get_session)) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.repository = VillageRepository(session)
 
     async def list(self) -> Sequence[Village]:
