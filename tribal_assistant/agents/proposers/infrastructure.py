@@ -45,11 +45,11 @@ class InfrastructureProposer(Proposer):
         if ctx.levels.get("main", 0) < 20 and self._ok(view, "main"):
             items.append(self._build(view, "main", "edifício principal acelera todas as obras", impact=0.6, opportunity=0.2))
 
-        production = view.estimator.production()
-        lowest = min(PITS, key=lambda b: production[PIT_RESOURCE[b]] or ctx.levels.get(b, 0))
-        if self._ok(view, lowest):
+        pit = self.bottleneck(view, plan)
+        if self._ok(view, pit):
             weight = 0.7 if view.role in (Role.GROWTH, Role.EXPANSION) else 0.45
-            items.append(self._build(view, lowest, f"{lowest} é o gargalo de produção", impact=weight, opportunity=0.3))
+            resource = PIT_RESOURCE[pit]
+            items.append(self._build(view, pit, f"{resource} é o que mais trava as próximas obras", impact=weight, opportunity=0.3))
 
         for option_id in PlanTracker.next_unlocks(ctx.plan)[:1]:
             if not view.guard.check_unlock_scavenge(ctx, option_id):
@@ -69,6 +69,23 @@ class InfrastructureProposer(Proposer):
                 )
 
         return items
+
+    @staticmethod
+    def bottleneck(view: CoordinationView, plan: list[str]) -> str:
+        """The pit whose resource the next builds miss the most, measured in hours of production."""
+        production = view.estimator.production()
+        demand = dict.fromkeys(("wood", "clay", "iron"), 0)
+        for building in [*plan[:4], "main", "storage", "farm"]:
+            for resource, amount in view.build_cost(building).items():
+                if resource in demand:
+                    demand[resource] += amount
+
+        def pressure(pit: str) -> float:
+            resource = PIT_RESOURCE[pit]
+            missing = max(0, demand[resource] - view.ctx.stock.get(resource, 0))
+            return missing / max(production[resource], 1)
+
+        return max(PITS, key=lambda pit: (pressure(pit), -view.ctx.levels.get(pit, 0)))
 
     @staticmethod
     def _ok(view: CoordinationView, building: str) -> bool:

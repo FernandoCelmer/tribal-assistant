@@ -70,3 +70,24 @@ def test_scavenging_is_split_with_at_least_ten_pop_each():
     assert set(parts) == {1, 2}
     assert sum(parts[1].values()) > sum(parts[2].values())
     assert len(AttackProposer.split({"spear": 13}, {1: 0.1, 2: 0.25})) == 1
+
+
+def test_mine_follows_the_resource_that_blocks_builds():
+    from tests.agents.builders import building, context
+    from tribal_assistant.agents.proposers.infrastructure import InfrastructureProposer
+
+    class View:
+        pass
+
+    ctx = context(buildings=[building("main", 7, cost=600), building("wood", 7), building("stone", 7), building("iron", 7), building("storage", 5), building("farm", 5)], stock=300)
+    ctx.stock = {"wood": 100, "clay": 900, "iron": 900}
+    ctx.village.wood_prod, ctx.village.clay_prod, ctx.village.iron_prod = 160, 130, 110
+
+    from tribal_assistant.agents.coordination.estimates import Estimator
+
+    view = View()
+    view.ctx = ctx
+    view.estimator = Estimator(ctx)
+    view.build_cost = lambda b: {"wood": ctx.building(b).next_wood, "clay": ctx.building(b).next_clay, "iron": ctx.building(b).next_iron} if ctx.building(b) else {}
+
+    assert InfrastructureProposer.bottleneck(view, ["main"]) == "wood"
