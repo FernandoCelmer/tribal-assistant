@@ -110,6 +110,7 @@ GUIDES = {
     "avancado": "Fase avançada: especialização de aldeias, mercado, ataques sincronizados, defesa e tribo.",
     "nobre": "Conquista: academia, espionagem, limpeza, nobres sincronizados e defesa da aldeia nova.",
     "tribo": "Tribos: para que servem, como escolher, riscos e como entram no planejamento.",
+    "coleta": "Coleta: custos, quanto rende cada nível, como dividir as tropas e por que recrutar lanceiros.",
 }
 GUIDES_DIR = Path(__file__).parent / "guides"
 
