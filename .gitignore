@@ -13,3 +13,5 @@ storage/
 logs/
 playwright-state.json
 *.db
+build/
+dist/
