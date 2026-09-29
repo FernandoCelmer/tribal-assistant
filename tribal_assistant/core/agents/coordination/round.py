@@ -16,6 +16,7 @@ from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.proposers.attack import AttackProposer
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.defense import DefenseProposer
+from tribal_assistant.core.agents.proposers.diplomacy import DiplomacyProposer
 from tribal_assistant.core.agents.proposers.economy import EconomyProposer
 from tribal_assistant.core.agents.proposers.expansion import ExpansionProposer
 from tribal_assistant.core.agents.proposers.infrastructure import InfrastructureProposer
@@ -56,6 +57,7 @@ class VillageRound:
         ExpansionProposer,
         IntelligenceProposer,
         UpkeepProposer,
+        DiplomacyProposer,
     )
 
     def __init__(

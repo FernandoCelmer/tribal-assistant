@@ -10,6 +10,9 @@ from tribal_assistant.core.agents.guardrails import Guardrails
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.tools.act import (
     AcceptMarketOffer,
+    AcceptMentor,
+    AcceptTribeInvite,
+    ApplyToTribe,
     AssignFlag,
     ChooseRelic,
     ClaimQuestRewards,
@@ -73,6 +76,9 @@ class Toolbox:
         LearnKnightSkill,
         TrainKnight,
         CraftEventItem,
+        ApplyToTribe,
+        AcceptTribeInvite,
+        AcceptMentor,
         AcceptMarketOffer,
         CreateMarketOffer,
         ResearchUnit,

@@ -65,11 +65,11 @@ class ChallengePlan:
         "Vítima": Pursuit(BLOCKED, "", "ser conquistado; nunca"),
         "Ressurreição": Pursuit(BLOCKED, "", "reiniciar a conta no mundo; nunca"),
         "Filantropo": Pursuit(BLOCKED, "", "exige gastar premium; nunca"),
-        "Irmãos de guerra": Pursuit(SOCIAL, "", "exige entrar numa tribo; você decide"),
-        "Amigo fiel": Pursuit(SOCIAL, "", "amizades com outros jogadores; você decide"),
-        "O mentor": Pursuit(SOCIAL, "", "ser mentor de um aprendiz; você decide"),
-        "Graduado": Pursuit(SOCIAL, "", "aceitar um mentor; você decide"),
-        "Recrutamento bem sucedido": Pursuit(SOCIAL, "", "convidar amigos; você decide"),
+        "Irmãos de guerra": Pursuit(AUTO, "diplomacy", "aceita convite ou se candidata à tribo mais forte da região e fica 30 dias"),
+        "Graduado": Pursuit(AUTO, "diplomacy", "aceita o mentor recomendado pelo jogo e segue até graduar"),
+        "Amigo fiel": Pursuit(PASSIVE, "diplomacy", "amizades com colegas de tribo depois de entrar numa; tela de amigos em mapeamento"),
+        "O mentor": Pursuit(BLOCKED, "", "ser mentor exige conta veterana"),
+        "Recrutamento bem sucedido": Pursuit(BLOCKED, "", "exige convidar pessoas reais por e-mail"),
     }
     UNKNOWN: ClassVar[Pursuit] = Pursuit(PASSIVE, "", "ainda sem estratégia mapeada")
 

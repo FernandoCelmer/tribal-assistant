@@ -713,6 +713,69 @@ class CraftEventItem(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class ApplyToTribe(AgentTool):
+    name = "apply_to_tribe"
+    description = "Envia candidatura a uma tribo da região (id da lista \"Tribos em sua área\"). Nunca funda tribo."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"ally_id": {"type": "string", "pattern": "^[0-9]+$"}, "reason": REASON},
+        "required": ["ally_id", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        if (box.ctx.player or {}).get("ally_id"):
+            return ToolOutcome(False, "RECUSADO: já está numa tribo")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) candidatar à tribo {args['ally_id']}")
+
+        result = await box.actions.diplomacy.apply(box.ctx.game_id, str(args["ally_id"]))
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
+class AcceptTribeInvite(AgentTool):
+    name = "accept_tribe_invite"
+    description = "Aceita um convite recebido para entrar numa tribo."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"invite_id": {"type": "string"}, "reason": REASON},
+        "required": ["invite_id", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        if (box.ctx.player or {}).get("ally_id"):
+            return ToolOutcome(False, "RECUSADO: já está numa tribo")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) aceitar convite {args['invite_id']}")
+
+        result = await box.actions.diplomacy.accept_invite(box.ctx.game_id, str(args["invite_id"]))
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
+class AcceptMentor(AgentTool):
+    name = "accept_mentor"
+    description = "Aceita a oferta de um mentor sugerido pelo jogo (vira aprendiz; conta para a conquista Graduado)."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"mentor_id": {"type": "string", "pattern": "^[0-9]+$"}, "reason": REASON},
+        "required": ["mentor_id", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) aceitar mentor {args['mentor_id']}")
+
+        result = await box.actions.diplomacy.accept_mentor(box.ctx.game_id, str(args["mentor_id"]))
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class AcceptMarketOffer(AgentTool):
     name = "accept_market_offer"
     description = (

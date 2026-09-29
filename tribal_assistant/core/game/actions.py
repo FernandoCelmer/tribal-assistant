@@ -34,6 +34,7 @@ from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
 
 if TYPE_CHECKING:
+    from tribal_assistant.core.game.diplomacy import Diplomacy
     from tribal_assistant.core.game.forge import Forge
 
 UNIT_SCREEN = {
@@ -169,6 +170,12 @@ class ActionResult:
 
 class GameActions:
     """Every state-changing action a player can take, driven through the real game UI."""
+
+    @property
+    def diplomacy(self) -> "Diplomacy":
+        from tribal_assistant.core.game.diplomacy import Diplomacy
+
+        return Diplomacy(self)
 
     @property
     def forge(self) -> "Forge":

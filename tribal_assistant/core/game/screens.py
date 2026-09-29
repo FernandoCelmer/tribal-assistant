@@ -44,6 +44,7 @@ class ScreenCatalog:
         "market_send": ("market", {"mode": "send"}),
         "market_transports": ("market", {"mode": "transports"}),
         "mentor": ("mentor", {}),
+        "buddies": ("buddies", {}),
         "wall": ("wall", {}),
         "hide": ("hide", {}),
         "farm_building": ("farm", {}),
