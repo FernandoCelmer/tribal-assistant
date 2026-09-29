@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     app_host: str = Field(default="0.0.0.0")
     app_port: int = Field(default=8000)
     log_level: str = Field(default="INFO")
+    log_store_level: str = Field(default="INFO")
+    log_retention_days: int = Field(default=14)
+    trace_retention_days: int = Field(default=30)
 
     database_url: str = Field(default="sqlite+aiosqlite:///./storage/tw.db")
 
@@ -32,10 +35,18 @@ class Settings(BaseSettings):
     sync_report_details: bool = True
     world_sync_interval_minutes: int = 60
     quiet_hours: str | None = None
+    html_capture_dir: str = "./storage/html"
 
     farm_enabled: bool = True
     farm_min_loot: int = 10
     farm_max_wall_level: int = 1
+
+    ai_provider: str = "none"
+    ai_model: str | None = None
+    ai_api_key: str | None = None
+    ai_base_url: str | None = None
+    ai_max_steps: int = 10
+    ai_max_tokens: int = 2048
 
     telegram_token: str | None = None
     telegram_chat_id: str | None = None
