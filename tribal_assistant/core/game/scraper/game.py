@@ -13,6 +13,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from tribal_assistant.core.game.incoming import IncomingLabel, size_of
+
 SECONDS_PER_HOUR = 3600
 SERVER_TZ = ZoneInfo("America/Sao_Paulo")
 
@@ -105,6 +107,10 @@ class CommandSnapshot:
     label: str
     coords: str | None
     arrival_at: datetime
+    origin_coords: str | None = None
+    origin_player: str | None = None
+    size: str | None = None
+    watchtower: bool = False
 
 
 @dataclass(frozen=True)
@@ -381,12 +387,12 @@ def parse_recruit_queue(rows: Sequence[Mapping[str, Any]]) -> tuple[RecruitSnaps
 def _command_kind(icon: str) -> str:
     icon = icon.lower()
     for key, kind in (
-        ("snob", "noble"),
-        ("attack", "attack"),
-        ("support", "support"),
         ("return", "return"),
         ("back", "return"),
         ("cancel", "cancel"),
+        ("snob", "noble"),
+        ("support", "support"),
+        ("attack", "attack"),
     ):
         if key in icon:
             return kind
@@ -399,16 +405,27 @@ def parse_commands(rows: Sequence[Mapping[str, Any]]) -> tuple[CommandSnapshot, 
         arrival = _from_epoch(row.get("end"))
         if arrival is None:
             continue
-        label = " ".join(str(row.get("text") or "").split())
-        coords = _COORDS.findall(label)
+        text = " ".join(str(row.get("text") or "").split())
+        coords = _COORDS.findall(text)
+        incoming = row.get("direction") == "in"
+        origin_found = _COORDS.findall(str(row.get("origin") or ""))
+        origin = origin_found[-1] if origin_found else None
+        player = " ".join(str(row.get("player") or "").split()) or None
+        size = size_of(str(row.get("icon") or ""), str(row.get("hint") or ""))
+        watchtower = bool(row.get("watchtower"))
+        label = IncomingLabel.compose(text, size, player, origin, watchtower) if incoming and (size or origin or watchtower) else text
         result.append(
             CommandSnapshot(
                 game_id=str(row["id"]) if row.get("id") else None,
-                direction="in" if row.get("direction") == "in" else "out",
-                kind=_command_kind(str(row.get("icon") or "")),
+                direction="in" if incoming else "out",
+                kind=_command_kind(str(row.get("icon") or "") + " " + str(row.get("type") or "")),
                 label=label[:255],
-                coords=coords[-1] if coords else None,
+                coords=origin if incoming and origin else (coords[-1] if coords else None),
                 arrival_at=arrival,
+                origin_coords=origin if incoming else None,
+                origin_player=player if incoming else None,
+                size=size if incoming else None,
+                watchtower=watchtower,
             )
         )
     return tuple(result)

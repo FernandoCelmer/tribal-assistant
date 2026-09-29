@@ -55,3 +55,18 @@ async def test_attack_only_on_known_barbarians_in_radius(session: AsyncSession) 
     assert "bárbara" in await guard.check_attack(ctx, "502|500", {"spear": 5})
     assert "limite" in await guard.check_attack(ctx, "560|500", {"spear": 5})
     assert "só há" in await guard.check_attack(ctx, "503|500", {"spear": 50})
+
+
+async def test_dodge_ignores_the_raid_limits_only_with_an_attack_coming(session: AsyncSession) -> None:
+    session.add(WorldVillage(id=4, name="Longe", x=515, y=500, player_id=0, points=30))
+    await session.commit()
+
+    guard = Guardrails(session, AgentSettings())
+    ctx = context(units=[unit("spear", 10)])
+    ctx.policy = Policy.for_role("emergency")
+
+    assert "limite" in await guard.check_attack(ctx, "515|500", {"spear": 10}, dodge=True)
+
+    ctx.commands = [{"direction": "in", "kind": "attack"}]
+    assert await guard.check_attack(ctx, "515|500", {"spear": 10}, dodge=True) is None
+    assert "limite" in await guard.check_attack(ctx, "515|500", {"spear": 10})

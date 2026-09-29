@@ -1,19 +1,25 @@
 """Hard limits every agent action passes through, whatever the model decided."""
 
+import json
 import math
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.knowledge import UNITS, GameKnowledge
+from tribal_assistant.core.models.agent import AgentDecision
 from tribal_assistant.core.models.world import WorldVillage
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
+DODGE_RADIUS = 20
+
 SCAVENGE_MIN_POP = 10
+SPY_PROBE = (1, 2)
+RAID_ACTIONS = ("send_farm_attack", "send_spy")
 
 
 @dataclass(frozen=True)
@@ -140,7 +146,7 @@ class Guardrails:
 
         return RecruitPlan(allowed)
 
-    async def check_attack(self, ctx: VillageContext, target: str, units: dict[str, int]) -> str | None:
+    async def check_attack(self, ctx: VillageContext, target: str, units: dict[str, int], dodge: bool = False) -> str | None:
         try:
             tx, ty = (int(part) for part in target.split("|"))
             ox, oy = (int(part) for part in ctx.village.coords.split("|"))
@@ -156,20 +162,76 @@ class Guardrails:
                 return f"só há {current.home if current else 0} {unit} em casa"
 
         distance = math.hypot(tx - ox, ty - oy)
-        if distance > ctx.policy.attack_radius:
-            return f"alvo a {distance:.1f} campos; limite {ctx.policy.attack_radius}"
+        dodging = dodge and any(c["direction"] == "in" and c["kind"] in ("attack", "noble") for c in ctx.commands)
+        radius = DODGE_RADIUS if dodging else ctx.policy.attack_radius
+        if distance > radius:
+            return f"alvo a {distance:.1f} campos; limite {radius}"
 
         if not await self._is_barbarian(target, tx, ty):
             return "alvo não é aldeia bárbara conhecida; agentes só saqueiam bárbaras"
 
-        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=1)
-        if await self.repo.attacks_since(ctx.id, since) >= ctx.policy.max_attacks_per_hour:
+        if dodging:
+            return None
+
+        if await self.attacks_last_hour(ctx) >= ctx.policy.max_attacks_per_hour:
             return f"limite de {ctx.policy.max_attacks_per_hour} ataques por hora atingido"
 
         if await self.repo.attacked_recently(target, ctx.policy.retarget_minutes):
             return f"{target} já foi atacado nos últimos {ctx.policy.retarget_minutes} min"
 
         return None
+
+    async def check_spy(self, ctx: VillageContext, target: str, count: int) -> str | None:
+        """A scouting probe: 1 to 2 scouts, barbarians only, inside the radius and the hourly limit; it carries nothing."""
+        low, high = SPY_PROBE
+        if not low <= count <= high:
+            return f"sonda usa de {low} a {high} exploradores"
+
+        try:
+            tx, ty = (int(part) for part in target.split("|"))
+            ox, oy = (int(part) for part in ctx.village.coords.split("|"))
+        except ValueError:
+            return f"coordenada inválida: {target!r}"
+
+        spy = ctx.unit("spy")
+        if spy is None or spy.home < count:
+            return f"só há {spy.home if spy else 0} exploradores em casa"
+
+        distance = math.hypot(tx - ox, ty - oy)
+        if distance > ctx.policy.attack_radius:
+            return f"alvo a {distance:.1f} campos; limite {ctx.policy.attack_radius}"
+
+        if not await self._is_barbarian(target, tx, ty):
+            return "alvo não é aldeia bárbara conhecida; espiões só vão a bárbaras"
+
+        if await self.attacks_last_hour(ctx) >= ctx.policy.max_attacks_per_hour:
+            return f"limite de {ctx.policy.max_attacks_per_hour} ataques por hora atingido"
+
+        if await self.spied_recently(target, ctx.policy.retarget_minutes):
+            return f"{target} já foi espionado nos últimos {ctx.policy.retarget_minutes} min"
+
+        return None
+
+    async def attacks_last_hour(self, ctx: VillageContext) -> int:
+        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=1)
+        stmt = select(func.count(AgentDecision.id)).where(
+            AgentDecision.village_id == ctx.id,
+            AgentDecision.action.in_(RAID_ACTIONS),
+            AgentDecision.ok.is_(True),
+            AgentDecision.dry_run.is_(False),
+            AgentDecision.created_at >= since,
+        )
+        return int((await self.session.execute(stmt)).scalar_one())
+
+    async def spied_recently(self, target: str, minutes: int) -> bool:
+        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=minutes)
+        stmt = select(AgentDecision.arguments).where(
+            AgentDecision.action == "send_spy",
+            AgentDecision.ok.is_(True),
+            AgentDecision.dry_run.is_(False),
+            AgentDecision.created_at >= since,
+        )
+        return any(json.loads(raw or "{}").get("target") == target for raw in (await self.session.execute(stmt)).scalars())
 
     async def _is_barbarian(self, target: str, x: int, y: int) -> bool:
         row = (
