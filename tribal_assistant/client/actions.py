@@ -962,6 +962,46 @@ class GameActions:
             {"notices": messages["notices"]},
         )
 
+    async def train_knight(self, village_id: str, regimen: int) -> ActionResult:
+        """Start a paladin XP training with resources (never the premium -20% option)."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "statue")
+
+            launch = page.locator(".knight_train_launch")
+            if not await launch.count() or not await launch.first.is_visible():
+                return ActionResult(False, "train_knight", "paladino indisponível para treino")
+
+            await human_click(page, launch.first)
+            await human_delay(800, 1500)
+
+            start = page.locator(
+                f'.knight_regimen_confirm[data-regimen="{regimen}"][data-cheap="0"]:not(.btn-pp):not(.btn-disabled)'
+            )
+            if not await start.count():
+                await page.keyboard.press("Escape")
+                return ActionResult(
+                    False,
+                    "train_knight",
+                    f"treino {regimen} indisponível (recursos ou paladino ocupado)",
+                )
+
+            await human_click(page, start.first)
+            await page.wait_for_timeout(1_500)
+
+            second = page.locator(".evt-confirm-btn:visible")
+            if await second.count():
+                await human_click(page, second.first)
+                await page.wait_for_timeout(1_200)
+
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "train_knight", " | ".join(messages["errors"]))
+
+        logger.info("Paladin training {} started in village {}", regimen, village_id)
+        return ActionResult(
+            True, "train_knight", f"treino {regimen} iniciado", {"notices": messages["notices"]}
+        )
+
     async def claim_rewards(self, village_id: str) -> ActionResult:
         """Claim every reward waiting in the "Recompensas" tab (resources land in this village)."""
         async with game_session.lock:

@@ -574,6 +574,31 @@ class LearnKnightSkill(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class TrainKnight(AgentTool):
+    name = "train_knight"
+    description = (
+        "Treina o paladino por XP na estátua com recursos (nunca a opção premium -20%). "
+        "regimen 21: 500 XP, 100/100/100, 2h; 22: 800 XP, 200 cada, 4h; 23: 1400 XP, 400 cada, 8h; "
+        "24: 2200 XP, 700 cada, 12h; 25: 3000 XP, 1000 cada, 24h. O paladino fica indisponível durante o treino."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"regimen": {"type": "integer", "minimum": 21, "maximum": 25}, "reason": REASON},
+        "required": ["regimen", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        regimen = int(args["regimen"])
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) treinar paladino {regimen}")
+
+        result = await box.actions.train_knight(box.ctx.game_id, regimen)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (
