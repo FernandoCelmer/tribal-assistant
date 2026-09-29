@@ -76,6 +76,55 @@ class LookupKnowledge(AgentTool):
         return ToolOutcome(True, self.dump(info))
 
 
+class SearchDocs(AgentTool):
+    name = "search_docs"
+    description = (
+        "Busca na biblioteca local (ajuda oficial, guias e tutoriais do fórum) e devolve os trechos mais relevantes "
+        "com o caminho do documento. Use para dúvidas de regra, custo, estratégia ou mecânica do jogo."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "minLength": 2, "description": "Pergunta ou palavras-chave em português."},
+            "category": {"type": "string", "description": "Opcional: help, forum, guides ou search."},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 8},
+        },
+        "required": ["query"],
+        "additionalProperties": False,
+    }
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        from tribal_assistant.core.services.docs import DocsService
+
+        hits = await DocsService(box.session).search(str(args["query"]), int(args.get("limit") or 4), args.get("category"))
+        if not hits:
+            return ToolOutcome(True, "nada encontrado na biblioteca; tente outras palavras")
+
+        return ToolOutcome(True, "\n\n".join(f"[{h.path}] {h.title}{' · ' + h.section if h.section else ''}\n{h.text[:900]}" for h in hits))
+
+
+class ReadDoc(AgentTool):
+    name = "read_doc"
+    description = "Lê um documento inteiro da biblioteca pelo caminho que search_docs devolveu (ex.: help/academia.md)."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"path": {"type": "string", "minLength": 3}},
+        "required": ["path"],
+        "additionalProperties": False,
+    }
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        from tribal_assistant.core.errors import NotFoundError
+        from tribal_assistant.core.services.docs import DocsService
+
+        try:
+            doc = await DocsService(box.session).read(str(args["path"]))
+        except NotFoundError as exc:
+            return ToolOutcome(False, exc.message)
+
+        return ToolOutcome(True, f"{doc.title}\n\n{doc.text[:12000]}")
+
+
 class ListBarbarians(AgentTool):
     name = "list_barbarians"
     description = (

@@ -41,6 +41,8 @@ from tribal_assistant.core.agents.tools.read import (
     GetVillageState,
     ListBarbarians,
     LookupKnowledge,
+    ReadDoc,
+    SearchDocs,
 )
 from tribal_assistant.core.ai.types import ToolCall, ToolResult, ToolSpec
 from tribal_assistant.core.game.actions import GameActions
@@ -59,6 +61,8 @@ class Toolbox:
         GetVillageState,
         GetQuests,
         LookupKnowledge,
+        SearchDocs,
+        ReadDoc,
         ListBarbarians,
         UpgradeBuilding,
         RecruitUnits,

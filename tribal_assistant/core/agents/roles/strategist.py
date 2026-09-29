@@ -25,10 +25,10 @@ class StrategistAgent(VillageAgent):
         "7) caminho do primeiro nobre (Edifício principal 20, Ferreiro 20, Mercado 10, Academia). "
         "Passo build = nível a atingir (não +1, no máximo 3 níveis acima do atual); passo recruit = total "
         "de tropas a ter. Não inclua o que está feito ou bloqueado por requisito sem antes planejar o "
-        "requisito. Respeite o objetivo da aldeia se houver. Use lookup_knowledge só se tiver dúvida de "
+        "requisito. Respeite o objetivo da aldeia se houver. Use lookup_knowledge ou search_docs (ajuda, guias e tutoriais do fórum) só se tiver dúvida de "
         "requisito. Uma chamada set_village_plan basta; set_village_goal só se o objetivo mudar."
     )
-    tools = ("lookup_knowledge", "set_village_plan", "set_village_goal")
+    tools = ("lookup_knowledge", "search_docs", "read_doc", "set_village_plan", "set_village_goal")
 
     def system_prompt(self) -> str:
         return super().system_prompt() + "\n" + GameKnowledge.strategy

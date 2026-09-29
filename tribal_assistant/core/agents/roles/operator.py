@@ -19,6 +19,8 @@ class OperatorAgent(VillageAgent):
         "get_village_state",
         "get_quests",
         "lookup_knowledge",
+        "search_docs",
+        "read_doc",
         "list_barbarians",
         "upgrade_building",
         "recruit_units",
