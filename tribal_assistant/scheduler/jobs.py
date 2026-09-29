@@ -18,7 +18,7 @@ async def _sync_game_job() -> None:
         return
     try:
         await sync_game()
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.exception("game sync failed")
 
 
@@ -27,7 +27,7 @@ async def _sync_world_job() -> None:
 
     try:
         await sync_world()
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.exception("world sync failed")
 
 
@@ -42,8 +42,49 @@ async def _farm_tick_job() -> None:
         service.repository = FarmTargetRepository(session)
         try:
             await service.tick()
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.exception("farm tick failed")
+
+
+async def _agents_job() -> None:
+    from datetime import UTC
+
+    from tribal_assistant.agents.runner import AgentRunner
+    from tribal_assistant.client.human import in_quiet_hours
+    from tribal_assistant.db.session import SessionFactory
+    from tribal_assistant.repositories.agent_settings import AgentSettingsRepository
+
+    async with SessionFactory() as session:
+        repo = AgentSettingsRepository(session)
+        config = await repo.get()
+        last = await repo.last_run_at()
+
+        if not config.enabled or in_quiet_hours():
+            return
+
+        now = datetime.now(UTC).replace(tzinfo=None)
+        if last and now - last < timedelta(minutes=config.interval_minutes):
+            return
+
+        await repo.mark_run()
+
+    try:
+        report = await AgentRunner(trigger="schedule").run()
+    except Exception:
+        logger.exception("village agents failed")
+        return
+
+    logger.info("Village agents run {} ({}): {}", report.run_id, report.brain, report.error or "ok")
+
+
+async def _retention_job() -> None:
+    from tribal_assistant.db.session import SessionFactory
+    from tribal_assistant.repositories.observability import ObservabilityRepository
+
+    async with SessionFactory() as session:
+        removed = await ObservabilityRepository(session).prune(settings.trace_retention_days)
+
+    logger.info("Retention removed {} old agent trace rows", removed)
 
 
 def register_jobs(scheduler: AsyncIOScheduler) -> None:
@@ -75,3 +116,22 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
             id="farm_tick",
             replace_existing=True,
         )
+
+    scheduler.add_job(
+        _agents_job,
+        trigger=IntervalTrigger(minutes=1, jitter=20),
+        id="village_agents",
+        next_run_time=datetime.now() + timedelta(seconds=90),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _retention_job,
+        trigger=IntervalTrigger(hours=24, jitter=600),
+        id="trace_retention",
+        next_run_time=datetime.now() + timedelta(minutes=5),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )

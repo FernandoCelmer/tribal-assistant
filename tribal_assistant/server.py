@@ -1,31 +1,41 @@
 """FastAPI application factory: API, dashboard and scheduler lifespan."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from tribal_assistant import __version__
 from tribal_assistant.api.health import health_router
+from tribal_assistant.api.pages import WebPages
 from tribal_assistant.api.v1 import v1_router
 from tribal_assistant.client.session import game_session
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.errors import install_error_handlers
+from tribal_assistant.core.events import event_bus
 from tribal_assistant.core.logging import configure_logging
 from tribal_assistant.db.session import init_db
 from tribal_assistant.scheduler.runtime import scheduler
+from tribal_assistant.version import __version__
 
 API_V1_PREFIX = "/api/v1"
 WEB_DIR = Path(__file__).parent / "web"
+async def _interrupt_leftover_runs() -> None:
+    from tribal_assistant.db.session import SessionFactory
+    from tribal_assistant.repositories.observability import ObservabilityRepository
+
+    async with SessionFactory() as session:
+        await ObservabilityRepository(session).interrupt_stale(older_than_minutes=0)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     configure_logging(settings.log_level)
+    event_bus.bind(asyncio.get_running_loop())
     await init_db()
+    await _interrupt_leftover_runs()
     scheduler.start()
     try:
         yield
@@ -48,13 +58,7 @@ def create_app() -> FastAPI:
 
     application.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
-    @application.get("/", include_in_schema=False)
-    async def dashboard() -> FileResponse:
-        return FileResponse(WEB_DIR / "index.html", headers={"Cache-Control": "no-cache"})
-
-    @application.get("/design", include_in_schema=False)
-    async def design_system() -> FileResponse:
-        return FileResponse(WEB_DIR / "design.html", headers={"Cache-Control": "no-cache"})
+    WebPages(WEB_DIR).register(application)
 
     return application
 

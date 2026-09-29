@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends
 
-from tribal_assistant.schemas.assistant import CommandResult, AssistantStatus
+from tribal_assistant.schemas.assistant import AssistantStatus, CommandResult
 from tribal_assistant.services.assistant import AssistantService
 
 assistant_router = APIRouter()
