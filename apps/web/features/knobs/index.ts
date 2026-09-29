@@ -1,1 +1,2 @@
-export { KnobsTable, TuneButton, knobLabel, knobValue } from "./knobs-table";
+export { KnobsTable, TuneButton } from "./knobs-table";
+export { knobLabel, knobValue } from "./labels";
