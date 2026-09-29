@@ -86,7 +86,7 @@ class AgentService:
             if not contexts:
                 raise NotFoundError(f"aldeia {village_id} não sincronizada")
 
-            role, reason = RoleSelector.derive(contexts[0])
+            role, reason = await RoleSelector(self.session).evaluate(contexts[0])
             row = await repo.set_strategy(village_id, role.value, reason, manual=False)
         else:
             row = await repo.set_strategy(village_id, body.role, body.reason or "definido no painel", manual=True)
