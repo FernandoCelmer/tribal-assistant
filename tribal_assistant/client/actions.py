@@ -58,6 +58,25 @@ CURRENT_FLAG_JS = """() => {
   return cell ? (cell.querySelector('strong')?.innerText.trim() + ' ' + (cell.querySelector('p')?.innerText.trim() || '')).trim() : '';
 }"""
 
+FLAGS_STATE_JS = """() => {
+  const owned = [...document.querySelectorAll('.flag_box:not(.flag_box_empty)')]
+    .map(n => n.id.replace('flag_box_', '').split('_').map(Number))
+    .filter(p => p.length === 2 && p.every(Number.isFinite));
+  const th = [...document.querySelectorAll('#content_value th')].find(t => /Atual bandeira/.test(t.innerText));
+  const cell = th && th.closest('table').querySelector('td');
+  const current = cell ? (cell.querySelector('strong')?.innerText || '').trim() : '';
+  return {owned, current};
+}"""
+
+KNIGHT_STATE_JS = """() => {
+  const visible = (sel) => { const n = document.querySelector(sel); return !!(n && n.offsetParent); };
+  return {
+    learnable: [...document.querySelectorAll('.skill_node.learnable[data-skill]')].map(n => Number(n.dataset.skill)),
+    can_recruit: visible('.knight_recruit_launch'),
+    can_train: visible('.knight_train_launch'),
+  };
+}"""
+
 FREE_FINISH = "#buildqueue .btn-instant-free"
 FREE_WAIT_MAX = 75
 FREE_WAIT_JS = "(n) => { const at = Number(n.dataset.availableFrom || 0); return at ? Math.max(0, at - Date.now() / 1000) : null; }"
@@ -780,6 +799,13 @@ class GameActions:
             page = await self._in_game(village_id, "relic_system")
             await page.wait_for_timeout(2_000)
 
+            status = page.locator("#village_equip_status")
+            if (
+                await status.count()
+                and "nenhuma relíquia equipada" not in await status.inner_text()
+            ):
+                return ActionResult(False, "equip_relic", "aldeia já tem relíquia equipada")
+
             relic = page.locator("#relics img[data-id]").first
             if not await relic.count():
                 return ActionResult(
@@ -1001,6 +1027,19 @@ class GameActions:
         return ActionResult(
             True, "train_knight", f"treino {regimen} iniciado", {"notices": messages["notices"]}
         )
+
+    async def flags(self, village_id: str) -> dict[str, Any]:
+        """Owned flags (type, level) and the flag assigned to this village."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "flags")
+            return await page.evaluate(FLAGS_STATE_JS)
+
+    async def knight_state(self, village_id: str) -> dict[str, Any]:
+        """What the statue allows right now: learnable skills, recruit and XP training."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "statue")
+            await page.wait_for_timeout(1_200)
+            return await page.evaluate(KNIGHT_STATE_JS)
 
     async def claim_rewards(self, village_id: str) -> ActionResult:
         """Claim every reward waiting in the "Recompensas" tab (resources land in this village)."""
