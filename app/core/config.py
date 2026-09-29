@@ -28,12 +28,16 @@ class Settings(BaseSettings):
     browser_state_path: str = "./storage/playwright-state.json"
     min_delay_ms: int = 1200
     max_delay_ms: int = 3800
+    sync_interval_seconds: int = 120
+    sync_report_details: bool = True
+    world_sync_interval_minutes: int = 60
+    quiet_hours: str | None = None
 
     farm_enabled: bool = True
     farm_min_loot: int = 10
     farm_max_wall_level: int = 1
 
-    telegram_bot_token: str | None = None
+    telegram_token: str | None = None
     telegram_chat_id: str | None = None
 
 
