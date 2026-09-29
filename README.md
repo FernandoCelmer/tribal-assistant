@@ -221,6 +221,7 @@ The server reloads `docs/` every 6 hours. The strategist and the MCP clients use
 | `openai` | `OPENAI_API_KEY` | `gpt-5` | OpenAI SDK |
 | `grok` | `XAI_API_KEY` | `grok-4.20-0309-non-reasoning` | `https://api.x.ai/v1` |
 | `gemini` | `GEMINI_API_KEY` | `gemini-2.5-pro` | Gemini OpenAI-compatible endpoint |
+| `vertex` | `GOOGLE_API_KEY` | `gemini-2.5-flash` | Gemini on Vertex AI with an express-mode API key (native generateContent) |
 | `ollama` | none | `llama3.1` | `http://localhost:11434/v1` |
 | `openai-compatible` | `OPENAI_API_KEY` | set `AI_MODEL` | set `AI_BASE_URL` |
 
