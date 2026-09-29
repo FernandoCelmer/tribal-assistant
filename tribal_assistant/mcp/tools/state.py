@@ -105,7 +105,7 @@ class StateTools(ToolGroup):
             retarget_minutes: Annotated[int | None, Field(ge=0, le=1440, description="Minutes before re-hitting a target.")] = None,
             build_queue_slots: Annotated[int | None, Field(ge=1, le=5, description="Build orders agents may keep queued.")] = None,
             llm_agents: Annotated[list[str] | None, Field(description="Agents allowed to call the AI: strategist, economist, commander, quartermaster, raider.")] = None,
-            plan_refresh_hours: Annotated[int | None, Field(ge=1, le=168, description="Hours before the plan is rewritten.")] = None,
+            plan_refresh_minutes: Annotated[int | None, Field(ge=5, le=10080, description="Minutes before the plan is rewritten.")] = None,
             auto_finish_free: Annotated[bool | None, Field(description="Use the free finish-now button on short builds.")] = None,
         ) -> AgentSettings:
             """Change agent settings at runtime; only the fields given change, the rest keep their
@@ -127,7 +127,7 @@ class StateTools(ToolGroup):
                 build_queue_slots=build_queue_slots,
                 auto_finish_free=auto_finish_free,
                 llm_agents=llm_agents,
-                plan_refresh_hours=plan_refresh_hours,
+                plan_refresh_minutes=plan_refresh_minutes,
             )
             return await self.with_session(lambda s: AgentService(s).update_settings(patch))
 

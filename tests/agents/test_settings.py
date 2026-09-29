@@ -49,3 +49,16 @@ async def test_settings_api_roundtrip(client: AsyncClient) -> None:
     assert response.json()["interval_minutes"] == 15
 
     assert (await client.patch("/api/v1/agents/settings", json={"attack_radius": 0})).status_code == 422
+
+
+def test_legacy_plan_refresh_hours_becomes_minutes():
+    from tribal_assistant.schemas.agent_settings import AgentSettings
+
+    assert AgentSettings.model_validate({"plan_refresh_hours": 2}).plan_refresh_minutes == 120
+
+
+def test_legacy_hours_win_over_merged_defaults():
+    from tribal_assistant.schemas.agent_settings import AgentSettings
+
+    merged = {**AgentSettings().model_dump(), "plan_refresh_hours": 1}
+    assert AgentSettings.model_validate(merged).plan_refresh_minutes == 60

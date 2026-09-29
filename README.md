@@ -131,7 +131,7 @@ Every round, five specialists run on each of your villages, in this order:
 
 New villages are picked up automatically after the next sync.
 
-**AI plans, rules execute.** Only the Strategist calls the model: it writes a **village plan** (up to 12 ordered steps — build X to level N, recruit, unlock scavenging) with `set_village_plan`. The other agents execute the plan with rules, at zero token cost. The plan is rewritten only when it is missing, older than `plan_refresh_hours`, finished or stuck, so the model runs a few times a day instead of five times per round. Without an AI key the same plan comes from a built-in rule planner (quests, advisor, balanced production, path to the first nobleman).
+**AI plans, rules execute.** Only the Strategist calls the model: it writes a **village plan** (up to 12 ordered steps — build X to level N, recruit, unlock scavenging) with `set_village_plan`. The other agents execute the plan with rules, at zero token cost. The plan is rewritten only when it is missing, older than `plan_refresh_minutes`, finished or stuck, so the model runs a few times a day instead of five times per round. Without an AI key the same plan comes from a built-in rule planner (quests, advisor, balanced production, path to the first nobleman).
 
 Plan progress is measured from the real village state every round (pending, queued, done, blocked) and shown on `/agentes`. Builds in the plan may take any free queue slot, so a Smithy step is no longer starved by economy builds; when storage is almost full, the Economist and Commander spend the surplus on buildings and troops.
 
@@ -154,7 +154,7 @@ The guardrails and the schedule are **runtime settings** stored in the database,
 | `build_queue_slots` | `2` | build orders agents may keep queued |
 | `auto_finish_free` | `true` | click the free "finish now" button on short builds (never paid ones) |
 | `llm_agents` | `["strategist"]` | agents allowed to call the AI |
-| `plan_refresh_hours` | `6` | hours before the plan is rewritten with AI |
+| `plan_refresh_minutes` | `360` | minutes before the strategist rewrites the plan (free with rules; one AI call when AI is on) |
 | `llm_max_steps` | `6` | tool rounds per AI conversation |
 
 Every decision, including refusals, is stored with its reason and shown in the dashboard.

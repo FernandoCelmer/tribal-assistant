@@ -38,7 +38,7 @@ class StrategistAgent(VillageAgent):
             return True
 
         age = datetime.now(UTC).replace(tzinfo=None) - ctx.plan_refreshed_at
-        return age > timedelta(hours=config.plan_refresh_hours)
+        return age > timedelta(minutes=config.plan_refresh_minutes)
 
     def needs_llm(self, ctx: VillageContext, config: AgentSettings) -> bool:
         return self.stale(ctx, config) or PlanTracker.needs_refresh(ctx.plan)

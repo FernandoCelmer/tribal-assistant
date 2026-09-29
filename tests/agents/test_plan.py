@@ -62,7 +62,7 @@ def test_only_strategist_asks_for_ai_and_only_when_plan_is_stale() -> None:
 
     assert not StrategistAgent().needs_llm(ctx, settings)
 
-    ctx.plan_refreshed_at -= timedelta(hours=settings.plan_refresh_hours + 1)
+    ctx.plan_refreshed_at -= timedelta(minutes=settings.plan_refresh_minutes + 1)
     assert StrategistAgent().needs_llm(ctx, settings)
 
     for agent in (EconomistAgent(), CommanderAgent(), RaiderAgent(), QuartermasterAgent()):
