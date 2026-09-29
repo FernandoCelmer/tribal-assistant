@@ -17,18 +17,27 @@ class StrategistAgent(VillageAgent):
     key = "strategist"
     title = "Estrategista"
     mission = (
-        "Escrever o plano da aldeia com set_village_plan: até 12 passos em ordem de prioridade que o "
-        "especialistas de economia, infraestrutura e recrutamento seguem sozinhos, sem IA. Ordem de prioridade: 1) metas de missão "
-        "próximas (dão recursos); 2) Armazém antes de um recurso passar de 85%; 3) Fazenda antes de a "
-        "população passar de 85%; 4) minas equilibradas, a mais baixa primeiro; 5) Quartel 3 e tropas de "
-        "saque (lanceiros, depois cavalaria leve com Estábulo 3); 6) coleta desbloqueada em ordem; "
-        "7) caminho do primeiro nobre (Edifício principal 20, Ferreiro 20, Mercado 10, Academia). "
+        "Escrever o plano da aldeia com set_village_plan: até 12 passos em ordem de prioridade que os "
+        "especialistas de economia, infraestrutura e recrutamento seguem sozinhos, sem IA. Ordem de prioridade: "
+        "1) Estátua 1 logo depois do Quartel 1 (paladino saqueia cedo); 2) metas de missão próximas, inclusive "
+        "Muralha 1 (devolve 300 de cada) e Esconderijo 3 (dá 100), nunca acima do nível 3 por missão, e nunca a "
+        "missão da milícia (não ative a milícia); 3) Armazém antes de um recurso passar de 85%; 4) Fazenda antes "
+        "de a população passar de 85%; 5) minas com madeira sempre a mais alta e ferro 3 níveis abaixo de "
+        "madeira e argila até existir Estábulo; 6) lanceiros até 40 (missão), depois o portão da cavalaria "
+        "leve: Edifício principal 10 (não passe de 10 antes do Estábulo 3), Quartel 5, Ferreiro 5, Estábulo 3, "
+        "Armazém 6-7 para caber os custos; 7) coleta desbloqueada em ordem; 8) fim da proteção: nas 72h finais "
+        "Muralha 8 e cerca de 80 lanceiros + 80 espadachins; machados (bárbaros) só ~12h antes do fim; "
+        "9) depois da proteção, a cada 3 níveis de EP, 2 de Quartel e 2 de Estábulo; 10) nobre só com "
+        "Edifício principal 20, Ferreiro 20, Mercado 10, Fazenda 24 e exército de verdade. "
         "Passo build = nível a atingir (não +1, no máximo 3 níveis acima do atual); passo recruit = total "
         "de tropas a ter. Não inclua o que está feito ou bloqueado por requisito sem antes planejar o "
-        "requisito. Respeite o objetivo da aldeia se houver. Use lookup_knowledge ou search_docs (ajuda, guias e tutoriais do fórum) só se tiver dúvida de "
-        "requisito. Uma chamada set_village_plan basta; set_village_goal só se o objetivo mudar."
+        "requisito. Respeite o objetivo da aldeia se houver. A cada mudança de fase (início, portão do estábulo, "
+        "fim da proteção, academia) chame search_docs antes de planejar, por exemplo \"sprint popeye\", "
+        "\"fim da proteção\", \"muralha cavalaria leve bárbara\", \"academia armazenamento\" ou "
+        "\"torre de vigia\"; fora disso use lookup_knowledge ou search_docs só com dúvida de requisito. "
+        "Uma chamada set_village_plan basta; set_village_goal só se o objetivo mudar."
     )
-    tools = ("lookup_knowledge", "search_docs", "read_doc", "set_village_plan", "set_village_goal")
+    tools = ("lookup_knowledge", "search_docs", "read_doc", "get_forecast", "get_incoming", "simulate_battle", "get_target_intel", "set_village_plan", "set_village_goal")
 
     def system_prompt(self) -> str:
         return super().system_prompt() + "\n" + GameKnowledge.strategy

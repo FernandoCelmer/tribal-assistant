@@ -169,7 +169,7 @@ class SendFarmAttack(AgentTool):
         target = str(args["target"]).strip()
         units = {str(k): int(v) for k, v in dict(args["units"]).items() if int(v) > 0}
 
-        refusal = await box.guard.check_attack(box.ctx, target, units)
+        refusal = await box.guard.check_attack(box.ctx, target, units, dodge=str(args.get("reason", "")).startswith("esquiva"))
         if refusal:
             return ToolOutcome(False, f"RECUSADO: {refusal}")
 
@@ -189,6 +189,48 @@ class SendFarmAttack(AgentTool):
         return ToolOutcome(
             result_ok, detail, {"target": target, "units": units, "arrival": arrival}
         )
+
+
+class SendSpy(AgentTool):
+    name = "send_spy"
+    description = (
+        "Sonda uma aldeia BÁRBARA com 1 ou 2 exploradores para ver muralha, recursos e tropas antes do saque. "
+        "Não carrega recursos; conta no limite de ataques por hora. Use em alvos desconhecidos, grandes ou com "
+        "resultado amarelo. RECUSADO para jogadores, fora do raio, sem exploradores ou alvo espionado há pouco."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "target": {"type": "string", "description": "Coordenadas x|y do alvo, ex.: 498|503."},
+            "count": {"type": "integer", "minimum": 1, "maximum": 2, "description": "Exploradores: 1 basta contra bárbara."},
+            "reason": REASON,
+        },
+        "required": ["target", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        target = str(args["target"]).strip()
+        count = int(args.get("count") or 1)
+
+        refusal = await box.guard.check_spy(box.ctx, target, count)
+        if refusal:
+            return ToolOutcome(False, f"RECUSADO: {refusal}")
+
+        if box.dry_run:
+            result_ok, detail, arrival = True, f"(simulação) {count} explorador(es) para {target}", None
+        else:
+            x, y = (int(part) for part in target.split("|"))
+            result = await box.actions.send_attack(box.ctx.game_id, x, y, {"spy": count})
+            result_ok, detail, arrival = result.ok, result.detail, result.data.get("arrival")
+
+        if result_ok:
+            spy = box.ctx.unit("spy")
+            spy.home -= count
+            spy.away += count
+
+        return ToolOutcome(result_ok, detail, {"target": target, "units": {"spy": count}, "arrival": arrival})
 
 
 class UnlockScavenge(AgentTool):
@@ -370,6 +412,11 @@ class CompleteQuest(AgentTool):
 
         if not quest["can_complete"]:
             return ToolOutcome(False, f"missão {quest_id} ainda não concluída")
+
+        from tribal_assistant.core.agents.quests import QuestRules
+
+        if QuestRules.forbidden(quest):
+            return ToolOutcome(False, "RECUSADO: missão de milícia corta a produção pela metade; nunca ativar")
 
         if box.dry_run:
             return ToolOutcome(True, f"(simulação) concluir missão {quest_id}")
@@ -906,3 +953,81 @@ class SetVillageGoal(AgentTool):
         box.ctx.goal = goal
 
         return ToolOutcome(True, "objetivo registrado", {"goal": goal})
+
+
+class CancelMarketOffer(AgentTool):
+    name = "cancel_market_offer"
+    description = (
+        "Cancela uma oferta própria no mercado desta aldeia e devolve o recurso ao armazém. Use quando o recurso "
+        "estacionado for necessário (pesquisa, recrutamento, obra). O id vem de get_own_offers."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"offer_id": {"type": "string", "pattern": "^[0-9]+$"}, "reason": REASON},
+        "required": ["offer_id", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        offer_id = str(args["offer_id"]).strip()
+        if not offer_id.isdigit():
+            return ToolOutcome(False, "RECUSADO: id de oferta inválido")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) cancelar oferta {offer_id}")
+
+        result = await box.actions.market.cancel_offer(box.ctx.game_id, offer_id)
+        if result.ok:
+            offer = result.data.get("offer", {})
+            key = "clay" if offer.get("sell") == "stone" else offer.get("sell")
+            if key in box.ctx.stock:
+                box.ctx.stock[key] += offer.get("sell_amount", 0) * offer.get("count", 1)
+
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
+class ParkMarketOffer(AgentTool):
+    name = "park_market_offer"
+    description = (
+        "Estaciona recurso sobrando em ofertas próprias que quase ninguém aceita (pede o máximo que o mundo permite, "
+        "viagem curta): o recurso fica nos comerciantes, não é saqueado nem estoura o armazém. Cancele com "
+        "cancel_market_offer quando precisar dele. Recusado se deixar menos que 20% do armazém do recurso."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "sell": {"type": "string", "enum": ["wood", "stone", "iron"]},
+            "buy": {"type": "string", "enum": ["wood", "stone", "iron"]},
+            "amount": {"type": "integer", "minimum": 100, "maximum": 1000, "multipleOf": 100, "description": "Quantidade por oferta (um comerciante)."},
+            "lots": {"type": "integer", "minimum": 1, "maximum": 20, "description": "Quantas ofertas iguais."},
+            "max_hours": {"type": "integer", "minimum": 1, "maximum": 96},
+            "reason": REASON,
+        },
+        "required": ["sell", "buy", "amount", "lots", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+    FLOOR = 0.2
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        sell, buy = str(args["sell"]), str(args["buy"])
+        amount, lots = int(args["amount"]), int(args["lots"])
+        key = "clay" if sell == "stone" else sell
+        stock = box.ctx.stock.get(key, 0)
+        storage = box.ctx.village.storage or 0
+
+        if sell == buy:
+            return ToolOutcome(False, "RECUSADO: troca do mesmo recurso")
+
+        if stock - amount * lots < storage * self.FLOOR:
+            return ToolOutcome(False, f"RECUSADO: {sell} ficaria abaixo de {self.FLOOR:.0%} do armazém")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) estacionar {lots}x {amount} {sell} pedindo {buy}")
+
+        result = await box.actions.market.park(box.ctx.game_id, sell, amount, buy, lots, int(args.get("max_hours") or 1))
+        if result.ok:
+            box.ctx.stock[key] -= amount * lots
+
+        return ToolOutcome(result.ok, result.detail, result.data)

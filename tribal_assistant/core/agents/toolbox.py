@@ -14,6 +14,7 @@ from tribal_assistant.core.agents.tools.act import (
     AcceptTribeInvite,
     ApplyToTribe,
     AssignFlag,
+    CancelMarketOffer,
     ChooseRelic,
     ClaimQuestRewards,
     CompleteQuest,
@@ -22,12 +23,14 @@ from tribal_assistant.core.agents.tools.act import (
     EquipRelic,
     LearnKnightSkill,
     OpenDailyBonus,
+    ParkMarketOffer,
     RecruitKnight,
     RecruitUnits,
     RenameVillage,
     ResearchUnit,
     SendFarmAttack,
     SendScavenge,
+    SendSpy,
     SetVillageGoal,
     SetVillagePlan,
     TrainKnight,
@@ -36,6 +39,9 @@ from tribal_assistant.core.agents.tools.act import (
     UseItem,
 )
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
+from tribal_assistant.core.agents.tools.defense import GetIncoming, SimulateBattle
+from tribal_assistant.core.agents.tools.insight import GetForecast, GetOwnOffers, PlanScavenge
+from tribal_assistant.core.agents.tools.intel import GetTargetIntel
 from tribal_assistant.core.agents.tools.read import (
     GetQuests,
     GetVillageState,
@@ -64,9 +70,16 @@ class Toolbox:
         SearchDocs,
         ReadDoc,
         ListBarbarians,
+        GetTargetIntel,
+        GetIncoming,
+        SimulateBattle,
+        GetForecast,
+        PlanScavenge,
+        GetOwnOffers,
         UpgradeBuilding,
         RecruitUnits,
         SendFarmAttack,
+        SendSpy,
         SendScavenge,
         ClaimQuestRewards,
         OpenDailyBonus,
@@ -85,6 +98,8 @@ class Toolbox:
         AcceptMentor,
         AcceptMarketOffer,
         CreateMarketOffer,
+        ParkMarketOffer,
+        CancelMarketOffer,
         ResearchUnit,
         SetVillageGoal,
         SetVillagePlan,
