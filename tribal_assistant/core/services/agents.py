@@ -71,10 +71,6 @@ class AgentService:
 
         return sorted(items, key=lambda o: o.village_id)
 
-    async def coordination_history(self, village_id: int, limit: int = 20) -> list[CoordinationOut]:
-        rows = await CoordinationRepository(self.session).history(village_id, limit)
-        return [CoordinationOut.model_validate(row) for row in rows]
-
     async def set_role(self, village_id: int, body: RoleIn) -> RoleOut:
         from tribal_assistant.core.agents.coordination.roles import RoleSelector
 

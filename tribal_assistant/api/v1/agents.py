@@ -81,15 +81,6 @@ async def coordination(service: AgentServiceDep) -> list[CoordinationOut]:
     return await service.coordination()
 
 
-@agents_router.get("/coordination/{village_id}", response_model=list[CoordinationOut])
-async def coordination_history(
-    service: AgentServiceDep,
-    village_id: int,
-    limit: int = Query(default=20, ge=1, le=200),
-) -> list[CoordinationOut]:
-    return await service.coordination_history(village_id, limit)
-
-
 @agents_router.put("/villages/{village_id}/role", response_model=RoleOut)
 async def set_role(village_id: int, body: RoleIn, service: AgentServiceDep) -> RoleOut:
     return await service.set_role(village_id, body)

@@ -36,11 +36,6 @@ async def unit(key: str) -> dict[str, Any]:
     return knowledge.unit(key)
 
 
-@knowledge_router.get("/guides")
-async def guides() -> dict[str, str]:
-    return knowledge.guides()
-
-
 @knowledge_router.get("/guides/{name}", response_class=PlainTextResponse)
 async def guide(name: str) -> str:
     return knowledge.guide(name)

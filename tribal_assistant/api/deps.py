@@ -14,7 +14,6 @@ from tribal_assistant.core.services.agents import AgentService
 from tribal_assistant.core.services.challenges import ChallengeService
 from tribal_assistant.core.services.game import GameService
 from tribal_assistant.core.services.observability import ObservabilityService
-from tribal_assistant.core.services.villages import VillageService
 from tribal_assistant.core.services.world import WorldService
 
 ACCOUNT_COOKIE = "tw_account"
@@ -62,5 +61,4 @@ AgentServiceDep = Annotated[AgentService, Depends(provide(AgentService))]
 ChallengeServiceDep = Annotated[ChallengeService, Depends(provide(ChallengeService))]
 GameServiceDep = Annotated[GameService, Depends(provide(GameService))]
 ObservabilityServiceDep = Annotated[ObservabilityService, Depends(provide(ObservabilityService))]
-VillageServiceDep = Annotated[VillageService, Depends(provide(VillageService))]
 WorldServiceDep = Annotated[WorldService, Depends(provide(WorldService))]

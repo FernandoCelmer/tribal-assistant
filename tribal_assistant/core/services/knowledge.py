@@ -30,9 +30,6 @@ class KnowledgeService:
 
         return info
 
-    def guides(self) -> dict[str, str]:
-        return dict(GameKnowledge.guides)
-
     def guide(self, name: str) -> str:
         text = GameKnowledge.guide(name)
         if text is None:

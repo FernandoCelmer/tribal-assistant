@@ -18,16 +18,6 @@ class AssistantService:
             last_error=session_state.last_error,
         )
 
-    async def start(self) -> CommandResult:
-        if not scheduler.running:
-            scheduler.start()
-        return CommandResult(ok=True, message="scheduler started")
-
-    async def stop(self) -> CommandResult:
-        if scheduler.running:
-            scheduler.pause()
-        return CommandResult(ok=True, message="scheduler paused")
-
     async def sync(self) -> CommandResult:
         from tribal_assistant.core.game.modules.game_sync import sync_game
 

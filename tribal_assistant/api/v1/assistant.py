@@ -17,16 +17,6 @@ async def status(service: AssistantService = Depends(_service)) -> AssistantStat
     return await service.status()
 
 
-@assistant_router.post("/start", response_model=CommandResult)
-async def start(service: AssistantService = Depends(_service)) -> CommandResult:
-    return await service.start()
-
-
-@assistant_router.post("/stop", response_model=CommandResult)
-async def stop(service: AssistantService = Depends(_service)) -> CommandResult:
-    return await service.stop()
-
-
 @assistant_router.post("/sync", response_model=CommandResult)
 async def sync(service: AssistantService = Depends(_service)) -> CommandResult:
     return await service.sync()
