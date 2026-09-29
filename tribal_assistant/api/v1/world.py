@@ -1,6 +1,7 @@
 """World data endpoints."""
 
-from typing import Literal
+from dataclasses import asdict
+from typing import Any, Literal
 
 from fastapi import APIRouter, Query
 
@@ -13,6 +14,11 @@ world_router = APIRouter()
 @world_router.get("/status", response_model=WorldStatus)
 async def status(service: WorldServiceDep) -> WorldStatus:
     return await service.status()
+
+
+@world_router.get("/config", response_model=dict[str, Any])
+async def config(service: WorldServiceDep) -> dict[str, Any]:
+    return asdict(await service.config())
 
 
 @world_router.get("/nearby", response_model=list[NearbyVillage])

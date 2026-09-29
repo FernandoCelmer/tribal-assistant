@@ -14,8 +14,11 @@ from tribal_assistant.core.services.agents import AgentService
 from tribal_assistant.core.services.assistant import AssistantService
 from tribal_assistant.core.services.challenges import ChallengeService
 from tribal_assistant.core.services.docs import DocsService
+from tribal_assistant.core.services.forecast import ForecastService
 from tribal_assistant.core.services.game import GameService
+from tribal_assistant.core.services.live import LiveGameService
 from tribal_assistant.core.services.observability import ObservabilityService
+from tribal_assistant.core.services.reports import ReportService
 from tribal_assistant.core.services.world import WorldService
 
 ACCOUNT_COOKIE = "tw_account"
@@ -66,3 +69,6 @@ DocsServiceDep = Annotated[DocsService, Depends(provide(DocsService))]
 GameServiceDep = Annotated[GameService, Depends(provide(GameService))]
 ObservabilityServiceDep = Annotated[ObservabilityService, Depends(provide(ObservabilityService))]
 WorldServiceDep = Annotated[WorldService, Depends(provide(WorldService))]
+ForecastServiceDep = Annotated[ForecastService, Depends(provide(ForecastService))]
+LiveGameServiceDep = Annotated[LiveGameService, Depends(provide(LiveGameService))]
+ReportServiceDep = Annotated[ReportService, Depends(provide(ReportService))]

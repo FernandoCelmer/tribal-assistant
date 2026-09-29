@@ -17,7 +17,14 @@ READ_ONLY_TOOLS = {
     "get_coordination",
     "search_docs",
     "read_doc",
+    "get_reports",
+    "get_forecast",
+    "plan_scavenge",
+    "get_market",
+    "get_knight",
+    "get_inventory",
 }
+READS_GAME_TOOLS = {"get_market", "get_knight", "get_inventory"}
 GAME_ACTIONS = {
     "run_agents",
     "upgrade_building",
@@ -52,7 +59,7 @@ async def test_tool_surface(server) -> None:
     tools = await _tools(server)
 
     assert set(tools) == READ_ONLY_TOOLS | GAME_ACTIONS | LOCAL_WRITES | {"sync_account", "sync_world"}
-    assert len(tools) == 28
+    assert len(tools) == 34
     for tool in tools.values():
         assert tool.description
         assert tool.title
@@ -66,6 +73,7 @@ async def test_annotations_match_side_effects(server) -> None:
 
     for name in READ_ONLY_TOOLS:
         assert tools[name].annotations.read_only_hint, name
+        assert tools[name].annotations.open_world_hint == (name in READS_GAME_TOOLS), name
     for name in GAME_ACTIONS:
         assert not tools[name].annotations.read_only_hint, name
         assert tools[name].annotations.open_world_hint, name
@@ -137,3 +145,13 @@ async def test_knowledge_resources(server) -> None:
 
     contents = list(await server.read_resource("tribal://knowledge/buildings"))
     assert '"snob"' in contents[0].content
+
+
+async def test_insight_tools_read_through_the_api(server) -> None:
+    reports = await server.call_tool("get_reports", {"limit": 5})
+    forecast = await server.call_tool("get_forecast", {})
+    scavenge = await server.call_tool("plan_scavenge", {})
+
+    assert reports.structured_content["total"] == 0
+    assert forecast.structured_content == {"villages": []}
+    assert scavenge.structured_content == {"villages": []}

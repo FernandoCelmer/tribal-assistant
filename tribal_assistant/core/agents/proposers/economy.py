@@ -1,5 +1,6 @@
 """Economy: how much can be invested and when; storage, farm, reserves and market trades."""
 
+import math
 from datetime import UTC, datetime, timedelta
 
 from tribal_assistant.core.agents.coordination.budget import Reservation
@@ -12,6 +13,58 @@ from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 MARKET_MINUTES = 360
 POP_WINDOW_HOURS = 6
 SPENDING = ("recruit_units", "train_knight", "use_item", "research_unit")
+RECRUIT_BATCH = 25
+LIGHT_RESEARCH_IRON = 2000
+PARK_MEMORY_HOURS = 96
+
+
+class IronParking:
+    """Surplus iron waits in market offers nobody takes: safe from loot and from overflow, cancelled when needed."""
+
+    FULL = 0.85
+    SOON_HOURS = 2.0
+    KEEP = 0.25
+    FLOOR = 0.2
+    LOT = 1000
+    MIN_LOT = 500
+    THREAT_HOURS = 6.0
+    MAX_HOURS = 1
+
+    @classmethod
+    def lots(cls, iron: int, storage: int, need: int, hours_full: float, impact_hours: float | None) -> tuple[int, int] | None:
+        """Amount per offer and how many offers, or None when the iron should stay home."""
+        threatened = impact_hours is not None and impact_hours <= cls.THREAT_HOURS
+        pressed = storage > 0 and (iron >= storage * cls.FULL or hours_full <= cls.SOON_HOURS)
+        if not (threatened or pressed):
+            return None
+
+        keep = max(need, math.ceil(storage * (cls.FLOOR if threatened else cls.KEEP)))
+        surplus = iron - keep
+        if surplus >= cls.LOT:
+            return cls.LOT, surplus // cls.LOT
+
+        if surplus >= cls.MIN_LOT:
+            return surplus // 100 * 100, 1
+
+        return None
+
+    @staticmethod
+    def parked(offers: list[dict]) -> list[dict]:
+        return [o for o in offers if o.get("sell") == "iron" and o.get("buy_amount", 0) > o.get("sell_amount", 0)]
+
+    @classmethod
+    def release(cls, offers: list[dict], iron: int, need: int) -> list[dict]:
+        """Parked offers to cancel, biggest first, until the iron in stock covers the next use."""
+        missing = need - iron
+        chosen = []
+        for offer in sorted(cls.parked(offers), key=lambda o: -o["sell_amount"] * o.get("count", 1)):
+            if missing <= 0:
+                break
+
+            chosen.append(offer)
+            missing -= offer["sell_amount"] * offer.get("count", 1)
+
+        return chosen
 
 
 class EconomyProposer(Proposer):
@@ -109,7 +162,85 @@ class EconomyProposer(Proposer):
         if trade:
             items.append(trade)
 
+        if trade is None or trade.arguments.get("pay", trade.arguments.get("sell")) != "iron":
+            items += await self._parking(view)
+
         return items
+
+    @staticmethod
+    def iron_need(ctx) -> int:
+        """Iron the next use asks for: a plan build, a plan recruit batch or the light cavalry research."""
+        needs = []
+        for name in PlanTracker.next_builds(ctx.plan)[:2]:
+            building = ctx.building(name)
+            needs.append((building.next_iron or 0) if building else 0)
+
+        for step in PlanTracker.next_recruits(ctx.plan)[:2]:
+            unit = ctx.unit(step.target)
+            if unit is not None and unit.available:
+                needs.append((unit.cost_iron or 0) * min(RECRUIT_BATCH, max(0, step.amount - unit.total)))
+
+        light = ctx.unit("light")
+        if ctx.levels.get("stable", 0) >= 1 and ctx.levels.get("smith", 0) >= 1 and light is not None and not light.available:
+            needs.append(LIGHT_RESEARCH_IRON)
+
+        return max(needs, default=0)
+
+    async def _parking(self, view: CoordinationView) -> list[Proposal]:
+        ctx = view.ctx
+        if ctx.levels.get("market", 0) < 1 or view.dry_run:
+            return []
+
+        iron = ctx.stock.get("iron", 0)
+        need = self.iron_need(ctx)
+        impact = view.estimator.hours_to_impact()
+        memory = f"market_parked:{ctx.game_id}"
+
+        if need > iron and impact is None and not await view.lessons.due(memory, PARK_MEMORY_HOURS) and await view.cooldown("market_release", 0.5):
+            offers = await view.actions.market.list_own_offers(ctx.game_id)
+            return [self._cancel(offer, need) for offer in IronParking.release(offers, iron, need)]
+
+        plan = IronParking.lots(iron, ctx.village.storage or 0, need, view.estimator.hours_to_full()["iron"], impact)
+        if plan is None or not await view.cooldown("market_park", 2):
+            return []
+
+        merchants = await view.actions.market_merchants(ctx.game_id)
+        amount, lots = plan
+        lots = min(lots, merchants.get("free", 0))
+        if lots <= 0:
+            return []
+
+        await view.lessons.mark(memory)
+        buy = "wood" if ctx.stock.get("wood", 0) <= ctx.stock.get("clay", 0) else "stone"
+        why = f"ataque chega em {impact:.1f}h: ferro em oferta não é saqueado" if impact is not None else f"ferro {iron} de {ctx.village.storage} sem uso próximo"
+        return [
+            Proposal(
+                self.key,
+                "park_market_offer",
+                {"sell": "iron", "buy": buy, "amount": amount, "lots": lots, "max_hours": IronParking.MAX_HOURS, "reason": "estacionar ferro sobrando"},
+                why,
+                f"{amount * lots} ferro guardado nos comerciantes",
+                cost={"iron": amount * lots},
+                factors=Factors(urgency=0.5 if impact is not None else 0.3, impact=0.4, risk_avoided=0.7 if impact is not None else 0.4, opportunity_cost=0.1),
+                horizon=Horizon.IMMEDIATE if impact is not None else Horizon.TACTICAL,
+                confidence=0.75,
+                risks=["alguém pode aceitar a oferta: ainda assim troca a favor"],
+                key=f"park_market_offer:{amount}x{lots}",
+            )
+        ]
+
+    def _cancel(self, offer: dict, need: int) -> Proposal:
+        return Proposal(
+            self.key,
+            "cancel_market_offer",
+            {"offer_id": offer["id"], "reason": "ferro necessário"},
+            f"próximo uso pede {need} de ferro",
+            f"+{offer['sell_amount'] * offer.get('count', 1)} ferro de volta",
+            factors=Factors(urgency=0.6, impact=0.5, opportunity=0.4),
+            horizon=Horizon.IMMEDIATE,
+            confidence=0.9,
+            key=f"cancel_market_offer:{offer['id']}",
+        )
 
     @staticmethod
     def pop_lock_hours(samples: list[tuple[datetime, int]], pop_free: int) -> float:

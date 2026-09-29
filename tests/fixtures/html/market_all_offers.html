@@ -1,0 +1,53 @@
+<td id="content_value">
+                                            
+                                            <table width="100%">
+	<tbody><tr>
+		<td valign="top"><img src="https://dsbr.innogamescdn.com/asset/07afad24/graphic/big_buildings/market2.webp" class="" data-title="Mercado"></td>
+		<td valign="top" width="100%">
+			<h2>Mercado (Nível 5) </h2>
+			No mercado, você pode trocar recursos com outros jogadores.
+		</td>
+	</tr>
+</tbody></table>
+
+<script type="text/javascript">
+    var Data = {
+        Trader : {
+            carry: 1000,
+            amount: 4,
+            total: 4,
+            capacity : function () {
+                return Data.Trader.carry * Data.Trader.amount;
+            }
+        },
+
+        Res : {
+            wood: 0,
+            stone: 0,
+            iron: 0
+        }
+    };
+
+    $(document).ready(function() {
+        Market.init(Data, 'all_own_offer');
+    });
+</script>
+<table>
+	<tbody><tr>
+		<td valign="top">
+			<table class="vis modemenu">
+                                    <tbody><tr id="id_other_offer"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=other_offer">Comércio </a></td></tr>
+                                    <tr id="id_exchange"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=exchange">Troca Premium </a></td></tr>
+                                    <tr id="id_own_offer"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=own_offer">Criar ofertas </a></td></tr>
+                                    <tr id="id_send"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=send">Enviar recursos </a></td></tr>
+                                    <tr id="id_transports"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=transports">Transporte </a></td></tr>
+                                    <tr id="id_traders"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=traders">Estado do comerciante </a></td></tr>
+                                    <tr id="id_all_own_offer"><td class="selected" style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=all_own_offer">Todas as suas ofertas </a></td></tr>
+                			</tbody></table>
+		</td>
+		<td valign="top">
+<h3>Todas as suas ofertas</h3>
+
+    Você não tem nada a oferecer atualmente.
+</td></tr></tbody></table>
+	                               		</td>

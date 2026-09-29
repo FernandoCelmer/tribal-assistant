@@ -1,0 +1,136 @@
+<td id="content_value">
+                                            
+                                            <table width="100%">
+	<tbody><tr>
+		<td valign="top"><img src="https://dsbr.innogamescdn.com/asset/07afad24/graphic/big_buildings/market2.webp" class="" data-title="Mercado"></td>
+		<td valign="top" width="100%">
+			<h2>Mercado (Nível 5) </h2>
+			No mercado, você pode trocar recursos com outros jogadores.
+		</td>
+	</tr>
+</tbody></table>
+
+<script type="text/javascript">
+    var Data = {
+        Trader : {
+            carry: 1000,
+            amount: 4,
+            total: 4,
+            capacity : function () {
+                return Data.Trader.carry * Data.Trader.amount;
+            }
+        },
+
+        Res : {
+            wood: 0,
+            stone: 0,
+            iron: 0
+        }
+    };
+
+    $(document).ready(function() {
+        Market.init(Data, 'own_offer');
+    });
+</script>
+<table>
+	<tbody><tr>
+		<td valign="top">
+			<table class="vis modemenu">
+                                    <tbody><tr id="id_other_offer"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=other_offer">Comércio </a></td></tr>
+                                    <tr id="id_exchange"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=exchange">Troca Premium </a></td></tr>
+                                    <tr id="id_own_offer"><td class="selected" style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=own_offer">Criar ofertas </a></td></tr>
+                                    <tr id="id_send"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=send">Enviar recursos </a></td></tr>
+                                    <tr id="id_transports"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=transports">Transporte </a></td></tr>
+                                    <tr id="id_traders"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=traders">Estado do comerciante </a></td></tr>
+                                    <tr id="id_all_own_offer"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=all_own_offer">Todas as suas ofertas </a></td></tr>
+                			</tbody></table>
+		</td>
+		<td valign="top">
+<div id="market_status_bar">
+	<table class="vis">
+		<tbody><tr>
+			<th>Comerciantes: <span id="market_merchant_available_count">4</span>/<span id="market_merchant_total_count">5</span></th>
+			<th>Quantidade máxima de transporte: <span id="market_merchant_max_transport">4000</span></th>
+					</tr>
+	</tbody></table>
+
+			<table class="vis">
+			<tbody><tr>
+									<th>Entrada: <span class="nowrap"><span class="icon header wood" data-title="Madeira"> </span>300</span> </th>
+													<th>Saída: <span class="nowrap"><span class="icon header iron" data-title="Ferro"> </span>300</span> </th>
+							</tr>
+		</tbody></table>
+	</div>
+<script>
+    MarketTrends.latest_server_update = 1790650799;
+    MarketTrends.ratio_min = 1 - 0.1;
+    MarketTrends.ratio_max = 1 + 0.1;
+</script>
+
+<h3>Criar oferta</h3>
+ <p>Ofertas de recursos apenas são possíveis com uma proporção entre 1 e 1.</p>
+<form id="own_offer_form" action="/game.php?village=105765&amp;screen=market&amp;mode=own_offer&amp;action=new_offer" method="post">
+    <!-- resource selection -->
+                    <table class="vis">
+            <tbody><tr><th>Eu estou oferecendo:</th>
+                <td>
+                    <input name="sell" id="res_sell_amount" type="text" style="width: 50px" value="">
+                </td>
+                <td style="min-width:200px;">
+                    <span id="res_sell_selection" class="res_selection"><label style="padding:5px;"><input id="res_sell_wood" name="res_sell" type="radio" value="wood"><span class="icon header wood" data-title="Madeira"> </span></label><label style="padding:5px;"><input id="res_sell_stone" name="res_sell" type="radio" value="stone"><span class="icon header stone" data-title="Argila"> </span></label><label style="padding:5px;"><input id="res_sell_iron" name="res_sell" type="radio" value="iron"><span class="icon header iron" data-title="Ferro"> </span></label></span>
+                </td>
+            </tr>
+
+            <tr><th>Eu quero:</th>
+                <td>
+                    <input name="buy" id="res_buy_amount" type="text" style="width: 50px" value="">
+                </td>
+                <td>
+                    <span id="res_buy_selection" class="res_selection"><label style="padding:5px;"><input id="res_buy_wood" name="res_buy" type="radio" value="wood"><span class="icon header wood" data-title="Madeira"> </span></label><label style="padding:5px;"><input id="res_buy_stone" name="res_buy" type="radio" value="stone"><span class="icon header stone" data-title="Argila"> </span></label><label style="padding:5px;"><input id="res_buy_iron" name="res_buy" type="radio" value="iron"><span class="icon header iron" data-title="Ferro"> </span></label></span>
+                </td>
+            </tr>
+        </tbody></table>
+    
+    <table id="trends_main" class="vis" data-enabled="0">
+        <tbody>
+        <tr><th><span class="float_left" id="trends_title"></span><span class="float_right" id="trends_ratio"></span></th></tr>
+        <tr>
+            <td>
+                            </td>
+        </tr>
+        <tr><td>
+                <div style="width:100px; margin-left:auto; margin-right: auto;"><img id="trend_loading_icon" src="graphic/throbber200.gif"></div>
+                <div id="market_trends">
+
+                    <div id="graph_container_0" class="graph_show">
+                        <div id="trend_graph_0" class="market_trend_graph" style="padding: 0px; position: relative;"><canvas class="flot-base" width="400" height="250" style="direction: ltr; position: absolute; left: 0px; top: 0px; width: 400px; height: 250px;"></canvas><div class="flot-text" style="position: absolute; inset: 0px; font-size: smaller; color: rgb(84, 84, 84);"><div class="flot-x-axis flot-x1-axis xAxis x1Axis" style="position: absolute; inset: 0px;"><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 39px; text-align: center;">Sep 02</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 77px; text-align: center;">Sep 05</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 116px; text-align: center;">Sep 08</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 154px; text-align: center;">Sep 11</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 192px; text-align: center;">Sep 14</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 231px; text-align: center;">Sep 17</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 269px; text-align: center;">Sep 20</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 308px; text-align: center;">Sep 23</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 346px; text-align: center;">Sep 26</div><div class="flot-tick-label tickLabel" style="position: absolute; max-width: 33px; top: 248px; left: 384px; text-align: center;">Sep 29</div></div><div class="flot-y-axis flot-y1-axis yAxis y1Axis" style="position: absolute; inset: 0px;"><div class="flot-tick-label tickLabel" style="position: absolute; top: 228px; left: 2px; text-align: right;">0.5</div><div class="flot-tick-label tickLabel" style="position: absolute; top: 159px; left: 2px; text-align: right;">1.0</div><div class="flot-tick-label tickLabel" style="position: absolute; top: 91px; left: 2px; text-align: right;">1.5</div><div class="flot-tick-label tickLabel" style="position: absolute; top: 22px; left: 2px; text-align: right;">2.0</div></div></div><canvas class="flot-overlay" width="400" height="250" style="direction: ltr; position: absolute; left: 0px; top: 0px; width: 400px; height: 250px;"></canvas></div>
+                    </div>
+                    <div id="graph_container_1" class="graph_hide">
+                        <div id="trend_graph_1" class="market_trend_graph"></div>
+                    </div>
+                </div>
+            </td></tr>
+        </tbody>
+    </table>
+    <br>
+    <table class="vis">
+        <tbody><tr>
+            <th colspan="3">Limitações</th>
+        </tr>
+        <tr>
+            <td>Quantas vezes oferecer:</td>
+            <td><input name="multi" type="text" style="width: 50px" value="1"></td>
+            <td>Ofertas</td>
+        </tr>
+
+        <tr>
+            <td>Duração máxima da viagem:</td>
+            <td><input name="max_time" type="text" style="width: 50px" value="5"></td>
+            <td>Horas</td>
+        </tr>
+            </tbody></table>
+    <br>
+    <input id="submit_offer" class="btn" type="submit" value="Criar">
+<input type="hidden" name="h" value="00000000"></form>
+</td></tr></tbody></table>
+	                               		</td>

@@ -12,6 +12,7 @@ from tribal_assistant.mcp.prompts import Prompts
 from tribal_assistant.mcp.resources import Resources
 from tribal_assistant.mcp.tools.base import ToolGroup
 from tribal_assistant.mcp.tools.game import GameActionTools
+from tribal_assistant.mcp.tools.insight import InsightTools
 from tribal_assistant.mcp.tools.state import StateTools
 from tribal_assistant.mcp.tools.world import WorldTools
 from tribal_assistant.version import __version__
@@ -27,6 +28,11 @@ Reading, cheapest first:
 - lookup_knowledge answers building requirements and unit stats from the official help pages;
   search_docs and read_doc search the whole local library (help, guides, forum tutorials).
 - list_barbarians gives loot targets that the guardrails accept; list_nearby scouts the map.
+- get_reports pages the synced report inbox; get_forecast says when storage fills, population
+  locks, an attack lands or a cost becomes affordable; plan_scavenge splits idle troops over
+  the free scavenging tiers. All three read the local database only.
+- get_market, get_knight and get_inventory open the game in the browser: they only work on the
+  server that plays (PLAY=true), take a few seconds, and should not be polled.
 - Data is as fresh as the last sync_account (game) and sync_world (public map); sync once per
   session or after acting, not before every read.
 Resources mirror the static parts: tribal://knowledge/strategy, tribal://knowledge/buildings,
@@ -58,7 +64,7 @@ Rules, whatever the client:
 
 
 class TribalMcpServer:
-    GROUPS: tuple[type[ToolGroup], ...] = (StateTools, WorldTools, GameActionTools)
+    GROUPS: tuple[type[ToolGroup], ...] = (StateTools, WorldTools, InsightTools, GameActionTools)
 
     def __init__(self, api: ApiClient | None = None) -> None:
         self.api = api or ApiClient()

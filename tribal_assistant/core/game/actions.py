@@ -36,6 +36,7 @@ from tribal_assistant.core.game.session import game_session
 if TYPE_CHECKING:
     from tribal_assistant.core.game.diplomacy import Diplomacy
     from tribal_assistant.core.game.forge import Forge
+    from tribal_assistant.core.game.market import Market
 
 UNIT_SCREEN = {
     "spear": "barracks",
@@ -182,6 +183,12 @@ class GameActions:
         from tribal_assistant.core.game.forge import Forge
 
         return Forge(self)
+
+    @property
+    def market(self) -> "Market":
+        from tribal_assistant.core.game.market import Market
+
+        return Market(self)
 
     def _capture(self, page_html: str, name: str) -> None:
         """Keep the HTML of screens we act on, so scrapers can be written against real markup."""
@@ -746,14 +753,18 @@ class GameActions:
         """Items in the inventory with their detail text and whether they can be used."""
         async with game_session.lock:
             page = await self._in_game(village_id, "inventory")
-            await page.wait_for_timeout(2_000)
+            try:
+                await page.wait_for_selector(".inventory_items .item, .inventory_message_empty:visible", timeout=15_000)
+            except PlaywrightError:
+                logger.warning("Inventory did not load in village {}", village_id)
+                return []
 
             items = []
             for item in await page.locator(".inventory_items .item").all():
                 key = (await item.get_attribute("id") or "").removeprefix("item_")
                 await item.click()
                 await page.wait_for_timeout(700)
-                detail = page.locator(".inventory_detail").first
+                detail = page.locator(".inventory_detail:visible").first
                 items.append(
                     {
                         "key": key,
