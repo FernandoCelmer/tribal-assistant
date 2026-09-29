@@ -209,6 +209,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/game/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reports */
+        get: operations["reports_api_v1_game_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/game/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Forecast */
+        get: operations["forecast_api_v1_game_forecast_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/game/scavenge-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scavenge Plan */
+        get: operations["scavenge_plan_api_v1_game_scavenge_plan_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/game/market": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Market */
+        get: operations["market_api_v1_game_market_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/game/knight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Knight */
+        get: operations["knight_api_v1_game_knight_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/game/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inventory */
+        get: operations["inventory_api_v1_game_inventory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/world/status": {
         parameters: {
             query?: never;
@@ -218,6 +320,23 @@ export interface paths {
         };
         /** Status */
         get: operations["status_api_v1_world_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/world/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Config */
+        get: operations["config_api_v1_world_config_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -601,6 +720,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/docs/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_api_v1_docs_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read */
+        get: operations["read_api_v1_docs_read_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_api_v1_docs_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sync */
+        post: operations["sync_api_v1_docs_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/system/info": {
         parameters: {
             query?: never;
@@ -688,6 +875,22 @@ export interface components {
             headless?: boolean | null;
             /** Enabled */
             enabled?: boolean | null;
+        };
+        /** Affordability */
+        Affordability: {
+            /** Label */
+            label: string;
+            /** Cost */
+            cost: {
+                [key: string]: number;
+            };
+            /**
+             * Hours
+             * @description Hours until the stock pays the cost at the current production; 0 when it already does, null when never.
+             */
+            hours: number | null;
+            /** At */
+            at: string | null;
         };
         /** AgentActOut */
         AgentActOut: {
@@ -1063,6 +1266,43 @@ export interface components {
              */
             created_at: string;
         };
+        /** DocHit */
+        DocHit: {
+            /** Path */
+            path: string;
+            /** Title */
+            title: string;
+            /** Section */
+            section: string;
+            /** Category */
+            category: string;
+            /** Text */
+            text: string;
+            /** Score */
+            score: number;
+        };
+        /** DocOut */
+        DocOut: {
+            /** Path */
+            path: string;
+            /** Title */
+            title: string;
+            /** Category */
+            category: string;
+            /** Text */
+            text: string;
+        };
+        /** DocsSyncOut */
+        DocsSyncOut: {
+            /** Files */
+            files: number;
+            /** Updated */
+            updated: number;
+            /** Removed */
+            removed: number;
+            /** Chunks */
+            chunks: number;
+        };
         /** FlowLink */
         FlowLink: {
             /** Source */
@@ -1129,6 +1369,35 @@ export interface components {
             by_agent: {
                 [key: string]: number;
             };
+        };
+        /** InventoryItem */
+        InventoryItem: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string | null;
+            /** Detail */
+            detail: string;
+            /** Usable */
+            usable: boolean;
+        };
+        /** InventoryOut */
+        InventoryOut: {
+            /** Village Id */
+            village_id: number;
+            /** Items */
+            items: components["schemas"]["InventoryItem"][];
+        };
+        /** KnightOut */
+        KnightOut: {
+            /** Village Id */
+            village_id: number;
+            /** Learnable */
+            learnable: number[];
+            /** Can Recruit */
+            can_recruit: boolean;
+            /** Can Train */
+            can_train: boolean;
         };
         /** LessonOut */
         LessonOut: {
@@ -1201,6 +1470,42 @@ export interface components {
             /** Process */
             process: string;
         };
+        /** MarketOffer */
+        MarketOffer: {
+            /** Receive */
+            receive: string | null;
+            /** Receive Amount */
+            receive_amount: number;
+            /** Pay */
+            pay: string | null;
+            /** Pay Amount */
+            pay_amount: number;
+            /** Player */
+            player: string;
+            /** Minutes */
+            minutes: number | null;
+            /** Can Accept */
+            can_accept: boolean;
+        };
+        /** MarketOut */
+        MarketOut: {
+            /** Village Id */
+            village_id: number;
+            merchants: components["schemas"]["Merchants"];
+            /** Offers */
+            offers: components["schemas"]["MarketOffer"][];
+            /** Own Offers */
+            own_offers: components["schemas"]["OwnOffer"][];
+        };
+        /** Merchants */
+        Merchants: {
+            /** Free */
+            free: number;
+            /** Total */
+            total: number;
+            /** Carry */
+            carry: number;
+        };
         /** NearbyVillage */
         NearbyVillage: {
             /** Id */
@@ -1225,6 +1530,28 @@ export interface components {
             travel_minutes: {
                 [key: string]: number;
             };
+        };
+        /** OwnOffer */
+        OwnOffer: {
+            /** Id */
+            id: string;
+            /** Sell */
+            sell: string;
+            /** Sell Amount */
+            sell_amount: number;
+            /** Buy */
+            buy: string;
+            /** Buy Amount */
+            buy_amount: number;
+            /** Count */
+            count: number;
+            /** Max Hours */
+            max_hours: number | null;
+            /**
+             * Parked
+             * @description Asks more than it gives: a resource kept in the merchants, not a real trade.
+             */
+            parked: boolean;
         };
         /** PlanStep */
         PlanStep: {
@@ -1378,6 +1705,17 @@ export interface components {
             /** Haul Total */
             haul_total: number | null;
         };
+        /** ReportPage */
+        ReportPage: {
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+            /** Items */
+            items: components["schemas"]["ReportOut"][];
+        };
         /** RoleIn */
         RoleIn: {
             /**
@@ -1466,6 +1804,44 @@ export interface components {
             unlock_at: string | null;
             /** Return At */
             return_at: string | null;
+        };
+        /** ScavengePlan */
+        ScavengePlan: {
+            /** Village Id */
+            village_id: number;
+            /** Free Options */
+            free_options: number[];
+            /** Units Home */
+            units_home: {
+                [key: string]: number;
+            };
+            /** Runs */
+            runs: components["schemas"]["ScavengeRun"][];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** ScavengeRun */
+        ScavengeRun: {
+            /** Option Id */
+            option_id: number;
+            /** Loot Factor */
+            loot_factor: number;
+            /** Units */
+            units: {
+                [key: string]: number;
+            };
+            /** Carry */
+            carry: number;
+            /** Haul */
+            haul: number;
+            /**
+             * Base Minutes
+             * @description Run length before the world speed factor.
+             */
+            base_minutes: number;
         };
         /** SnapshotOut */
         SnapshotOut: {
@@ -1615,6 +1991,49 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VillageForecast */
+        VillageForecast: {
+            /** Village Id */
+            village_id: number;
+            /** Name */
+            name: string;
+            /** Coords */
+            coords: string;
+            /** Stock */
+            stock: {
+                [key: string]: number;
+            };
+            /** Storage */
+            storage: number;
+            /** Production */
+            production: {
+                [key: string]: number;
+            };
+            /** Hours To Full */
+            hours_to_full: {
+                [key: string]: number | null;
+            };
+            /** Storage Full Hours */
+            storage_full_hours: number | null;
+            /** Storage Full At */
+            storage_full_at: string | null;
+            /** Pop Free */
+            pop_free: number;
+            /** Pop Max */
+            pop_max: number;
+            /** Pop Ratio */
+            pop_ratio: number;
+            /** Pop Lock Hours */
+            pop_lock_hours: number | null;
+            /** Queue Hours */
+            queue_hours: number;
+            /** Incoming Attacks */
+            incoming_attacks: number;
+            /** Impact Hours */
+            impact_hours: number | null;
+            next_build: components["schemas"]["Affordability"] | null;
+            afford: components["schemas"]["Affordability"] | null;
         };
         /** VillageOverview */
         VillageOverview: {
@@ -2038,6 +2457,199 @@ export interface operations {
             };
         };
     };
+    reports_api_v1_game_reports_get: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+                category?: string | null;
+                result?: string | null;
+                coords?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forecast_api_v1_game_forecast_get: {
+        parameters: {
+            query?: {
+                village_id?: number | null;
+                wood?: number;
+                clay?: number;
+                iron?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VillageForecast"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scavenge_plan_api_v1_game_scavenge_plan_get: {
+        parameters: {
+            query?: {
+                village_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScavengePlan"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    market_api_v1_game_market_get: {
+        parameters: {
+            query?: {
+                village_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    knight_api_v1_game_knight_get: {
+        parameters: {
+            query?: {
+                village_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnightOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inventory_api_v1_game_inventory_get: {
+        parameters: {
+            query?: {
+                village_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     status_api_v1_world_status_get: {
         parameters: {
             query?: never;
@@ -2054,6 +2666,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorldStatus"];
+                };
+            };
+        };
+    };
+    config_api_v1_world_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -2677,6 +3311,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChallengesOut"];
+                };
+            };
+        };
+    };
+    search_api_v1_docs_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+                category?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocHit"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_api_v1_docs_read_get: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalog_api_v1_docs_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    }[];
+                };
+            };
+        };
+    };
+    sync_api_v1_docs_sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocsSyncOut"];
                 };
             };
         };
