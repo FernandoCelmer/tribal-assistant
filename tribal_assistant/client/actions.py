@@ -52,6 +52,12 @@ QUEST_POPUP = ".quest-popup-container"
 SCAVENGE_HOME_JS = """() => Object.fromEntries([...document.querySelectorAll('.units-entry-all[data-unit]')]
   .map(a => [a.dataset.unit, Number((a.innerText.match(/\\d+/) || [0])[0])]))"""
 
+CURRENT_FLAG_JS = """() => {
+  const th = [...document.querySelectorAll('#content_value th')].find(t => /Atual bandeira/.test(t.innerText));
+  const cell = th && th.closest('table').querySelector('td');
+  return cell ? (cell.querySelector('strong')?.innerText.trim() + ' ' + (cell.querySelector('p')?.innerText.trim() || '')).trim() : '';
+}"""
+
 FREE_FINISH = "#buildqueue .btn-instant-free"
 FREE_WAIT_MAX = 75
 FREE_WAIT_JS = "(n) => { const at = Number(n.dataset.availableFrom || 0); return at ? Math.max(0, at - Date.now() / 1000) : null; }"
@@ -868,9 +874,7 @@ class GameActions:
             await human_click(page, box.first)
             await human_delay(800, 1500)
 
-            confirm = page.locator(
-                ".evt-confirm-btn:visible, .btn-confirm-yes:visible, .popup_box_container a.btn:visible"
-            )
+            confirm = page.locator("#selected_flag .btn-confirm-yes:visible")
             if await confirm.count():
                 self._capture(await page.content(), "flag-assign")
                 await human_click(page, confirm.first)
@@ -881,14 +885,14 @@ class GameActions:
                 return ActionResult(False, "assign_flag", " | ".join(messages["errors"]))
 
             await _open(page, "flags", village_id)
-            current = " ".join((await page.locator("#content_value").inner_text()).split())
+            current = await page.evaluate(CURRENT_FLAG_JS)
 
-        if title and title.split(" ")[0] not in current:
+        if not current:
             return ActionResult(False, "assign_flag", f"bandeira não ficou atribuída ({title})")
 
         logger.info("Assigned flag {}_{} in village {}", flag_type, level, village_id)
         return ActionResult(
-            True, "assign_flag", f"bandeira atribuída: {title}", {"notices": messages["notices"]}
+            True, "assign_flag", f"bandeira atribuída: {current}", {"notices": messages["notices"]}
         )
 
     async def claim_rewards(self, village_id: str) -> ActionResult:

@@ -75,11 +75,8 @@ class Guardrails:
         if option.unlock_at is not None:
             return f"coleta {option_id} já está sendo desbloqueada"
 
-        if any(o.is_locked and o.unlock_at is not None for o in options.values()):
-            return "outra coleta já está sendo desbloqueada"
-
         previous = options.get(option_id - 1)
-        if previous is not None and previous.is_locked:
+        if previous is not None and previous.is_locked and previous.unlock_at is None:
             return f"desbloqueie a coleta {option_id - 1} primeiro"
 
         return None
