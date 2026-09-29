@@ -120,3 +120,12 @@ async def test_role_switches_only_after_it_repeats(session: AsyncSession) -> Non
     assert await selector._confirm(ctx, Role.GROWTH, Role.OFFENSIVE) == Role.GROWTH
     assert await selector._confirm(ctx, Role.GROWTH, Role.OFFENSIVE) == Role.OFFENSIVE
     assert await selector._confirm(ctx, Role.GROWTH, Role.DEFENSE) == Role.DEFENSE
+
+
+def test_base_reserve_does_not_block_buildings() -> None:
+    ctx = context(stock=300, storage=2810)
+    budget = Budget(ctx)
+    budget.reserve(Reservation("base", "base", "mínimo", {"wood": 281, "clay": 281, "iron": 281}, applies_to=("recruit_units",)))
+
+    assert budget.affordable({"wood": 231, "clay": 219, "iron": 205}, action="upgrade_building")
+    assert not budget.affordable({"wood": 231, "clay": 219, "iron": 205}, action="recruit_units")

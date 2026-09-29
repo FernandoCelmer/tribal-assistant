@@ -7,6 +7,7 @@ from tribal_assistant.agents.plan import PlanTracker
 from tribal_assistant.agents.proposers.base import Proposer, clamp
 
 MARKET_MINUTES = 360
+SPENDING = ("recruit_units", "train_knight", "accept_market_offer", "create_market_offer", "use_item", "research_unit")
 
 
 class EconomyProposer(Proposer):
@@ -26,8 +27,9 @@ class EconomyProposer(Proposer):
                 Reservation(
                     "base",
                     "base",
-                    "reserva mínima configurada",
+                    "reserva mínima configurada (não vale para obras)",
                     {"wood": base, "clay": base, "iron": base},
+                    applies_to=SPENDING,
                 )
             )
 

@@ -153,14 +153,14 @@ class Coordinator:
         if proposal.troops and not self.budget.troops_available(proposal.troops, proposal.purpose):
             return "tropas comprometidas ou fora de casa"
 
-        if proposal.cost and not self.budget.affordable(proposal.cost, proposal.purpose):
-            short = self.budget.shortfall(proposal.cost, proposal.purpose)
+        if proposal.cost and not self.budget.affordable(proposal.cost, proposal.purpose, proposal.action):
+            short = self.budget.shortfall(proposal.cost, proposal.purpose, proposal.action)
             stock = self.budget.stock()
-            reserved = [r.purpose for r in self.budget.reservations if r.purpose != proposal.purpose and r.cost]
+            reserved = [r.purpose for r in self.budget.reservations if r.purpose != proposal.purpose and r.cost and r.covers(proposal.action)]
             if all(stock[k] >= proposal.cost.get(k, 0) for k in short) and reserved:
                 return f"consumiria recursos reservados para {', '.join(reserved)}"
 
-            hours = self.view.estimator.hours_to_afford(proposal.cost, self.budget.free(proposal.purpose))
+            hours = self.view.estimator.hours_to_afford(proposal.cost, self.budget.free(proposal.purpose, proposal.action))
             eta = f", disponível em ~{hours:.1f}h" if hours != float("inf") else ""
             if proposal.cost.get("pop", 0) > self.view.ctx.pop_free:
                 return "falta população (fazenda)"
@@ -173,7 +173,7 @@ class Coordinator:
         entry = proposal.to_dict()
         entry.update(extra)
         if "why" in extra and proposal.cost:
-            hours = self.view.estimator.hours_to_afford(proposal.cost, self.budget.free(proposal.purpose))
+            hours = self.view.estimator.hours_to_afford(proposal.cost, self.budget.free(proposal.purpose, proposal.action))
             entry["ready_in_hours"] = None if hours == float("inf") else round(hours, 2)
 
         return entry
