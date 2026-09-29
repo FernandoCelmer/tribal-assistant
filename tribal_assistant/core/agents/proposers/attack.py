@@ -130,25 +130,40 @@ class AttackProposer(Proposer):
         return squad
 
     @staticmethod
-    def split(units: dict[str, int], factors: dict[int, float]) -> dict[int, dict[str, int]]:
-        """Share troops among free scavenging tiers; lower tiers get more (weight 1/loot factor), each part at least 10 pop."""
+    def scavenge_seconds(haul: float) -> float:
+        """Game formula for a scavenging run, before the world speed factor (the same for every tier)."""
+        return (haul * haul * 100) ** 0.45 + 1800
+
+    @classmethod
+    def tier_sets(cls, carry: int, factors: dict[int, float]) -> list[tuple[int, ...]]:
+        """Every combination of free tiers, best resources per minute first when all of them end together."""
+        tiers = sorted(factors)
+        sets = [tuple(t for i, t in enumerate(tiers) if mask >> i & 1) for mask in range(1, 1 << len(tiers))]
+
+        def rate(chosen: tuple[int, ...]) -> float:
+            haul = carry / sum(1 / factors[t] for t in chosen)
+            return len(chosen) * haul / cls.scavenge_seconds(haul)
+
+        return sorted(sets, key=rate, reverse=True)
+
+    @classmethod
+    def split(cls, units: dict[str, int], factors: dict[int, float]) -> dict[int, dict[str, int]]:
+        """Troops for the tiers that yield the most per minute, shared 1/loot factor so every run ends together; each part at least 10 pop."""
         def pop(part: dict[str, int]) -> int:
             return sum(UNITS[u].pop * n for u, n in part.items() if u in UNITS)
 
-        options = sorted(factors, reverse=True)
-        while options:
-            for weights in ({o: 1 / factors[o] for o in options}, dict.fromkeys(options, 1.0)):
-                total = sum(weights.values())
-                parts = {o: {u: int(n * weights[o] / total) for u, n in units.items()} for o in options}
-                top = options[0]
-                for unit, count in units.items():
-                    parts[top][unit] += count - sum(p[unit] for p in parts.values())
+        carry = sum(UNITS[u].carry * n for u, n in units.items() if u in UNITS)
+        for chosen in cls.tier_sets(carry, factors):
+            weights = {t: 1 / factors[t] for t in chosen}
+            total = sum(weights.values())
+            parts = {t: {u: int(n * weights[t] / total) for u, n in units.items()} for t in chosen}
+            top = max(chosen)
+            for unit, count in units.items():
+                parts[top][unit] += count - sum(p[unit] for p in parts.values())
 
-                parts = {o: {u: n for u, n in p.items() if n > 0} for o, p in parts.items()}
-                if all(pop(p) >= SCAVENGE_MIN_POP for p in parts.values()):
-                    return parts
-
-            options = options[:-1]
+            parts = {t: {u: n for u, n in p.items() if n > 0} for t, p in parts.items()}
+            if all(pop(p) >= SCAVENGE_MIN_POP for p in parts.values()):
+                return parts
 
         return {}
 

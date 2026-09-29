@@ -80,13 +80,21 @@ def test_squad_is_sized_by_expected_haul_and_uses_the_paladin():
     assert AttackProposer.squad({"spear": 2}, 300) is None
 
 
-def test_scavenging_is_split_with_at_least_ten_pop_each():
+def test_scavenging_picks_the_tiers_that_yield_most_per_minute():
     from tribal_assistant.core.agents.proposers.attack import AttackProposer
 
-    parts = AttackProposer.split({"spear": 30, "sword": 10}, {1: 0.1, 2: 0.25})
-    assert set(parts) == {1, 2}
-    assert sum(parts[1].values()) > sum(parts[2].values())
-    assert len(AttackProposer.split({"spear": 13}, {1: 0.1, 2: 0.25})) == 1
+    tiers = {1: 0.10, 2: 0.25, 3: 0.50, 4: 0.75}
+    assert set(AttackProposer.split({"spear": 100}, tiers)) == {2, 3, 4}
+    assert set(AttackProposer.split({"spear": 1000}, tiers)) == {1, 2, 3, 4}
+    assert set(AttackProposer.split({"spear": 12}, tiers)) == {4}
+
+
+def test_scavenging_split_makes_every_run_end_together():
+    from tribal_assistant.core.agents.proposers.attack import AttackProposer
+
+    parts = AttackProposer.split({"spear": 1040}, {1: 0.10, 2: 0.25, 3: 0.50, 4: 0.75})
+    assert [parts[t]["spear"] for t in (1, 2, 3, 4)] == [600, 240, 120, 80]
+    assert all(sum(p.values()) >= 10 for p in parts.values())
 
 
 def test_mine_follows_the_resource_that_blocks_builds():
@@ -108,14 +116,6 @@ def test_mine_follows_the_resource_that_blocks_builds():
     view.build_cost = lambda b: {"wood": ctx.building(b).next_wood, "clay": ctx.building(b).next_clay, "iron": ctx.building(b).next_iron} if ctx.building(b) else {}
 
     assert InfrastructureProposer.bottleneck(view, ["main"]) == "wood"
-
-
-def test_twenty_swordsmen_fill_two_scavenging_tiers():
-    from tribal_assistant.core.agents.proposers.attack import AttackProposer
-
-    parts = AttackProposer.split({"sword": 20}, {1: 0.1, 2: 0.25})
-    assert set(parts) == {1, 2}
-    assert parts[1]["sword"] + parts[2]["sword"] == 20
 
 
 def test_iron_surplus_buys_wood_when_wood_is_almost_gone():
