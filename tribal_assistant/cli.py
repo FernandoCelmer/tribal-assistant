@@ -11,8 +11,8 @@ from rich.console import Console
 from rich.table import Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tribal_assistant import __version__
 from tribal_assistant.core.config import settings
+from tribal_assistant.version import __version__
 
 console = Console()
 app = typer.Typer(
@@ -24,7 +24,9 @@ app = typer.Typer(
 farm_app = typer.Typer(help="Farm targets and farm ticks.", no_args_is_help=True)
 world_app = typer.Typer(help="Public world data: sync, status, nearby villages.", no_args_is_help=True)
 app.add_typer(farm_app, name="farm")
+agents_app = typer.Typer(help="Village agents: run a round, read decisions and configuration.", no_args_is_help=True)
 app.add_typer(world_app, name="world")
+app.add_typer(agents_app, name="agents")
 
 JsonOption = Annotated[bool, typer.Option("--json", help="Print raw JSON instead of a table.")]
 
@@ -88,6 +90,23 @@ def serve(
     import uvicorn
 
     uvicorn.run("tribal_assistant.server:app", host=host, port=port, reload=reload)
+
+
+@app.command()
+def mcp(
+    http: Annotated[bool, typer.Option(help="Serve streamable HTTP instead of stdio.")] = False,
+    host: Annotated[str, typer.Option(help="HTTP bind address.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="HTTP port.")] = 8765,
+) -> None:
+    """Run the MCP server (stdio by default) for Claude, Codex or any MCP client."""
+    try:
+        from tribal_assistant.mcp.server import main as mcp_main
+    except ImportError as exc:
+        console.print("[red]MCP não instalado: pip install 'tribal-assistant[mcp]'[/red]")
+        raise typer.Exit(1) from exc
+
+    argv = ["--http", "--host", host, "--port", str(port)] if http else []
+    mcp_main(argv)
 
 
 @app.command()
@@ -263,6 +282,140 @@ def world_nearby(
             "yes" if n.is_farm_target else "",
         )
     console.print(table)
+
+
+@agents_app.command("run")
+def agents_run(
+    dry_run: Annotated[
+        bool | None, typer.Option("--dry-run/--live", help="Simulate or act in the game (default: AGENT_DRY_RUN).")
+    ] = None,
+    village: Annotated[list[int] | None, typer.Option(help="Only these village IDs (repeatable).")] = None,
+    as_json: JsonOption = False,
+) -> None:
+    """Run every specialist once on each own village."""
+    from dataclasses import asdict
+
+    from tribal_assistant.agents.runner import AgentRunner
+    from tribal_assistant.db.session import init_db
+
+    async def _go():
+        await init_db()
+        try:
+            return await AgentRunner(dry_run=dry_run, trigger="cli").run(village)
+        finally:
+            from tribal_assistant.client.session import game_session
+
+            await game_session.close()
+
+    report = _run(_go())
+    if as_json:
+        _print_json(asdict(report))
+        return
+
+    mode = "simulação" if report.dry_run else "ao vivo"
+    console.print(f"[bold]rodada {report.run_id}[/bold] · cérebro {report.brain} · {mode}")
+    if report.error:
+        console.print(f"[red]{report.error}[/red]")
+        raise typer.Exit(1)
+
+    for village_run in report.villages:
+        table = Table("Agente", "Resumo", title=village_run.village, show_lines=True)
+        for key, summary in village_run.summaries.items():
+            table.add_row(key, summary)
+        console.print(table)
+
+
+@agents_app.command("log")
+def agents_log(
+    limit: Annotated[int, typer.Option(min=1, max=500, help="Rows to show.")] = 30,
+    village_id: Annotated[int | None, typer.Option(help="Filter by village ID.")] = None,
+    as_json: JsonOption = False,
+) -> None:
+    """Show the latest agent decisions."""
+    from tribal_assistant.repositories.agents import AgentRepository
+    from tribal_assistant.schemas.agents import AgentDecisionOut
+
+    rows = _run(_with_session(lambda s: AgentRepository(s).decisions(village_id=village_id, limit=limit)))
+    decisions = [AgentDecisionOut.model_validate(r) for r in rows]
+    if as_json:
+        _print_json(decisions)
+        return
+
+    table = Table("Quando", "Agente", "Ação", "OK", "Resultado")
+    for d in decisions:
+        flag = "sim" if d.ok else "não"
+        if d.dry_run:
+            flag += " (sim.)"
+        table.add_row(d.created_at.strftime("%d/%m %H:%M"), d.agent, d.action, flag, d.result[:90])
+    console.print(table)
+
+
+@agents_app.command("config")
+def agents_config(as_json: JsonOption = False) -> None:
+    """Show brain, provider and the runtime settings stored in the database."""
+    from tribal_assistant.services.agents import AgentService
+
+    config = _run(_with_session(lambda s: AgentService(s).config()))
+    if as_json:
+        _print_json(config)
+        return
+
+    brain = f"{config.provider} {config.model}" if config.brain == "llm" else "regras"
+    console.print(f"cérebro: {brain} · última rodada agendada: {config.last_run_at or '—'}")
+
+    table = Table("Configuração", "Valor")
+    for key, value in config.settings.model_dump().items():
+        table.add_row(key, str(value))
+    console.print(table)
+
+
+@agents_app.command("set")
+def agents_set(
+    values: Annotated[list[str], typer.Argument(help="key=value pairs, e.g. enabled=true interval_minutes=15.")],
+) -> None:
+    """Change agent settings at runtime; the running server picks them up on its next minute tick."""
+    from pydantic import ValidationError
+
+    from tribal_assistant.schemas.agent_settings import AgentSettingsUpdate
+    from tribal_assistant.services.agents import AgentService
+
+    pairs = {}
+    for item in values:
+        if "=" not in item:
+            console.print(f"[red]use chave=valor: {item!r}[/red]")
+            raise typer.Exit(1)
+        key, value = item.split("=", 1)
+        pairs[key.strip()] = value.strip()
+
+    try:
+        patch = AgentSettingsUpdate.model_validate(pairs)
+    except ValidationError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    updated = _run(_with_session(lambda s: AgentService(s).update_settings(patch)))
+    for key in pairs:
+        console.print(f"{key} = {getattr(updated, key)}", style="green")
+
+
+@app.command()
+def quests(as_json: JsonOption = False) -> None:
+    """Show active quests and pending rewards (as of the last agent round)."""
+    from tribal_assistant.services.agents import AgentService
+
+    data = _run(_with_session(lambda s: AgentService(s).quests()))
+    if as_json:
+        _print_json(data)
+        return
+
+    for quest in data.quests:
+        status = "[green]pronta[/green]" if quest.can_complete else quest.state
+        console.print(f"[bold]{quest.title}[/bold] ({quest.quest_id}) · {status}")
+        for goal in quest.goals:
+            progress = f"{goal.current}/{goal.target}" if goal.target is not None else ""
+            console.print(f"  - {goal.title} {progress}")
+
+    console.print(f"recompensas pendentes: {len(data.rewards)}")
 
 
 def main() -> None:

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "tribal-assistant": {
+      "command": "poetry",
+      "args": ["run", "tribal-assistant-mcp"],
+      "env": {}
+    }
+  }
+}
