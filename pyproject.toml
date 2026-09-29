@@ -1,10 +1,26 @@
 [project]
 name = "tribal-assistant"
 version = "0.1.0"
-description = "Tribal Wars assistant — FastAPI control plane + Playwright game client."
+description = "Tribal Wars assistant: account sync, build advisor, farm assistant, world map search — CLI, Python library and web dashboard."
 requires-python = ">=3.12"
 readme = "README.md"
 authors = [{ name = "Fernando Celmer", email = "fernandocelmer@gmail.com" }]
+keywords = [
+    "tribal-wars", "tribalwars", "guerra-tribal", "die-staemme", "browser-game",
+    "game-assistant", "farm-assistant", "playwright", "fastapi", "cli",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment :: Real Time Strategy",
+]
 
 dependencies = [
     "fastapi>=0.115.0",
@@ -22,7 +38,13 @@ dependencies = [
     "httpx>=0.27.0",
     "loguru>=0.7.2",
     "python-dotenv>=1.0.0",
+    "typer>=0.12.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/FernandoCelmer/tribal-assistant"
+Repository = "https://github.com/FernandoCelmer/tribal-assistant"
+Issues = "https://github.com/FernandoCelmer/tribal-assistant/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -34,7 +56,7 @@ dev = [
 ]
 
 [project.scripts]
-tribal-assistant = "app.cli:main"
+tribal-assistant = "tribal_assistant.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -42,10 +64,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*"]
+include = ["tribal_assistant*"]
+
+[tool.setuptools.package-data]
+tribal_assistant = ["web/*.html", "web/static/*"]
 
 [tool.poetry]
-packages = [{ include = "app" }]
+packages = [{ include = "tribal_assistant" }]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
