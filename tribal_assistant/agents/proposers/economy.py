@@ -21,7 +21,7 @@ class EconomyProposer(Proposer):
         storage = ctx.village.storage or 0
         items = []
 
-        base = int(storage * view.config.resource_reserve)
+        base = int(storage * view.ctx.policy.resource_reserve)
         if base:
             items.append(
                 Reservation(

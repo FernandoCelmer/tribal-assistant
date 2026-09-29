@@ -134,9 +134,6 @@ class Coordinator:
             if constraint.violated_by(proposal):
                 return f"vetado: {constraint.reason}"
 
-        if proposal.action in self.view.config.approval_actions:
-            return "aguardando aprovação do jogador"
-
         if proposal.key in self.view.recent:
             return "feito há pouco; aguardando confirmação do jogo"
 

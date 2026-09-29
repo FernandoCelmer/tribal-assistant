@@ -7,6 +7,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.agents.coordination.policy import Policy
 from tribal_assistant.agents.knowledge import GameKnowledge
 from tribal_assistant.repositories.agents import AgentRepository
 from tribal_assistant.repositories.plans import PlanRepository
@@ -31,6 +32,7 @@ class VillageContext:
     plan_refreshed_at: datetime | None = None
     lessons: str = ""
     coordination: str = ""
+    policy: Policy = field(default_factory=Policy)
 
     @property
     def id(self) -> int:
@@ -168,6 +170,11 @@ class ContextLoader:
 
         ctx.lessons = await LessonBook(self.plans.session).summary()
         ctx.coordination = await self._coordination(ctx.id)
+
+        from tribal_assistant.repositories.coordination import CoordinationRepository
+
+        strategy = await CoordinationRepository(self.plans.session).strategy(ctx.id)
+        ctx.policy = Policy.for_role(strategy.role if strategy else "growth")
 
     async def _coordination(self, village_id: int) -> str:
         from tribal_assistant.repositories.coordination import CoordinationRepository

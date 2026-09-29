@@ -32,7 +32,7 @@ class BarbarianTarget(BaseModel):
     points: int | None = Field(default=None, description="Village points; high points on a former player village may mean troops left.")
     distance: float | None = Field(default=None, description="Distance in fields from the origin village.")
     minutes: dict[str, float] | None = Field(default=None, description="Travel minutes per unit.")
-    recently_attacked: bool = Field(description="Hit within retarget_minutes; send_farm_attack will refuse it.")
+    recently_attacked: bool = Field(description="Hit recently; send_farm_attack will refuse it.")
     source: str = Field(default="world", description="world (public world data) or farm_targets (local list).")
 
 

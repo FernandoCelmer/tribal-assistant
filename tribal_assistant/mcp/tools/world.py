@@ -37,7 +37,7 @@ class WorldTools(ToolGroup):
             """Villages around one of yours from the public world data: coords, points, distance,
             owner and tribe, whether it is barbarian or already a farm target, and travel minutes
             per unit. For scouting neighbours and threats; for picking loot targets prefer
-            list_barbarians, which also flags targets hit recently and respects attack_radius.
+            list_barbarians, which also flags targets hit recently and respects the role's attack radius.
             """
             rows = await self.with_session(lambda s: WorldService(s).nearby(village_id, kind, radius, limit))
             return Nearby(villages=rows)
@@ -45,12 +45,12 @@ class WorldTools(ToolGroup):
         @GuardedTool(mcp, title="Barbarian loot targets", annotations=READ_ONLY)
         async def list_barbarians(
             village_id: Annotated[int, Field(description="Origin own village id from get_overview.")],
-            radius: Annotated[int | None, Field(ge=1, le=50, description="Search radius; capped at the attack_radius guardrail.")] = None,
+            radius: Annotated[int | None, Field(ge=1, le=50, description="Search radius; capped at the role's attack radius guardrail.")] = None,
             limit: Annotated[int, Field(ge=1, le=30, description="Maximum targets, closest first.")] = 10,
         ) -> BarbarianTargets:
-            """Barbarian villages send_farm_attack would accept from this village: inside attack_radius,
+            """Barbarian villages send_farm_attack would accept from this village: inside the role's attack radius,
             closest first, with points, distance, travel minutes per unit and recently_attacked
-            (skip those; they are refused until retarget_minutes pass). Falls back to the local farm
+            (skip those; they are refused until the role's retarget time passes). Falls back to the local farm
             list when world data is missing; an empty list comes with a note on what to do.
             """
             args = {"limit": limit} | ({"radius": radius} if radius else {})

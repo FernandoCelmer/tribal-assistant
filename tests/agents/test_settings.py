@@ -17,11 +17,11 @@ async def test_defaults_are_created_on_first_read(session: AsyncSession) -> None
 async def test_update_changes_only_given_fields(session: AsyncSession) -> None:
     repo = AgentSettingsRepository(session)
 
-    updated = await repo.update(AgentSettingsUpdate(enabled=True, attack_radius=8))
+    updated = await repo.update(AgentSettingsUpdate(enabled=True, interval_minutes=8))
 
     assert updated.enabled is True
-    assert updated.attack_radius == 8
-    assert updated.interval_minutes == AgentSettings().interval_minutes
+    assert updated.interval_minutes == 8
+    assert updated.dry_run == AgentSettings().dry_run
     assert await repo.get() == updated
 
 
@@ -35,7 +35,7 @@ async def test_mark_run_records_timestamp(session: AsyncSession) -> None:
 
 def test_update_rejects_out_of_range_and_unknown_keys() -> None:
     with pytest.raises(ValidationError):
-        AgentSettingsUpdate(attack_radius=500)
+        AgentSettingsUpdate(interval_minutes=5000)
 
     with pytest.raises(ValidationError):
         AgentSettingsUpdate.model_validate({"enable": True})
@@ -48,7 +48,7 @@ async def test_settings_api_roundtrip(client: AsyncClient) -> None:
     assert response.status_code == 200
     assert response.json()["interval_minutes"] == 15
 
-    assert (await client.patch("/api/v1/agents/settings", json={"attack_radius": 0})).status_code == 422
+    assert (await client.patch("/api/v1/agents/settings", json={"interval_minutes": 0})).status_code == 422
 
 
 def test_legacy_plan_refresh_hours_becomes_minutes():

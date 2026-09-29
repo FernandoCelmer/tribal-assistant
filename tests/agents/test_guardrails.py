@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.agents.builders import building, context, unit
+from tribal_assistant.agents.coordination.policy import Policy
 from tribal_assistant.agents.guardrails import Guardrails
 from tribal_assistant.models.world import WorldVillage
 from tribal_assistant.schemas.agent_settings import AgentSettings
@@ -27,7 +28,11 @@ def test_recruit_respects_reserve_budget_and_population(session: AsyncSession) -
     guard = Guardrails(session, AgentSettings())
 
     plan = guard.plan_recruit(context(stock=1000, storage=2000, pop_free=100), "spear", 50)
-    assert plan.count == 8
+    assert plan.count == 4
+
+    offensive = context(stock=1000, storage=2000, pop_free=100)
+    offensive.policy = Policy.for_role("offensive")
+    assert guard.plan_recruit(offensive, "spear", 50).count > plan.count
 
     assert guard.plan_recruit(context(pop_free=3), "spear", 50).count == 3
     assert guard.plan_recruit(context(units=[unit("axe", available=False)]), "axe", 5).refusal

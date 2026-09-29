@@ -86,7 +86,7 @@ class GameActionTools(ToolGroup):
             """Queue the next level of one building (one level per call).
 
             Refused with RECUSADO when the building is already queued, the build queue is full
-            (build_queue_slots), the building is at max level, documented requirements are missing
+            (2 without premium), the building is at max level, documented requirements are missing
             (e.g. Academy needs Headquarters 20, Smithy 20, Market 10), resources or free population
             are short. Costs come from get_overview (next_wood/next_clay/next_iron/next_pop).
             data.level is the level queued. Never spends premium points.
@@ -104,7 +104,7 @@ class GameActionTools(ToolGroup):
             """Recruit troops in this village.
 
             The count is trimmed to what the budget allows: stock above the resource reserve times
-            recruit_budget (0.8 when storage is almost full), free population and the game's own
+            the role's recruit budget, free population and the game's own
             maximum. Refused when the unit is not researched or no budget is left. data.count is the
             amount actually ordered.
             """
@@ -121,8 +121,8 @@ class GameActionTools(ToolGroup):
             """Send a looting attack to a barbarian village.
 
             Refused for player villages or targets not known as barbarian, targets beyond
-            attack_radius, targets hit within retarget_minutes, troops not at home, and after
-            max_attacks_per_hour for this village. Troops can die: prefer 5 light cavalry or 10
+            the role's attack radius, targets hit recently, troops not at home, and after
+            the role's hourly attack limit. Troops can die: prefer 5 light cavalry or 10
             spearmen on low-point barbarians. data.arrival is the arrival time. Confirm with the
             user before dry_run=false: troops leave the village.
             """

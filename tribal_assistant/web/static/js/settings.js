@@ -46,7 +46,7 @@ class SettingsPage {
   }
 
   read() {
-    const lists = ["llm_agents", "approval_actions"];
+    const lists = ["llm_agents"];
     const body = Object.fromEntries(lists.map((name) => [name, [...this.form.querySelectorAll(`input[name="${name}"]:checked`)].map((b) => b.value)]));
     for (const input of this.form.querySelectorAll("input[name]")) {
       if (lists.includes(input.name)) continue;

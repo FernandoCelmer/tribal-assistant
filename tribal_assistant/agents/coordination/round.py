@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tribal_assistant.agents.context import VillageContext
 from tribal_assistant.agents.coordination.coordinator import Coordinator, Decision
 from tribal_assistant.agents.coordination.insight import Certainty, Insight, now
+from tribal_assistant.agents.coordination.policy import Policy
 from tribal_assistant.agents.coordination.proposal import Proposal
 from tribal_assistant.agents.coordination.roles import RoleSelector
 from tribal_assistant.agents.coordination.view import CoordinationView
@@ -91,8 +92,10 @@ class VillageRound:
 
     async def run(self, ctx: VillageContext) -> tuple[Decision, list[Insight]]:
         base, mode, reason = await RoleSelector(self.session).select(ctx)
+        ctx.policy = Policy.for_role(mode.value)
         view = CoordinationView(ctx, self.session, self.config, self.actions, self.dry_run, mode, base, self._box(ctx, "coordinator", "Coordenador"))
         view.recent = await self._recent(ctx)
+        view.note(Insight("policy", f"limites do modo {mode.value}: {ctx.policy.describe()}", Certainty.FACT, now(), 1.0, None, "coordenador"))
         view.note(Insight("role", f"papel {base.value}: {reason}", Certainty.FACT, now(), 1.0, base.value, "coordenador"))
 
         proposals: list[Proposal] = []

@@ -32,7 +32,7 @@ class Guardrails:
         self.repo = AgentRepository(session)
 
     def reserve(self, ctx: VillageContext) -> int:
-        return int(ctx.village.storage * self.config.resource_reserve)
+        return int(ctx.village.storage * ctx.policy.resource_reserve)
 
     def check_upgrade(self, ctx: VillageContext, building: str) -> str | None:
         current = ctx.building(building)
@@ -42,7 +42,7 @@ class Guardrails:
         if current.queued_level:
             return f"{building} já está na fila"
 
-        if len(ctx.queue) >= self.config.build_queue_slots:
+        if len(ctx.queue) >= ctx.policy.build_queue_slots:
             return "fila de construção cheia"
 
         if current.next_level is None or (current.max_level and current.level >= current.max_level):
@@ -125,7 +125,7 @@ class Guardrails:
         limits = [count, current.max_recruit or count]
         storage = ctx.village.storage or 1
         near_full = any(value >= storage * 0.85 for value in ctx.stock.values())
-        budget_share = max(self.config.recruit_budget, 0.8) if near_full else self.config.recruit_budget
+        budget_share = max(ctx.policy.recruit_budget, 0.8) if near_full else ctx.policy.recruit_budget
 
         for key, cost in (("wood", current.cost_wood), ("clay", current.cost_clay), ("iron", current.cost_iron)):
             if cost:
@@ -157,18 +157,18 @@ class Guardrails:
                 return f"só há {current.home if current else 0} {unit} em casa"
 
         distance = math.hypot(tx - ox, ty - oy)
-        if distance > self.config.attack_radius:
-            return f"alvo a {distance:.1f} campos; limite {self.config.attack_radius}"
+        if distance > ctx.policy.attack_radius:
+            return f"alvo a {distance:.1f} campos; limite {ctx.policy.attack_radius}"
 
         if not await self._is_barbarian(target, tx, ty):
             return "alvo não é aldeia bárbara conhecida; agentes só saqueiam bárbaras"
 
         since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=1)
-        if await self.repo.attacks_since(ctx.id, since) >= self.config.max_attacks_per_hour:
-            return f"limite de {self.config.max_attacks_per_hour} ataques por hora atingido"
+        if await self.repo.attacks_since(ctx.id, since) >= ctx.policy.max_attacks_per_hour:
+            return f"limite de {ctx.policy.max_attacks_per_hour} ataques por hora atingido"
 
-        if await self.repo.attacked_recently(target, self.config.retarget_minutes):
-            return f"{target} já foi atacado nos últimos {self.config.retarget_minutes} min"
+        if await self.repo.attacked_recently(target, ctx.policy.retarget_minutes):
+            return f"{target} já foi atacado nos últimos {ctx.policy.retarget_minutes} min"
 
         return None
 

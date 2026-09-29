@@ -24,7 +24,7 @@ class GetVillageState(AgentTool):
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
         from tribal_assistant.agents.view import ContextView
 
-        return ToolOutcome(True, ContextView(box.ctx, box.config.build_queue_slots).render(box.agent.key))
+        return ToolOutcome(True, ContextView(box.ctx, box.ctx.policy.build_queue_slots).render(box.agent.key))
 
 
 class GetQuests(AgentTool):
@@ -96,7 +96,7 @@ class ListBarbarians(AgentTool):
     }
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        radius = min(int(args.get("radius") or box.config.attack_radius), box.config.attack_radius)
+        radius = min(int(args.get("radius") or box.ctx.policy.attack_radius), box.ctx.policy.attack_radius)
         limit = int(args.get("limit") or 10)
 
         try:
@@ -110,7 +110,7 @@ class ListBarbarians(AgentTool):
                 "points": r.points,
                 "distance": r.distance,
                 "minutes": r.travel_minutes,
-                "recently_attacked": await box.repo.attacked_recently(r.coords, box.config.retarget_minutes),
+                "recently_attacked": await box.repo.attacked_recently(r.coords, box.ctx.policy.retarget_minutes),
                 **{k: v for k, v in (await box.lessons.target(r.coords)).items() if k in ("last_result", "avg_haul", "attacks")},
             }
             for r in rows
@@ -124,7 +124,7 @@ class ListBarbarians(AgentTool):
                 {
                     "coords": f.coords,
                     "source": "farm_targets",
-                    "recently_attacked": await box.repo.attacked_recently(f.coords, box.config.retarget_minutes),
+                    "recently_attacked": await box.repo.attacked_recently(f.coords, box.ctx.policy.retarget_minutes),
                 }
                 for f in farm
             ]

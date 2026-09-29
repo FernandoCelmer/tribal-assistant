@@ -6,6 +6,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
 
+from tribal_assistant.agents.coordination.policy import BUILD_SLOTS
 from tribal_assistant.core.config import settings
 
 
@@ -84,7 +85,7 @@ async def _agents_job() -> None:
 
         now = datetime.now(UTC).replace(tzinfo=None)
         waited = now - last if last else None
-        slot_free = await _build_slot_free(session, now, config.build_queue_slots)
+        slot_free = await _build_slot_free(session, now, BUILD_SLOTS)
         early = slot_free and (waited is None or waited >= timedelta(seconds=90))
 
         if waited is not None and waited < timedelta(minutes=config.interval_minutes) and not early:

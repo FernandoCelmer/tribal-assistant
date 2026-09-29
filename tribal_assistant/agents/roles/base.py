@@ -42,7 +42,7 @@ class VillageAgent(ABC):
 
     def task_prompt(self, ctx: VillageContext, config: AgentSettings) -> str:
         return (
-            f"{ContextView(ctx, config.build_queue_slots).render(self.key)}\n\n"
+            f"{ContextView(ctx, ctx.policy.build_queue_slots).render(self.key)}\n\n"
             "Decida e aja nesta rodada seguindo sua missão e as regras."
         )
 
@@ -70,7 +70,7 @@ class VillageAgent(ABC):
         return targets
 
     def free_slots(self, box: "Toolbox") -> int:
-        return max(0, box.config.build_queue_slots - len(box.ctx.queue))
+        return max(0, box.ctx.policy.build_queue_slots - len(box.ctx.queue))
 
     async def build_first_affordable(self, box: "Toolbox", candidates: list[str], limit: int, reason: str) -> list[str]:
         done = []

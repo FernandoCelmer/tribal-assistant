@@ -43,7 +43,7 @@ class CoordinationView:
 
     @property
     def free_slots(self) -> int:
-        return max(0, self.config.build_queue_slots - len(self.ctx.queue))
+        return max(0, self.ctx.policy.build_queue_slots - len(self.ctx.queue))
 
     def build_cost(self, building: str) -> dict[str, int]:
         b = self.ctx.building(building)

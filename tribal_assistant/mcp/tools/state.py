@@ -115,8 +115,7 @@ class StateTools(ToolGroup):
         async def get_agents_config() -> AgentConfigOut:
             """How the agents decide and what limits them: brain (LLM provider and model, or rules),
             which agents may call the AI, schedule (enabled, interval), global dry-run, and the
-            guardrails (resource_reserve, recruit_budget, build_queue_slots, attack_radius,
-            max_attacks_per_hour, retarget_minutes). Explains most RECUSADO answers.
+            and each village's current limits come from its role (see get_coordination).
             """
             return await self.with_session(lambda s: AgentService(s).config())
 
@@ -125,13 +124,7 @@ class StateTools(ToolGroup):
             enabled: Annotated[bool | None, Field(description="Run agents on the server schedule.")] = None,
             interval_minutes: Annotated[int | None, Field(ge=1, le=1440, description="Minutes between rounds.")] = None,
             dry_run: Annotated[bool | None, Field(description="Simulate instead of acting.")] = None,
-            resource_reserve: Annotated[float | None, Field(ge=0, le=0.9, description="Share of storage kept untouched.")] = None,
-            recruit_budget: Annotated[float | None, Field(ge=0, le=1, description="Share of spare resources recruiting may spend.")] = None,
-            max_attacks_per_hour: Annotated[int | None, Field(ge=0, le=200, description="Attacks per village per hour.")] = None,
-            attack_radius: Annotated[int | None, Field(ge=1, le=50, description="Max distance to barbarian targets.")] = None,
-            retarget_minutes: Annotated[int | None, Field(ge=0, le=1440, description="Minutes before re-hitting a target.")] = None,
-            build_queue_slots: Annotated[int | None, Field(ge=1, le=5, description="Build orders agents may keep queued.")] = None,
-            llm_agents: Annotated[list[str] | None, Field(description="Agents allowed to call the AI: strategist, economist, commander, quartermaster, raider.")] = None,
+            llm_agents: Annotated[list[str] | None, Field(description="Agents allowed to call the AI: strategist.")] = None,
             plan_refresh_minutes: Annotated[int | None, Field(ge=5, le=10080, description="Minutes before the plan is rewritten.")] = None,
             auto_finish_free: Annotated[bool | None, Field(description="Use the free finish-now button on short builds.")] = None,
         ) -> AgentSettings:
@@ -139,19 +132,13 @@ class StateTools(ToolGroup):
             value. Returns the full settings after the change.
 
             enabled=true makes the server act on its own every interval_minutes, and dry_run=false
-            makes those rounds real: confirm both with the user first. Loosening a guardrail
-            (lower resource_reserve, higher max_attacks_per_hour or attack_radius) also needs a yes.
+            makes those rounds real: confirm both with the user first. Reserves, recruit budget,
+            attack radius and pace are decided by the coordinator from each village role.
             """
             patch = AgentSettingsUpdate(
                 enabled=enabled,
                 interval_minutes=interval_minutes,
                 dry_run=dry_run,
-                resource_reserve=resource_reserve,
-                recruit_budget=recruit_budget,
-                max_attacks_per_hour=max_attacks_per_hour,
-                attack_radius=attack_radius,
-                retarget_minutes=retarget_minutes,
-                build_queue_slots=build_queue_slots,
                 auto_finish_free=auto_finish_free,
                 llm_agents=llm_agents,
                 plan_refresh_minutes=plan_refresh_minutes,

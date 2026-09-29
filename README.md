@@ -143,7 +143,7 @@ Each round has three stages per village:
 - **Priority.** `urgency + impact + risk avoided + opportunity − opportunity cost − uncertainty`, with weights that change with the mode (in emergency, urgency and risk dominate; in growth, economic return does).
 - **Reservations.** Defense, strategic goal, the next plan build (when affordable within 1.5 h) and the configured base reserve. "Available" means free after reservations; only the owner of a reservation may spend it.
 - **Hard vetoes.** Troops committed to an imminent defense never leave; no optional spending that would break an approved defense; no raid below 35% confidence (old or bad information); no repeating an action whose confirmation has not arrived yet; repeated identical failures are refused by the lessons.
-- **Approval.** Actions listed in `approval_actions` are only proposed; they wait on `/estrategia` for an *Aprovar* click. `dry_run` works as a pure diagnosis mode.
+- **Limits by role.** Reserve, recruit budget, raid radius and pace, and the retarget interval come from the village role (growth, defense, offensive, support, expansion, emergency), not from settings. `dry_run` works as a pure diagnosis mode.
 - **Horizons and review.** Each round stores the next review time: the earliest of a deferred proposal becoming affordable, the build queue ending, storage filling or an attack landing.
 
 New villages are picked up automatically after the next sync.
@@ -156,24 +156,17 @@ Token savings: role-sliced compact text context instead of full JSON, no duplica
 
 Every action passes the same **guardrails**, enforced in code.
 
-The guardrails and the schedule are **runtime settings** stored in the database, not `.env`. Change them from the **Configurações** page (`/configuracoes`), the API (`PATCH /api/v1/agents/settings`), the CLI (`tribal-assistant agents set …`) or MCP (`update_agent_settings`). A running server picks up changes within a minute, with no restart.
+The schedule and AI options are **runtime settings** stored in the database, not `.env`. Change them from the **Configurações** page (`/configuracoes`), the API (`PATCH /api/v1/agents/settings`), the CLI (`tribal-assistant agents set …`) or MCP (`update_agent_settings`). A running server picks up changes within a minute, with no restart.
 
 | Setting | Default | Meaning |
 |---------|---------|---------|
 | `enabled` | `false` | run on a schedule inside `tribal-assistant serve` |
 | `interval_minutes` | `10` | minutes between scheduled rounds |
 | `dry_run` | `false` | simulate and log without touching the game |
-| `resource_reserve` | `0.1` | share of storage recruiting never spends |
-| `recruit_budget` | `0.5` | share of spare resources recruiting may use per round |
-| `max_attacks_per_hour` | `12` | attacks per village per hour |
-| `attack_radius` | `12` | max distance to a barbarian target (players are never targeted) |
-| `retarget_minutes` | `30` | wait before hitting the same village again |
-| `build_queue_slots` | `2` | build orders agents may keep queued |
 | `auto_finish_free` | `true` | click the free "finish now" button on short builds (never paid ones) |
 | `llm_agents` | `["strategist"]` | agents allowed to call the AI |
 | `plan_refresh_minutes` | `360` | minutes before the strategist rewrites the plan (free with rules; one AI call when AI is on) |
 | `llm_max_steps` | `6` | tool rounds per AI conversation |
-| `approval_actions` | `[]` | actions the coordinator only proposes, waiting for approval on `/estrategia` |
 
 Every decision, including refusals, is stored with its reason and shown in the dashboard.
 

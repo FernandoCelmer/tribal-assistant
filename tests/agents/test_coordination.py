@@ -89,7 +89,8 @@ async def test_incoming_attack_switches_to_emergency_and_keeps_troops_home(sessi
 
     assert decision.mode == Role.EMERGENCY
     assert not any(e["action"] == "send_farm_attack" and e.get("ok") for e in decision.executed)
-    assert any("vetado" in e["why"] for e in decision.deferred if e["action"] in ("send_farm_attack", "send_scavenge"))
+    assert all("vetado" in e["why"] for e in decision.deferred if e["action"] in ("send_farm_attack", "send_scavenge"))
+    assert not any(e["action"] in ("send_farm_attack", "send_scavenge") for e in decision.executed)
     assert decision.executed and decision.executed[0]["source"] == "defense"
 
 
