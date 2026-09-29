@@ -124,6 +124,8 @@ class EconomyProposer(Proposer):
             return None
 
         offers = await view.actions.market_offers(ctx.game_id)
+        siblings = await self.managed_players(view)
+        offers = [o for o in offers if o.get("player", "").split(" [")[0] not in siblings]
         choice = self.pick_offer(offers, stock, ctx.village.storage or 0)
         if choice is None:
             return await self._own_offer(view, stock)
@@ -153,6 +155,22 @@ class EconomyProposer(Proposer):
             confidence=0.8,
             risks=["recurso só chega depois da viagem do comerciante"],
         )
+
+    @staticmethod
+    async def managed_players(view: CoordinationView) -> set[str]:
+        """Players of the other accounts this assistant runs in the same world: never trade with them."""
+        from sqlalchemy import select
+
+        from tribal_assistant.accounts.context import current_account
+        from tribal_assistant.models.player import Player
+
+        account = current_account()
+        rows = await view.session.execute(
+            select(Player.name)
+            .where(Player.world == account.server, Player.account_id != account.id)
+            .execution_options(all_accounts=True)
+        )
+        return set(rows.scalars().all())
 
     async def _own_offer(self, view: CoordinationView, stock: dict[str, int]) -> Proposal | None:
         plan = self.own_offer(stock, view.ctx.village.storage or 0)
