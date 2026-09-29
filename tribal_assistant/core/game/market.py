@@ -126,7 +126,7 @@ class Market:
                 return ActionResult(False, "cancel_market_offer", "a oferta continua no mercado")
 
         amount = offer["sell_amount"] * offer["count"]
-        logger.info("Market offer {} cancelled: {} {} back", offer_id, amount, offer["sell"])
+        logger.info("Oferta {} cancelada: {} {} devolvidos", offer_id, amount, offer["sell"])
         return ActionResult(
             True,
             "cancel_market_offer",
@@ -167,7 +167,7 @@ class Market:
                 return ActionResult(False, "park_market_offer", " | ".join(messages["errors"]))
 
         parked = [o for o in OwnOfferParser.offers(after) if o["sell"] == sell and o["buy"] == buy and o["buy_amount"] == wanted]
-        logger.info("Parked {}x {} {} asking {} {}", lots, amount, sell, wanted, buy)
+        logger.info("Estacionadas {}x {} {} pedindo {} {}", lots, amount, sell, wanted, buy)
         return ActionResult(
             True,
             "park_market_offer",

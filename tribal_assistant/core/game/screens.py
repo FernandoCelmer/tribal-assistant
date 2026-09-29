@@ -86,7 +86,7 @@ class ScreenCatalog:
         self.path(name).write_text(html, encoding="utf-8")
 
         if not quiet:
-            logger.info("Captured the {} screen for mapping ({} bytes)", name, len(html))
+            logger.info("Tela {} capturada para mapeamento ({} bytes)", name, len(html))
 
     async def capture(self, page: Page, village_id: str, name: str) -> None:
         from tribal_assistant.core.game.modules.game_sync import _open

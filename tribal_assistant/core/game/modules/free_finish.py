@@ -44,6 +44,6 @@ class FreeFinishWatcher:
             result = await self.actions.finish_free(game_id)
             if result.ok:
                 finished += result.data.get("finished", 0)
-                logger.info("Free finish in village {}: {}", game_id, result.detail)
+                logger.info("Conclusão grátis na aldeia {}: {}", game_id, result.detail)
 
         return finished

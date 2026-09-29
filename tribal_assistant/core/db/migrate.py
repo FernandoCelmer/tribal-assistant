@@ -55,7 +55,7 @@ class DatabaseCopier:
 
             count = self._copy(source_meta.tables[table.name], table, account_id, world)
             report.tables[table.name] = count
-            logger.info("Copied {} rows into {}", count, table.name)
+            logger.info("{} linha(s) copiadas para {}", count, table.name)
 
         self._reset_sequences()
         return report
@@ -107,7 +107,7 @@ class DatabaseCopier:
 
         with self.target.begin() as conn:
             if conn.execute(select(func.count()).select_from(target_table)).scalar():
-                logger.warning("{} already has rows; skipping", target_table.name)
+                logger.warning("{} já tem linhas; ignorada", target_table.name)
                 return 0
 
         total = 0

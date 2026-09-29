@@ -26,7 +26,7 @@ class DiplomacyProposer(Proposer):
                 items += await step(view)
             except Exception as exc:
                 view.note_error = str(exc)
-                logger.warning("Diplomacy step {} failed: {}", step.__name__, exc)
+                logger.warning("Passo de diplomacia {} falhou: {}", step.__name__, exc)
 
         return items
 

@@ -41,7 +41,7 @@ class LLMBrain(Brain):
                 reply = await self._send(box, conversation, results)
 
         except LLMError as exc:
-            logger.warning("{} on {}: {}; falling back to rules", agent.key, self.llm.provider, exc)
+            logger.warning("{} em {}: {}; usando as regras", agent.key, self.llm.provider, exc)
             await self._trace(box, "error", f"IA indisponível: {exc}", is_error=True)
             return f"IA indisponível ({exc}); regras: {await self.fallback.act(agent, box)}"
 

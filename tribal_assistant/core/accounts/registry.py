@@ -71,4 +71,4 @@ class AccountRegistry:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(legacy, target)
 
-        logger.info("Account {} created from .env", account.name)
+        logger.info("Conta {} criada a partir do .env", account.name)

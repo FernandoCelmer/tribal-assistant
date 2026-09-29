@@ -110,7 +110,7 @@ class VillageRound:
                 reservations += await proposer.reservations(view)
                 proposals += await proposer.propose(view)
             except Exception as exc:
-                logger.exception("Proposer {} failed", proposer.key)
+                logger.exception("Proponente {} falhou", proposer.key)
                 view.note(Insight(f"error:{proposer.key}", f"{proposer.title} falhou: {exc}", Certainty.FACT, now(), 1.0, None, proposer.key))
 
         await self._trace(

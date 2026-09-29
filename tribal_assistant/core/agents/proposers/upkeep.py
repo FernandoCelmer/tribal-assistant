@@ -35,7 +35,7 @@ class UpkeepProposer(Proposer):
                 items += await step(view)
             except Exception as exc:
                 view.note_error = str(exc)
-                logger.warning("Steward step {} failed: {}", step.__name__, exc)
+                logger.warning("Passo do administrador {} falhou: {}", step.__name__, exc)
 
         return items
 

@@ -64,7 +64,7 @@ class GameSession:
             timezone_id="America/Sao_Paulo",
         )
         self._page = await self._context.new_page()
-        logger.info("Browser session started for account {}", self.account.name)
+        logger.info("Sessão do navegador iniciada para a conta {}", self.account.name)
 
     async def save_state(self) -> None:
         if self._context is not None:
@@ -79,7 +79,7 @@ class GameSession:
             if self._playwright is not None:
                 await self._playwright.stop()
         except Exception:
-            logger.debug("Browser already closed")
+            logger.debug("Navegador já fechado")
         finally:
             self._playwright = self._browser = self._context = self._page = None
 

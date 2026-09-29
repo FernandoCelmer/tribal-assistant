@@ -25,21 +25,21 @@ async def login(page: Page) -> None:
     if await page.locator(LOGIN_FORM_SELECTOR).count():
         await _submit_credentials(page)
     else:
-        logger.info("Session already active, skipping login form")
+        logger.info("Sessão já ativa, formulário de login ignorado")
 
     await human_delay()
     await _enter_world(page)
 
 
 async def _submit_credentials(page: Page) -> None:
-    logger.info("Filling credentials")
+    logger.info("Preenchendo credenciais")
     await page.fill("#user", current_account().username)
     await human_delay(400, 900)
     await page.fill("#password", current_account().password)
     await human_delay(400, 900)
     await page.click("a.btn-login")
 
-    logger.info("Waiting for captcha/login (up to {}s)", LOGIN_TIMEOUT_MS // 1000)
+    logger.info("Aguardando captcha/login (até {}s)", LOGIN_TIMEOUT_MS // 1000)
     try:
         await page.wait_for_selector(LOGIN_FORM_SELECTOR, state="detached", timeout=LOGIN_TIMEOUT_MS)
     except PlaywrightTimeoutError as exc:
@@ -54,7 +54,7 @@ async def _enter_world(page: Page) -> None:
         return
 
     server = current_account().server
-    logger.info("Entering world {}", server)
+    logger.info("Entrando no mundo {}", server)
     await page.goto(PLAY_URL.format(server=server), wait_until="domcontentloaded")
     try:
         await page.wait_for_selector(VILLAGE_MENU_SELECTOR, timeout=WORLD_TIMEOUT_MS)

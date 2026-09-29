@@ -95,7 +95,7 @@ class Diplomacy:
         if messages["errors"]:
             return ActionResult(False, "apply_to_tribe", " | ".join(messages["errors"]))
 
-        logger.info("Applied to tribe {}", ally_id)
+        logger.info("Candidatura enviada à tribo {}", ally_id)
         return ActionResult(True, "apply_to_tribe", "candidatura enviada", {"ally_id": ally_id, "notices": messages["notices"]})
 
     async def accept_invite(self, village_id: str, invite_id: str) -> ActionResult:
@@ -120,7 +120,7 @@ class Diplomacy:
         if messages["errors"] or not state.get("in_tribe"):
             return ActionResult(False, "accept_tribe_invite", " | ".join(messages["errors"]) or "o convite não foi aceito")
 
-        logger.info("Joined a tribe through invite {}", invite_id)
+        logger.info("Entrou na tribo pelo convite {}", invite_id)
         return ActionResult(True, "accept_tribe_invite", "entrou na tribo", {"notices": messages["notices"]})
 
     async def accept_mentor(self, village_id: str, mentor_id: str) -> ActionResult:
@@ -146,5 +146,5 @@ class Diplomacy:
         if messages["errors"] or any(m["id"] == mentor_id for m in left):
             return ActionResult(False, "accept_mentor", " | ".join(messages["errors"]) or "a oferta continua aberta")
 
-        logger.info("Accepted mentor {}", mentor_id)
+        logger.info("Mentor {} aceito", mentor_id)
         return ActionResult(True, "accept_mentor", "mentor aceito", {"mentor_id": mentor_id, "notices": messages["notices"]})

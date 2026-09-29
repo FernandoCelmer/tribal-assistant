@@ -64,7 +64,7 @@ class AgentRunner:
         try:
             llm = LLMFactory().build()
         except LLMError as exc:
-            logger.warning("AI disabled: {}", exc)
+            logger.warning("IA desativada: {}", exc)
             return RuleBrain()
 
         return LLMBrain(llm) if llm else RuleBrain()
@@ -87,7 +87,7 @@ class AgentRunner:
             active = await observability.active_run(within_minutes=STALE_MINUTES)
             if active is not None:
                 report.error = f"rodada {active.run_id} ({active.trigger}) ainda em andamento em outro processo"
-                logger.info("Skipping agent round: {}", report.error)
+                logger.info("Rodada ignorada: {}", report.error)
                 return report
 
             config = await AgentSettingsRepository(session).get()
@@ -104,12 +104,12 @@ class AgentRunner:
                 dry_run=report.dry_run,
             )
             await trace.start()
-            logger.info("Agent round {} started ({}, {})", report.run_id, self.brain.name, self.trigger)
+            logger.info("Rodada {} iniciada ({}, {})", report.run_id, self.brain.name, self.trigger)
 
             try:
                 acted = await self._round(session, trace, config, report, village_ids)
             except Exception as exc:
-                logger.exception("Agent round {} failed", report.run_id)
+                logger.exception("Rodada {} falhou", report.run_id)
                 report.error = str(exc)
                 await trace.step("error", str(exc), is_error=True)
                 await trace.finish(villages=len(report.villages), status="failed", error=str(exc))
@@ -118,9 +118,9 @@ class AgentRunner:
             status = "skipped" if report.error else "done"
             await trace.finish(villages=len(report.villages), status=status, error=report.error)
             logger.info(
-                "Agent round {} {}: {} ok, {} refused, {} failed",
+                "Rodada {} {}: {} ok, {} recusadas, {} falhas",
                 report.run_id,
-                status,
+                "concluída" if status == "done" else "ignorada",
                 trace.run.actions_ok,
                 trace.run.actions_refused,
                 trace.run.actions_failed,
@@ -206,7 +206,7 @@ class AgentRunner:
         try:
             quests, rewards = await self.actions.read_quests(game_id)
         except Exception as exc:
-            logger.warning("Could not read quests: {}", exc)
+            logger.warning("Não foi possível ler as missões: {}", exc)
             return
 
         await AgentRepository(session).save_quests(quests, rewards)
@@ -224,4 +224,4 @@ class AgentRunner:
         try:
             await sync_game()
         except Exception as exc:
-            logger.warning("Post-run sync failed: {}", exc)
+            logger.warning("Falha na sincronização pós-rodada: {}", exc)

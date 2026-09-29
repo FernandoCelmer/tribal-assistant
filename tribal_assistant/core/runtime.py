@@ -25,7 +25,7 @@ class Engine:
             return
 
         if not settings.play:
-            logger.warning("PLAY=false: this server only serves the API; agents, syncs and the game browser stay off")
+            logger.warning("PLAY=false: este servidor só atende a API; agentes, sincronizações e navegador do jogo ficam desligados")
             return
 
         async with SessionFactory() as session:

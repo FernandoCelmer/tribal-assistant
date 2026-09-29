@@ -36,7 +36,7 @@ def per_account(job, one_per_world: bool = False):
                 try:
                     await job()
                 except Exception:
-                    logger.exception("{} failed for account {}", job.__name__, account.name)
+                    logger.exception("{} falhou para a conta {}", job.__name__, account.name)
 
     run.__name__ = job.__name__
     return run
@@ -47,12 +47,12 @@ async def _sync_game_job() -> None:
     from tribal_assistant.core.game.modules.game_sync import sync_game
 
     if in_quiet_hours():
-        logger.info("Quiet hours, skipping game sync")
+        logger.info("Horário de silêncio, sincronização do jogo ignorada")
         return
     try:
         await sync_game()
     except Exception:
-        logger.exception("game sync failed")
+        logger.exception("falha na sincronização do jogo")
 
 
 async def _sync_world_job() -> None:
@@ -61,7 +61,7 @@ async def _sync_world_job() -> None:
     try:
         await sync_world()
     except Exception:
-        logger.exception("world sync failed")
+        logger.exception("falha na sincronização do mundo")
 
 
 async def _docs_job() -> None:
@@ -72,11 +72,11 @@ async def _docs_job() -> None:
         async with SessionFactory() as session:
             report = await DocsService(session).sync()
     except Exception:
-        logger.exception("docs sync failed")
+        logger.exception("falha na sincronização dos docs")
         return
 
     if report.updated or report.removed:
-        logger.info("Docs synced: {} file(s) updated, {} removed, {} sections", report.updated, report.removed, report.chunks)
+        logger.info("Docs sincronizados: {} arquivo(s) atualizados, {} removidos, {} seções", report.updated, report.removed, report.chunks)
 
 
 async def _build_slot_free(session, now: datetime, slots: int) -> bool:
@@ -128,10 +128,10 @@ async def _agents_job() -> None:
     try:
         report = await AgentRunner(trigger="schedule").run()
     except Exception:
-        logger.exception("village agents failed")
+        logger.exception("falha nos agentes das aldeias")
         return
 
-    logger.info("Village agents run {} ({}): {}", report.run_id, report.brain, report.error or "ok")
+    logger.info("Rodada dos agentes {} ({}): {}", report.run_id, report.brain, report.error or "ok")
 
 
 async def _free_finish_job() -> None:
@@ -144,7 +144,7 @@ async def _free_finish_job() -> None:
     try:
         await FreeFinishWatcher().run()
     except Exception:
-        logger.exception("free finish watcher failed")
+        logger.exception("falha no monitor de conclusão grátis")
 
 
 async def _retention_job() -> None:
@@ -158,7 +158,7 @@ async def _retention_job() -> None:
 
         removed += await CoordinationRepository(session).prune(settings.trace_retention_days)
 
-    logger.info("Retention removed {} old agent trace rows", removed)
+    logger.info("Retenção removeu {} linha(s) antigas de rastreio dos agentes", removed)
 
 
 def register_jobs(scheduler: AsyncIOScheduler) -> None:

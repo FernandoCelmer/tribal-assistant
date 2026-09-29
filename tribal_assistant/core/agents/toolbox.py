@@ -158,7 +158,7 @@ class Toolbox:
         except (KeyError, TypeError, ValueError) as exc:
             outcome = ToolOutcome(False, f"argumentos inválidos: {exc}")
         except Exception as exc:
-            logger.exception("Tool {} failed", name)
+            logger.exception("Ferramenta {} falhou", name)
             outcome = ToolOutcome(False, f"falha: {exc}")
 
         await self._trace("tool_result", outcome.text, name, is_error=not outcome.ok)

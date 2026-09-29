@@ -16,6 +16,6 @@ async def sync_world() -> None:
 
         await LessonBook(session).neighbourhood()
     logger.info(
-        "World synced: {} villages, {} players, {} allies",
+        "Mundo sincronizado: {} aldeias, {} jogadores, {} tribos",
         len(data.villages), len(data.players), len(data.allies),
     )

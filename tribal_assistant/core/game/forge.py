@@ -98,7 +98,7 @@ class Forge:
         key = "-".join(sorted(materials, key=int))
         labels = ", ".join(before["materials"][m]["label"] for m in materials)
         new = key not in before["recipes"] and key in after["recipes"]
-        logger.info("Crafted with {} ({})", labels, "new formula" if new else key)
+        logger.info("Forjado com {} ({})", labels, "nova fórmula" if new else key)
         return ActionResult(
             True,
             "craft_event_item",

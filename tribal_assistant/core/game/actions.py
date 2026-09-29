@@ -261,7 +261,7 @@ class GameActions:
             finished += 1
 
         if finished:
-            logger.info("Finished {} build order(s) for free", finished)
+            logger.info("{} construção(ões) concluída(s) grátis", finished)
         elif await page.locator("#buildqueue").count():
             html = await page.locator("#buildqueue").first.evaluate("(n) => n.outerHTML")
             ScreenCatalog().save("buildqueue", html, quiet=True)
@@ -349,7 +349,7 @@ class GameActions:
                 return ActionResult(False, "unlock_scavenge", error, {"cost": cost})
 
             logger.info(
-                "Unlocking scavenging option {} in village {} for {}", option_id, village_id, cost
+                "Desbloqueando coleta {} na aldeia {} por {}", option_id, village_id, cost
             )
             return ActionResult(
                 True,
@@ -407,7 +407,7 @@ class GameActions:
                     False, "send_scavenge", error, {"option_id": option_id, "units": units}
                 )
 
-            logger.info("Scavenging option {} in village {} with {}", option_id, village_id, units)
+            logger.info("Coleta {} na aldeia {} com {}", option_id, village_id, units)
             return ActionResult(
                 True,
                 "send_scavenge",
@@ -460,7 +460,7 @@ class GameActions:
 
             finished = await self.click_free_finish(page) if finish_free else 0
 
-            logger.info("Queued {} level {} in village {}", building, level, village_id)
+            logger.info("{} nível {} na fila da aldeia {}", building, level, village_id)
             return ActionResult(
                 True,
                 "upgrade_building",
@@ -501,7 +501,7 @@ class GameActions:
             if error := await self._game_error(page):
                 return ActionResult(False, "recruit", error, {"unit": unit, "count": count})
 
-            logger.info("Recruiting {} {} in village {}", count, unit, village_id)
+            logger.info("Recrutando {} {} na aldeia {}", count, unit, village_id)
             return ActionResult(
                 True, "recruit", f"{count} {unit} em recrutamento", {"unit": unit, "count": count}
             )
@@ -571,7 +571,7 @@ class GameActions:
             if error := await self._game_error(page):
                 return ActionResult(False, "send_attack", error, {"target": target})
 
-            logger.info("Attack sent from {} to {} with {}", village_id, target, units)
+            logger.info("Ataque enviado de {} para {} com {}", village_id, target, units)
             return ActionResult(
                 True,
                 "send_attack",
@@ -669,7 +669,7 @@ class GameActions:
             await human_delay(900, 1800)
             await self._close_popup(page)
 
-            logger.info("Completed quest {}", quest_id)
+            logger.info("Missão {} concluída", quest_id)
             return ActionResult(
                 True, "complete_quest", f"missão {quest_id} concluída", {"quest_id": quest_id}
             )
@@ -710,7 +710,7 @@ class GameActions:
             )
 
         items = [c["item"] for c in chests if c.get("open") and c.get("item")][:opened]
-        logger.info("Opened {} daily bonus chest(s)", opened)
+        logger.info("{} baú(s) de bônus diário aberto(s)", opened)
         return ActionResult(
             True,
             "open_daily_bonus",
@@ -744,7 +744,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "recruit_knight", " | ".join(messages["errors"]))
 
-        logger.info("Recruiting a paladin in village {}", village_id)
+        logger.info("Recrutando paladino na aldeia {}", village_id)
         return ActionResult(
             True, "recruit_knight", "paladino em recrutamento", {"notices": messages["notices"]}
         )
@@ -756,7 +756,7 @@ class GameActions:
             try:
                 await page.wait_for_selector(".inventory_items .item, .inventory_message_empty:visible", timeout=15_000)
             except PlaywrightError:
-                logger.warning("Inventory did not load in village {}", village_id)
+                logger.warning("Inventário não carregou na aldeia {}", village_id)
                 return []
 
             items = []
@@ -811,7 +811,7 @@ class GameActions:
                     False, "use_item", " | ".join(messages["errors"]), {"item": name}
                 )
 
-        logger.info("Used item {} ({}) in village {}", key, name, village_id)
+        logger.info("Item {} ({}) usado na aldeia {}", key, name, village_id)
         return ActionResult(
             True, "use_item", f"{name} usado", {"item": name, "notices": messages["notices"]}
         )
@@ -846,7 +846,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "choose_relic", " | ".join(messages["errors"]))
 
-        logger.info("Chose starter relic {} in village {}", index, village_id)
+        logger.info("Relíquia inicial {} escolhida na aldeia {}", index, village_id)
         return ActionResult(
             True, "choose_relic", f"relíquia {index} escolhida", {"notices": messages["notices"]}
         )
@@ -910,7 +910,7 @@ class GameActions:
                     {"relic": relic_id},
                 )
 
-        logger.info("Equipped relic {} in village {}", relic_id, village_id)
+        logger.info("Relíquia {} equipada na aldeia {}", relic_id, village_id)
         return ActionResult(
             True,
             "equip_relic",
@@ -939,7 +939,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "rename_village", " | ".join(messages["errors"]))
 
-        logger.info("Renamed village {} to {}", village_id, name)
+        logger.info("Aldeia {} renomeada para {}", village_id, name)
         return ActionResult(
             True,
             "rename_village",
@@ -986,7 +986,7 @@ class GameActions:
         if not current:
             return ActionResult(False, "assign_flag", f"bandeira não ficou atribuída ({title})")
 
-        logger.info("Assigned flag {}_{} in village {}", flag_type, level, village_id)
+        logger.info("Bandeira {}_{} atribuída na aldeia {}", flag_type, level, village_id)
         return ActionResult(
             True, "assign_flag", f"bandeira atribuída: {current}", {"notices": messages["notices"]}
         )
@@ -1042,7 +1042,7 @@ class GameActions:
                 {"notices": messages["notices"]},
             )
 
-        logger.info("Learned paladin skill {} in village {}", skill_id, village_id)
+        logger.info("Habilidade de paladino {} aprendida na aldeia {}", skill_id, village_id)
         return ActionResult(
             True,
             "learn_knight_skill",
@@ -1085,7 +1085,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "train_knight", " | ".join(messages["errors"]))
 
-        logger.info("Paladin training {} started in village {}", regimen, village_id)
+        logger.info("Treino de paladino {} iniciado na aldeia {}", regimen, village_id)
         return ActionResult(
             True, "train_knight", f"treino {regimen} iniciado", {"notices": messages["notices"]}
         )
@@ -1157,7 +1157,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "accept_offer", " | ".join(messages["errors"]))
 
-        logger.info("Accepted market offer: {} {} for {} from {}", amount, receive, pay, player)
+        logger.info("Oferta aceita: {} {} por {} de {}", amount, receive, pay, player)
         return ActionResult(
             True,
             "accept_offer",
@@ -1199,7 +1199,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "create_offer", " | ".join(messages["errors"]))
 
-        logger.info("Market offer: {} {} for {} {}", amount, sell, amount, buy)
+        logger.info("Oferta no mercado: {} {} por {} {}", amount, sell, amount, buy)
         return ActionResult(
             True,
             "create_offer",
@@ -1248,7 +1248,7 @@ class GameActions:
                     False, "research", " | ".join(messages["errors"]), {"unit": unit}
                 )
 
-        logger.info("Research {} started in village {}", unit, village_id)
+        logger.info("Pesquisa {} iniciada na aldeia {}", unit, village_id)
         return ActionResult(
             True,
             "research",
@@ -1285,7 +1285,7 @@ class GameActions:
             if not claimed:
                 return ActionResult(False, "claim_rewards", "nenhuma recompensa disponível")
 
-            logger.info("Claimed {} reward(s)", len(claimed))
+            logger.info("{} recompensa(s) resgatada(s)", len(claimed))
             return ActionResult(
                 True,
                 "claim_rewards",

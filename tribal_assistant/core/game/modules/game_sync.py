@@ -214,12 +214,12 @@ async def _open(page: Page, screen: str, village_id: str | None = None, **params
             async with page.expect_navigation(wait_until="load", timeout=20_000):
                 await human_click(page, page.locator('a[data-tw-nav="1"]').first)
         except PlaywrightError:
-            logger.debug("Link click to {} did not navigate, loading URL", screen)
+            logger.debug("Clique no link para {} não navegou, carregando URL", screen)
             found = False
 
     wanted = [f"screen={screen}", *(f"{k}={v}" for k, v in params.items())]
     if found and not all(part in page.url for part in wanted):
-        logger.debug("Link click landed on {} instead of {}, loading URL", page.url, screen)
+        logger.debug("Clique no link caiu em {} em vez de {}, carregando URL", page.url, screen)
         found = False
 
     if not found:
@@ -235,7 +235,7 @@ async def _evaluate(page: Page, script: str) -> Any:
         except PlaywrightError as exc:
             if "Execution context was destroyed" not in str(exc) or attempt == EVALUATE_ATTEMPTS:
                 raise
-            logger.debug("Page navigated during read, retrying ({}/{})", attempt, EVALUATE_ATTEMPTS)
+            logger.debug("Página navegou durante a leitura, tentando de novo ({}/{})", attempt, EVALUATE_ATTEMPTS)
             await page.wait_for_load_state("load")
 
 
@@ -254,7 +254,7 @@ async def _ensure_in_game(page: Page) -> None:
     await page.goto(_url("overview"), wait_until="load")
     await reading_pause(page)
     if not await page.locator(VILLAGE_MENU_SELECTOR).count():
-        logger.info("Not in game, logging in")
+        logger.info("Fora do jogo, fazendo login")
         await login(page)
         await game_session.save_state()
 
@@ -328,7 +328,7 @@ async def _read_village(page: Page, village_id: str, finish_free: bool = False) 
             await catalog.capture(page, village_id, name)
             Findings.screens().append(name)
         except PlaywrightError as exc:
-            logger.warning("Could not capture {} screen: {}", name, exc)
+            logger.warning("Não foi possível capturar a tela {}: {}", name, exc)
 
     return village, data["overview"]["text"]
 
@@ -396,7 +396,7 @@ class IncomingDetails:
                     await _open(page, "info_command", village_id, id=str(row["id"]), type="other")
                     cls.known[key] = await _evaluate(page, INFO_COMMAND_JS) or {}
                 except PlaywrightError as exc:
-                    logger.debug("Could not read incoming command {}: {}", row["id"], exc)
+                    logger.debug("Não foi possível ler o comando recebido {}: {}", row["id"], exc)
                     continue
 
             cls.merge(row, cls.known.get(key, {}))
@@ -452,7 +452,7 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
             Findings.texts().append((key, "report", str(row.get("title", ""))[:255], await _evaluate(page, CONTENT_TEXT_JS)))
             budget -= 1
         except PlaywrightError as exc:
-            logger.debug("Could not read report {}: {}", row["id"], exc)
+            logger.debug("Não foi possível ler o relatório {}: {}", row["id"], exc)
 
     try:
         await _open(page, "mail", village_id)
@@ -473,7 +473,7 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
             Findings.texts().append((key, "mail", mail["title"][:255], await _evaluate(page, CONTENT_TEXT_JS)))
             budget -= 1
         except PlaywrightError as exc:
-            logger.debug("Could not read message {}: {}", mail["id"], exc)
+            logger.debug("Não foi possível ler a mensagem {}: {}", mail["id"], exc)
 
 
 async def _read_game(
@@ -539,6 +539,6 @@ async def sync_game() -> GameSnapshot:
     session_state.last_error = None
     session_state.last_sync_at = datetime.now(UTC)
     logger.info(
-        "Synced {} village(s), {} report(s)", len(snapshot.villages), len(snapshot.reports)
+        "{} aldeia(s) e {} relatório(s) sincronizados", len(snapshot.villages), len(snapshot.reports)
     )
     return snapshot
