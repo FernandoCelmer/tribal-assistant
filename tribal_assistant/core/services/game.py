@@ -1,10 +1,10 @@
 """Game overview service — everything the dashboard shows, in one read."""
 
-from dataclasses import asdict
 from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.game.labels import BUILDING_LABELS, label
 from tribal_assistant.core.models.player import Player
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.game import GameRepository
@@ -13,14 +13,12 @@ from tribal_assistant.core.schemas.game import (
     CommandOut,
     GameOverview,
     PlayerOut,
-    RecommendationOut,
     RecruitOrderOut,
     ReportOut,
     ScavengeOut,
     UnitOut,
     VillageOverview,
 )
-from tribal_assistant.core.services.advisor import BUILDING_LABELS, label, recommend
 
 
 def _aware(value: datetime | None) -> datetime | None:
@@ -51,7 +49,6 @@ def _player(player: Player) -> PlayerOut:
 
 
 def _village(v: Village) -> VillageOverview:
-    incoming_attacks = sum(1 for c in v.commands if c.direction == "in" and c.kind in ("attack", "noble"))
     return VillageOverview(
         id=v.id,
         game_id=v.game_id,
@@ -118,10 +115,6 @@ def _village(v: Village) -> VillageOverview:
                 return_at=_aware(s.return_at),
             )
             for s in sorted(v.scavenge_options, key=lambda s: s.option_id)
-        ],
-        recommendations=[
-            RecommendationOut(**asdict(r))
-            for r in recommend(v, v.buildings, incomings=incoming_attacks)
         ],
     )
 

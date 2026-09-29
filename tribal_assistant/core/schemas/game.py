@@ -75,23 +75,6 @@ class ScavengeOut(BaseModel):
     return_at: datetime | None
 
 
-class RecommendationOut(BaseModel):
-    building: str
-    label: str
-    from_level: int
-    to_level: int
-    wood: int
-    clay: int
-    iron: int
-    pop: int
-    build_time: int | None
-    can_build: bool
-    blocker: str | None
-    eta_seconds: int | None
-    priority: str
-    reason: str
-
-
 class VillageOverview(BaseModel):
     id: int
     game_id: str | None
@@ -112,7 +95,6 @@ class VillageOverview(BaseModel):
     units: list[UnitOut]
     recruit_orders: list[RecruitOrderOut]
     scavenge: list[ScavengeOut]
-    recommendations: list[RecommendationOut]
 
 
 class ReportOut(BaseModel):

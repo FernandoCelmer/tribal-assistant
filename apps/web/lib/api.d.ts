@@ -141,23 +141,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/knowledge/guides": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Guides */
-        get: operations["guides_api_v1_knowledge_guides_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/knowledge/guides/{name}": {
         parameters: {
             query?: never;
@@ -175,42 +158,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/villages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Villages */
-        get: operations["list_villages_api_v1_villages_get"];
-        put?: never;
-        /** Upsert Village */
-        post: operations["upsert_village_api_v1_villages_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/villages/{village_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Village */
-        get: operations["get_village_api_v1_villages__village_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Village */
-        patch: operations["update_village_api_v1_villages__village_id__patch"];
-        trace?: never;
-    };
     "/api/v1/assistant/status": {
         parameters: {
             query?: never;
@@ -222,40 +169,6 @@ export interface paths {
         get: operations["status_api_v1_assistant_status_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/assistant/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Start */
-        post: operations["start_api_v1_assistant_start_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/assistant/stop": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Stop */
-        post: operations["stop_api_v1_assistant_stop_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -629,23 +542,6 @@ export interface paths {
         };
         /** Coordination */
         get: operations["coordination_api_v1_agents_coordination_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/agents/coordination/{village_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Coordination History */
-        get: operations["coordination_history_api_v1_agents_coordination__village_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1442,37 +1338,6 @@ export interface components {
             /** Rewards */
             rewards: components["schemas"]["QuestRewardOut"][];
         };
-        /** RecommendationOut */
-        RecommendationOut: {
-            /** Building */
-            building: string;
-            /** Label */
-            label: string;
-            /** From Level */
-            from_level: number;
-            /** To Level */
-            to_level: number;
-            /** Wood */
-            wood: number;
-            /** Clay */
-            clay: number;
-            /** Iron */
-            iron: number;
-            /** Pop */
-            pop: number;
-            /** Build Time */
-            build_time: number | null;
-            /** Can Build */
-            can_build: boolean;
-            /** Blocker */
-            blocker: string | null;
-            /** Eta Seconds */
-            eta_seconds: number | null;
-            /** Priority */
-            priority: string;
-            /** Reason */
-            reason: string;
-        };
         /** RecruitOrderOut */
         RecruitOrderOut: {
             /** Unit */
@@ -1747,106 +1612,6 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
-        /** Village */
-        Village: {
-            /** Name */
-            name: string;
-            /** Coords */
-            coords: string;
-            /**
-             * Is Own
-             * @default true
-             */
-            is_own: boolean;
-            /**
-             * Wood
-             * @default 0
-             */
-            wood: number;
-            /**
-             * Clay
-             * @default 0
-             */
-            clay: number;
-            /**
-             * Iron
-             * @default 0
-             */
-            iron: number;
-            /**
-             * Storage
-             * @default 0
-             */
-            storage: number;
-            /**
-             * Pop Current
-             * @default 0
-             */
-            pop_current: number;
-            /**
-             * Pop Max
-             * @default 0
-             */
-            pop_max: number;
-            /** Id */
-            id: number;
-            /** Game Id */
-            game_id: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
-        };
-        /** VillageCreate */
-        VillageCreate: {
-            /** Name */
-            name: string;
-            /** Coords */
-            coords: string;
-            /**
-             * Is Own
-             * @default true
-             */
-            is_own: boolean;
-            /**
-             * Wood
-             * @default 0
-             */
-            wood: number;
-            /**
-             * Clay
-             * @default 0
-             */
-            clay: number;
-            /**
-             * Iron
-             * @default 0
-             */
-            iron: number;
-            /**
-             * Storage
-             * @default 0
-             */
-            storage: number;
-            /**
-             * Pop Current
-             * @default 0
-             */
-            pop_current: number;
-            /**
-             * Pop Max
-             * @default 0
-             */
-            pop_max: number;
-            /** Game Id */
-            game_id?: string | null;
-        };
         /** VillageOverview */
         VillageOverview: {
             /** Id */
@@ -1887,8 +1652,6 @@ export interface components {
             recruit_orders: components["schemas"]["RecruitOrderOut"][];
             /** Scavenge */
             scavenge: components["schemas"]["ScavengeOut"][];
-            /** Recommendations */
-            recommendations: components["schemas"]["RecommendationOut"][];
         };
         /** VillagePlanOut */
         VillagePlanOut: {
@@ -1917,21 +1680,6 @@ export interface components {
             summaries: {
                 [key: string]: string;
             };
-        };
-        /** VillageUpdate */
-        VillageUpdate: {
-            /** Wood */
-            wood?: number | null;
-            /** Clay */
-            clay?: number | null;
-            /** Iron */
-            iron?: number | null;
-            /** Storage */
-            storage?: number | null;
-            /** Pop Current */
-            pop_current?: number | null;
-            /** Pop Max */
-            pop_max?: number | null;
         };
         /** WorldStatus */
         WorldStatus: {
@@ -2195,28 +1943,6 @@ export interface operations {
             };
         };
     };
-    guides_api_v1_knowledge_guides_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
-                };
-            };
-        };
-    };
     guide_api_v1_knowledge_guides__name__get: {
         parameters: {
             query?: never;
@@ -2248,125 +1974,6 @@ export interface operations {
             };
         };
     };
-    list_villages_api_v1_villages_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Village"][];
-                };
-            };
-        };
-    };
-    upsert_village_api_v1_villages_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VillageCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Village"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_village_api_v1_villages__village_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                village_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Village"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_village_api_v1_villages__village_id__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                village_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VillageUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Village"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     status_api_v1_assistant_status_get: {
         parameters: {
             query?: never;
@@ -2383,46 +1990,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssistantStatus"];
-                };
-            };
-        };
-    };
-    start_api_v1_assistant_start_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CommandResult"];
-                };
-            };
-        };
-    };
-    stop_api_v1_assistant_stop_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CommandResult"];
                 };
             };
         };
@@ -3031,39 +2598,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CoordinationOut"][];
-                };
-            };
-        };
-    };
-    coordination_history_api_v1_agents_coordination__village_id__get: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                village_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CoordinationOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

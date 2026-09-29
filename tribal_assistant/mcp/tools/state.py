@@ -15,10 +15,11 @@ class StateTools(ToolGroup):
         @GuardedTool(mcp, title="Account overview", annotations=READ_ONLY)
         async def get_overview() -> dict[str, Any]:
             """Full account snapshot as last synced: player (points, rank, incomings, daily_bonus
-            waiting, beginner protection_until; premium_points is informational, never spent), every own village with its id, coords, resources, storage, population,
-            production, buildings (level, next-level cost and whether it can be built), troops (home,
-            away, recruitable), build and recruit queues, scavenging tiers and advisor
-            recommendations, plus troop movements (incoming attacks first) and recent reports.
+            waiting, beginner protection_until; premium_points is informational, never spent), every
+            own village with its id, coords, resources, storage, population, production, buildings
+            (level, next-level cost and whether it can be built), troops (home, away, recruitable),
+            build and recruit queues, scavenging tiers, troop movements (incoming attacks first) and
+            recent reports.
 
             Source of the village ids every other tool takes. Large: for one village prefer
             get_village_state. Data is as fresh as the last sync_account.

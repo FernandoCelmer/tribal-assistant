@@ -1,10 +1,10 @@
 import { Castle, Users } from "lucide-react";
-import { Cost, Meter, ResourceIcon } from "@/components/game/resource";
+import { Meter, ResourceIcon } from "@/components/game/resource";
 import { BuildingIcon, Coords } from "@/components/game/icons";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/ui/panel";
 import type { Schemas } from "@/lib/api";
-import { duration, num } from "@/lib/format";
+import { num } from "@/lib/format";
 import type { Resource } from "@/lib/game";
 
 type Village = Schemas["VillageOverview"];
@@ -13,7 +13,6 @@ export function VillageSummary({ village }: { village: Village }) {
   const stock: Record<Resource, number> = { wood: village.wood, clay: village.clay, iron: village.iron };
   const production: Record<Resource, number> = { wood: village.wood_prod, clay: village.clay_prod, iron: village.iron_prod };
   const queue = village.buildings.filter((b) => b.queued_level);
-  const top = village.recommendations.slice(0, 4);
 
   return (
     <Panel>
@@ -52,20 +51,6 @@ export function VillageSummary({ village }: { village: Village }) {
           )}
         </div>
 
-        <div>
-          <div className="mb-2 text-xs font-medium text-muted-foreground">O que subir</div>
-          <ul className="divide-y divide-border-subtle">
-            {top.map((r) => (
-              <li key={r.building} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <BuildingIcon name={r.building} level={r.from_level} className="size-6" />
-                <span className="text-sm">{r.label} <span className="text-secondary">{r.from_level} → {r.to_level}</span></span>
-                <Badge tone={r.priority === "high" ? "warning" : "neutral"}>{r.priority === "high" ? "prioridade" : r.priority}</Badge>
-                <Cost wood={r.wood} clay={r.clay} iron={r.iron} className="ml-auto" />
-                <span className="w-full text-[12px] text-muted-foreground">{r.reason}{r.eta_seconds ? ` · recursos em ${duration(r.eta_seconds)}` : ""}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
       </PanelBody>
     </Panel>
   );

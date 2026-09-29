@@ -84,7 +84,6 @@ def context(
         units=units or [unit("spear", 10)],
         recruit_orders=[],
         scavenge=scavenge_options or [],
-        recommendations=[],
     )
 
     return VillageContext(
