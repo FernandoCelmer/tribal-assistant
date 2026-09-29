@@ -198,7 +198,8 @@ async def _open(page: Page, screen: str, village_id: str | None = None, **params
             logger.debug("Link click to {} did not navigate, loading URL", screen)
             found = False
 
-    if found and f"screen={screen}" not in page.url:
+    wanted = [f"screen={screen}", *(f"{k}={v}" for k, v in params.items())]
+    if found and not all(part in page.url for part in wanted):
         logger.debug("Link click landed on {} instead of {}, loading URL", page.url, screen)
         found = False
 

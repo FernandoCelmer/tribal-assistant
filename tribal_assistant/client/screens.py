@@ -49,6 +49,8 @@ class ScreenCatalog:
         "farm_building": ("farm", {}),
         "place_units": ("place", {"mode": "units"}),
         "watchtower": ("watchtower", {}),
+        "event": ("event_crafting", {}),
+        "reports_event": ("report", {"mode": "event"}),
     }
     REFRESH: ClassVar[timedelta] = timedelta(hours=6)
 
