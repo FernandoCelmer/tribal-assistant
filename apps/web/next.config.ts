@@ -3,6 +3,7 @@ import { version } from "./package.json";
 
 const config: NextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   output: "standalone",
   env: { WEB_VERSION: version },
   images: { remotePatterns: [{ protocol: "https", hostname: "dsbr.innogamescdn.com" }] },

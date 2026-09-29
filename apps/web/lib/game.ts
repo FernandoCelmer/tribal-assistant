@@ -24,7 +24,7 @@ export const UNITS: Record<string, string> = {
 export const AGENTS: Record<string, string> = {
   quartermaster: "Missões", strategist: "Estrategista", coordinator: "Coordenador", economy: "Economia",
   infrastructure: "Infraestrutura", recruitment: "Recrutamento", defense: "Defesa", attack: "Ataque",
-  expansion: "Expansão", intelligence: "Inteligência", steward: "Mordomo", diplomacy: "Diplomacia", operator: "Operador",
+  expansion: "Expansão", intelligence: "Inteligência", steward: "Mordomo", diplomacy: "Diplomacia", free_finish: "Finalizar grátis", operator: "Operador",
   economist: "Economista", commander: "Comandante", raider: "Saqueador",
 };
 

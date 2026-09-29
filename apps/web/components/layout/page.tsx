@@ -12,7 +12,7 @@ export function PageHeader({ title, badge, description, shortDescription, action
         {shortDescription && <p className="mt-1 line-clamp-2 text-sm text-secondary md:hidden">{shortDescription}</p>}
         {description && <p className={cn("mt-1.5 text-[15px] text-secondary", shortDescription && "hidden md:block")}>{description}</p>}
       </div>
-      {actions && <div className="flex shrink-0 gap-2 [&>a>button]:h-12 [&>a>button]:w-full [&>a>button]:whitespace-nowrap [&>button]:h-12 [&>button]:w-full [&>button]:whitespace-nowrap md:[&>a>button]:h-9 md:[&>a>button]:w-auto md:[&>button]:h-9 md:[&>button]:w-auto">{actions}</div>}
+      {actions && <div className="flex shrink-0 gap-2 [&>a>button]:h-12 [&>a>button]:w-full [&>a>button]:whitespace-nowrap [&>button]:h-12 [&>button]:w-full [&>button]:whitespace-nowrap [&>a]:h-12 [&>a]:w-full [&>a]:whitespace-nowrap [&>*]:flex-1 md:[&>*]:flex-none md:[&>a]:h-9 md:[&>a]:w-auto md:[&>a>button]:h-9 md:[&>a>button]:w-auto md:[&>button]:h-9 md:[&>button]:w-auto">{actions}</div>}
     </div>
   );
 }
