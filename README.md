@@ -240,6 +240,7 @@ Each topic is its own page, reached from the sidebar (a drawer on phones):
 | `/aldeia` | troops and buildings |
 | `/arredores` | nearby villages with travel times |
 | `/relatorios` | battle reports with loot |
+| `/desafios` | the game achievements: progress, which agent chases each one, and which stay out (combat against players, social, premium) |
 | `/estrategia` | per village: role and mode, next best action with reason, cost and confidence, the executed sequence, deferred proposals and why, reservations, vetoes, insights, the specialists |
 | `/agentes` | live status of the agents, village plan, rounds, the full reasoning of each round, live feed |
 | `/graficos` | agent metrics (actions per hour, refusals, tokens) and village evolution |
