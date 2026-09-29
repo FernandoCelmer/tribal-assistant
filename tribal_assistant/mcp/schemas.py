@@ -4,11 +4,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from tribal_assistant.schemas.agents import AgentDecisionOut
-from tribal_assistant.schemas.coordination import CoordinationOut
-from tribal_assistant.schemas.farm import FarmTarget
-from tribal_assistant.schemas.plan import VillagePlanOut
-from tribal_assistant.schemas.world import NearbyVillage
+from tribal_assistant.core.schemas.agents import AgentDecisionOut
+from tribal_assistant.core.schemas.coordination import CoordinationOut
+from tribal_assistant.core.schemas.farm import FarmTarget
+from tribal_assistant.core.schemas.plan import VillagePlanOut
+from tribal_assistant.core.schemas.world import NearbyVillage
 
 
 class Decisions(BaseModel):

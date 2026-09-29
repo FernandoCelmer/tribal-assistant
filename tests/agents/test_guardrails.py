@@ -1,10 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.agents.builders import building, context, unit
-from tribal_assistant.agents.coordination.policy import Policy
-from tribal_assistant.agents.guardrails import Guardrails
-from tribal_assistant.models.world import WorldVillage
-from tribal_assistant.schemas.agent_settings import AgentSettings
+from tribal_assistant.core.agents.coordination.policy import Policy
+from tribal_assistant.core.agents.guardrails import Guardrails
+from tribal_assistant.core.models.world import WorldVillage
+from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
 
 def test_upgrade_allowed_when_affordable(session: AsyncSession) -> None:

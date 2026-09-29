@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from tribal_assistant.schemas.system import SystemInfo
-from tribal_assistant.services.system import SystemService
+from tribal_assistant.core.schemas.system import SystemInfo
+from tribal_assistant.core.services.system import SystemService
 
 system_router = APIRouter()
 

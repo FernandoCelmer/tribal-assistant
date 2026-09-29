@@ -87,7 +87,7 @@ class TribalMcpServer:
     @staticmethod
     def select_account() -> None:
         """Every tool works on one account: TRIBAL_ACCOUNT, or the first enabled one."""
-        from tribal_assistant.accounts.context import set_account
+        from tribal_assistant.core.accounts.context import set_account
 
         set_account(_pick_account())
 
@@ -107,8 +107,8 @@ class TribalMcpServer:
 def _pick_account():
     import os
 
-    from tribal_assistant.accounts.registry import AccountRegistry
-    from tribal_assistant.db.session import SessionFactory, init_db
+    from tribal_assistant.core.accounts.registry import AccountRegistry
+    from tribal_assistant.core.db.session import SessionFactory, init_db
 
     async def find():
         await init_db()

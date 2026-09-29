@@ -6,7 +6,7 @@ from typing import TypeVar
 
 from mcp.server.mcpserver import MCPServer
 
-from tribal_assistant.db.session import SessionFactory, init_db
+from tribal_assistant.core.db.session import SessionFactory, init_db
 
 T = TypeVar("T")
 

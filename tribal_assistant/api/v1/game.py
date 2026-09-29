@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, Depends
 
-from tribal_assistant.schemas.game import GameOverview
-from tribal_assistant.services.game import GameService
+from tribal_assistant.core.schemas.game import GameOverview
+from tribal_assistant.core.services.game import GameService
 
 game_router = APIRouter()
 

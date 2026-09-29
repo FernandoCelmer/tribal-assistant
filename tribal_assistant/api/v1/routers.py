@@ -11,7 +11,7 @@ from tribal_assistant.api.v1.observability import observability_router
 from tribal_assistant.api.v1.system import system_router
 from tribal_assistant.api.v1.villages import villages_router
 from tribal_assistant.api.v1.world import world_router
-from tribal_assistant.db.session import get_session
+from tribal_assistant.core.db.session import get_session
 
 v1_router = APIRouter(dependencies=[Depends(get_session)])
 v1_router.include_router(accounts_router, prefix="/accounts", tags=["Accounts"])

@@ -1,13 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.agents.builders import context, unit
-from tribal_assistant.agents.roles.base import VillageAgent
-from tribal_assistant.agents.roles.quartermaster import QuartermasterAgent
-from tribal_assistant.agents.roles.strategist import StrategistAgent
-from tribal_assistant.agents.toolbox import Toolbox
-from tribal_assistant.client.actions import ActionResult
-from tribal_assistant.repositories.agents import AgentRepository
-from tribal_assistant.schemas.agent_settings import AgentSettings
+from tribal_assistant.core.agents.roles.base import VillageAgent
+from tribal_assistant.core.agents.roles.quartermaster import QuartermasterAgent
+from tribal_assistant.core.agents.roles.strategist import StrategistAgent
+from tribal_assistant.core.agents.toolbox import Toolbox
+from tribal_assistant.core.game.actions import ActionResult
+from tribal_assistant.core.repositories.agents import AgentRepository
+from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
 
 class EconomyOnly(VillageAgent):

@@ -2,10 +2,10 @@
 
 from mcp.server.mcpserver import MCPServer
 
-from tribal_assistant.agents.knowledge import GameKnowledge
+from tribal_assistant.core.agents.knowledge import GameKnowledge
+from tribal_assistant.core.services.agents import AgentService
 from tribal_assistant.mcp.tools.base import ToolGroup
 from tribal_assistant.mcp.tools.bridge import ToolboxBridge
-from tribal_assistant.services.agents import AgentService
 
 
 class Resources:

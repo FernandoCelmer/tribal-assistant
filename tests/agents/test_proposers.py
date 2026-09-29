@@ -1,5 +1,5 @@
-from tribal_assistant.agents.proposers.economy import EconomyProposer
-from tribal_assistant.agents.proposers.upkeep import UpkeepProposer
+from tribal_assistant.core.agents.proposers.economy import EconomyProposer
+from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
 
 
 def test_best_flag_prefers_production_then_population():
@@ -49,14 +49,14 @@ def test_skill_books_are_used():
 
 
 def test_reward_label_resources():
-    from tribal_assistant.agents.roles.quartermaster import QuartermasterAgent
+    from tribal_assistant.core.agents.roles.quartermaster import QuartermasterAgent
 
     assert QuartermasterAgent.reward_resources("Poço de argila 5 150 150 100   Tudo") == (150, 150, 100)
     assert QuartermasterAgent.reward_resources("Mercado 1 1.000 1.200 1.000 Tudo") == (1000, 1200, 1000)
 
 
 def test_squad_is_sized_by_expected_haul_and_uses_the_paladin():
-    from tribal_assistant.agents.proposers.attack import AttackProposer
+    from tribal_assistant.core.agents.proposers.attack import AttackProposer
 
     assert AttackProposer.squad({"light": 10, "spear": 30}, 200) == {"light": 3}
     assert AttackProposer.squad({"knight": 1, "spear": 30}, 300) == {"knight": 1, "spear": 8}
@@ -64,7 +64,7 @@ def test_squad_is_sized_by_expected_haul_and_uses_the_paladin():
 
 
 def test_scavenging_is_split_with_at_least_ten_pop_each():
-    from tribal_assistant.agents.proposers.attack import AttackProposer
+    from tribal_assistant.core.agents.proposers.attack import AttackProposer
 
     parts = AttackProposer.split({"spear": 30, "sword": 10}, {1: 0.1, 2: 0.25})
     assert set(parts) == {1, 2}
@@ -74,7 +74,7 @@ def test_scavenging_is_split_with_at_least_ten_pop_each():
 
 def test_mine_follows_the_resource_that_blocks_builds():
     from tests.agents.builders import building, context
-    from tribal_assistant.agents.proposers.infrastructure import InfrastructureProposer
+    from tribal_assistant.core.agents.proposers.infrastructure import InfrastructureProposer
 
     class View:
         pass
@@ -83,7 +83,7 @@ def test_mine_follows_the_resource_that_blocks_builds():
     ctx.stock = {"wood": 100, "clay": 900, "iron": 900}
     ctx.village.wood_prod, ctx.village.clay_prod, ctx.village.iron_prod = 160, 130, 110
 
-    from tribal_assistant.agents.coordination.estimates import Estimator
+    from tribal_assistant.core.agents.coordination.estimates import Estimator
 
     view = View()
     view.ctx = ctx
@@ -94,7 +94,7 @@ def test_mine_follows_the_resource_that_blocks_builds():
 
 
 def test_twenty_swordsmen_fill_two_scavenging_tiers():
-    from tribal_assistant.agents.proposers.attack import AttackProposer
+    from tribal_assistant.core.agents.proposers.attack import AttackProposer
 
     parts = AttackProposer.split({"sword": 20}, {1: 0.1, 2: 0.25})
     assert set(parts) == {1, 2}

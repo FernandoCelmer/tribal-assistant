@@ -1,8 +1,8 @@
 import pytest
 
-from tribal_assistant.ai.abc.llm import LLM
-from tribal_assistant.ai.errors import LLMError
-from tribal_assistant.ai.factory import LLMFactory
+from tribal_assistant.core.ai.abc.llm import LLM
+from tribal_assistant.core.ai.errors import LLMError
+from tribal_assistant.core.ai.factory import LLMFactory
 
 
 @pytest.mark.parametrize(

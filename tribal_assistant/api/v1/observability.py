@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
-from tribal_assistant.schemas.observability import (
+from tribal_assistant.core.schemas.observability import (
     FlowOut,
     LiveOut,
     LogOut,
@@ -12,7 +12,7 @@ from tribal_assistant.schemas.observability import (
     SnapshotOut,
     StatsOut,
 )
-from tribal_assistant.services.observability import EventStream, ObservabilityService
+from tribal_assistant.core.services.observability import EventStream, ObservabilityService
 
 observability_router = APIRouter()
 

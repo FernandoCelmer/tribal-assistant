@@ -13,7 +13,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
-from tribal_assistant.ai.errors import LLMError
+from tribal_assistant.core.ai.errors import LLMError
 from tribal_assistant.core.errors import DomainError
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)

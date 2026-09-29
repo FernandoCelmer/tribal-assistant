@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, Depends
 
-from tribal_assistant.schemas.village import Village, VillageCreate, VillageUpdate
-from tribal_assistant.services.villages import VillageService
+from tribal_assistant.core.schemas.village import Village, VillageCreate, VillageUpdate
+from tribal_assistant.core.services.villages import VillageService
 
 villages_router = APIRouter()
 

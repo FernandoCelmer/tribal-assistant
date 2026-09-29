@@ -42,7 +42,7 @@ def _run[T](coro: Awaitable[T]) -> T:
 
 
 async def _with_session[T](fn: Callable[[AsyncSession], Awaitable[T]]) -> T:
-    from tribal_assistant.db.session import SessionFactory, init_db
+    from tribal_assistant.core.db.session import SessionFactory, init_db
 
     await init_db()
     async with SessionFactory() as session:
@@ -50,23 +50,23 @@ async def _with_session[T](fn: Callable[[AsyncSession], Awaitable[T]]) -> T:
         if account is None:
             return await fn(session)
 
-        from tribal_assistant.accounts.context import use_account
+        from tribal_assistant.core.accounts.context import use_account
 
         with use_account(account):
             return await fn(session)
 
 
 async def _account(session: AsyncSession):
-    from tribal_assistant.accounts.registry import AccountRegistry
+    from tribal_assistant.core.accounts.registry import AccountRegistry
 
     return await AccountRegistry(session).find(SELECTED_ACCOUNT["id"])
 
 
 async def _with_game[T](fn: Callable[[], Awaitable[T]]) -> T:
     """Run a browser-backed action and always release the Playwright session."""
-    from tribal_assistant.accounts.context import use_account
-    from tribal_assistant.client.session import game_session
-    from tribal_assistant.db.session import SessionFactory, init_db
+    from tribal_assistant.core.accounts.context import use_account
+    from tribal_assistant.core.db.session import SessionFactory, init_db
+    from tribal_assistant.core.game.session import game_session
 
     await init_db()
     async with SessionFactory() as session:
@@ -143,7 +143,7 @@ def mcp(
 @app.command()
 def sync() -> None:
     """Log in and sync player, villages, troops, commands and reports now."""
-    from tribal_assistant.services.assistant import AssistantService
+    from tribal_assistant.core.services.assistant import AssistantService
 
     result = _run(_with_game(AssistantService().sync))
     console.print(result.message, style="green" if result.ok else "red")
@@ -154,7 +154,7 @@ def sync() -> None:
 @app.command()
 def status(as_json: JsonOption = False) -> None:
     """Show the last synced account state (player and villages)."""
-    from tribal_assistant.services.game import GameService
+    from tribal_assistant.core.services.game import GameService
 
     overview = _run(_with_session(lambda s: GameService(s).overview()))
     if as_json:
@@ -189,8 +189,8 @@ def farm_list(
     as_json: JsonOption = False,
 ) -> None:
     """List farm targets."""
-    from tribal_assistant.repositories.farm import FarmTargetRepository
-    from tribal_assistant.schemas.farm import FarmTarget
+    from tribal_assistant.core.repositories.farm import FarmTargetRepository
+    from tribal_assistant.core.schemas.farm import FarmTarget
 
     rows = _run(_with_session(lambda s: FarmTargetRepository(s).list(enabled_only=not all_targets)))
     targets = [FarmTarget.model_validate(r) for r in rows]
@@ -216,8 +216,8 @@ def farm_add(
     from pydantic import ValidationError
 
     from tribal_assistant.core.errors import DomainError
-    from tribal_assistant.schemas.farm import FarmTargetCreate
-    from tribal_assistant.services.farm import FarmService
+    from tribal_assistant.core.schemas.farm import FarmTargetCreate
+    from tribal_assistant.core.services.farm import FarmService
 
     try:
         payload = FarmTargetCreate(coords=coords, template=template.upper(), wall_level=wall)
@@ -232,7 +232,7 @@ def farm_add(
 def farm_remove(target_id: Annotated[int, typer.Argument(help="Target ID from `farm list`.")]) -> None:
     """Remove a farm target."""
     from tribal_assistant.core.errors import DomainError
-    from tribal_assistant.services.farm import FarmService
+    from tribal_assistant.core.services.farm import FarmService
 
     try:
         _run(_with_session(lambda s: FarmService(s).remove(target_id)))
@@ -245,7 +245,7 @@ def farm_remove(target_id: Annotated[int, typer.Argument(help="Target ID from `f
 @farm_app.command("tick")
 def farm_tick() -> None:
     """Send farm attacks against enabled targets now."""
-    from tribal_assistant.services.farm import FarmService
+    from tribal_assistant.core.services.farm import FarmService
 
     result = _run(_with_game(lambda: _with_session(lambda s: FarmService(s).tick())))
     console.print(f"dispatched: {result.dispatched} · skipped: {result.skipped}")
@@ -258,8 +258,8 @@ def farm_tick() -> None:
 @world_app.command("sync")
 def world_sync() -> None:
     """Download the public world data (villages, players, tribes, config)."""
-    from tribal_assistant.client.modules.world_sync import sync_world
-    from tribal_assistant.db.session import init_db
+    from tribal_assistant.core.db.session import init_db
+    from tribal_assistant.core.game.modules.world_sync import sync_world
 
     async def _sync() -> None:
         await init_db()
@@ -272,7 +272,7 @@ def world_sync() -> None:
 @world_app.command("status")
 def world_status(as_json: JsonOption = False) -> None:
     """Show what world data is stored locally."""
-    from tribal_assistant.services.world import WorldService
+    from tribal_assistant.core.services.world import WorldService
 
     data = _run(_with_session(lambda s: WorldService(s).status()))
     if as_json:
@@ -292,7 +292,7 @@ def world_nearby(
 ) -> None:
     """List villages around one of your villages, closest first."""
     from tribal_assistant.core.errors import DomainError
-    from tribal_assistant.services.world import WorldService
+    from tribal_assistant.core.services.world import WorldService
 
     try:
         rows = _run(_with_session(lambda s: WorldService(s).nearby(village_id, kind, radius, limit)))
@@ -326,15 +326,15 @@ def agents_run(
     """Run every specialist once on each own village."""
     from dataclasses import asdict
 
-    from tribal_assistant.agents.runner import AgentRunner
-    from tribal_assistant.db.session import init_db
+    from tribal_assistant.core.agents.runner import AgentRunner
+    from tribal_assistant.core.db.session import init_db
 
     async def _go():
         await init_db()
         try:
             return await AgentRunner(dry_run=dry_run, trigger="cli").run(village)
         finally:
-            from tribal_assistant.client.session import game_session
+            from tribal_assistant.core.game.session import game_session
 
             await game_session.close()
 
@@ -363,8 +363,8 @@ def agents_log(
     as_json: JsonOption = False,
 ) -> None:
     """Show the latest agent decisions."""
-    from tribal_assistant.repositories.agents import AgentRepository
-    from tribal_assistant.schemas.agents import AgentDecisionOut
+    from tribal_assistant.core.repositories.agents import AgentRepository
+    from tribal_assistant.core.schemas.agents import AgentDecisionOut
 
     rows = _run(_with_session(lambda s: AgentRepository(s).decisions(village_id=village_id, limit=limit)))
     decisions = [AgentDecisionOut.model_validate(r) for r in rows]
@@ -384,7 +384,7 @@ def agents_log(
 @agents_app.command("config")
 def agents_config(as_json: JsonOption = False) -> None:
     """Show brain, provider and the runtime settings stored in the database."""
-    from tribal_assistant.services.agents import AgentService
+    from tribal_assistant.core.services.agents import AgentService
 
     config = _run(_with_session(lambda s: AgentService(s).config()))
     if as_json:
@@ -407,8 +407,8 @@ def agents_set(
     """Change agent settings at runtime; the running server picks them up on its next minute tick."""
     from pydantic import ValidationError
 
-    from tribal_assistant.schemas.agent_settings import AgentSettingsUpdate
-    from tribal_assistant.services.agents import AgentService
+    from tribal_assistant.core.schemas.agent_settings import AgentSettingsUpdate
+    from tribal_assistant.core.services.agents import AgentService
 
     pairs = {}
     for item in values:
@@ -432,7 +432,7 @@ def agents_set(
 @app.command()
 def quests(as_json: JsonOption = False) -> None:
     """Show active quests and pending rewards (as of the last agent round)."""
-    from tribal_assistant.services.agents import AgentService
+    from tribal_assistant.core.services.agents import AgentService
 
     data = _run(_with_session(lambda s: AgentService(s).quests()))
     if as_json:
@@ -460,8 +460,8 @@ if __name__ == "__main__":
 @accounts_app.command("list")
 def accounts_list() -> None:
     """Every account with world, login and whether it plays."""
-    from tribal_assistant.db.session import SessionFactory, init_db
-    from tribal_assistant.repositories.accounts import AccountRepository
+    from tribal_assistant.core.db.session import SessionFactory, init_db
+    from tribal_assistant.core.repositories.accounts import AccountRepository
 
     async def run():
         await init_db()
@@ -483,8 +483,8 @@ def accounts_add(
     headless: Annotated[bool, typer.Option(help="Run this account's browser without a window.")] = False,
 ) -> None:
     """Add a game account; its password is encrypted with APP_SECRET or storage/secret.key."""
-    from tribal_assistant.accounts.registry import AccountRegistry
-    from tribal_assistant.db.session import SessionFactory, init_db
+    from tribal_assistant.core.accounts.registry import AccountRegistry
+    from tribal_assistant.core.db.session import SessionFactory, init_db
 
     server = world_url.split("//", 1)[-1].split(".", 1)[0]
 
@@ -500,8 +500,8 @@ def accounts_add(
 @accounts_app.command("enable")
 def accounts_enable(account_id: int, enabled: Annotated[bool, typer.Option("--on/--off")] = True) -> None:
     """Turn an account's automatic play on or off."""
-    from tribal_assistant.db.session import SessionFactory, init_db
-    from tribal_assistant.repositories.accounts import AccountRepository
+    from tribal_assistant.core.db.session import SessionFactory, init_db
+    from tribal_assistant.core.repositories.accounts import AccountRepository
 
     async def run():
         await init_db()
@@ -524,7 +524,7 @@ def db_copy(
     wipe: Annotated[bool, typer.Option(help="Drop and recreate every table on the target first.")] = False,
 ) -> None:
     """Copy all data into the multi-account schema; old rows go to account 1 (created from .env)."""
-    from tribal_assistant.db.migrate import DatabaseCopier
+    from tribal_assistant.core.db.migrate import DatabaseCopier
 
     report = DatabaseCopier(source, target).run(wipe=wipe)
     table = Table("tabela", "linhas")

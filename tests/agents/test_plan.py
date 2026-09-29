@@ -1,12 +1,12 @@
 from datetime import UTC, datetime, timedelta
 
 from tests.agents.builders import building, context, scavenge, unit
-from tribal_assistant.agents.plan import PlanTracker, RulePlanner
-from tribal_assistant.agents.roles.quartermaster import QuartermasterAgent
-from tribal_assistant.agents.roles.strategist import StrategistAgent
-from tribal_assistant.agents.view import ContextView
-from tribal_assistant.schemas.agent_settings import AgentSettings
-from tribal_assistant.schemas.plan import PlanStep
+from tribal_assistant.core.agents.plan import PlanTracker, RulePlanner
+from tribal_assistant.core.agents.roles.quartermaster import QuartermasterAgent
+from tribal_assistant.core.agents.roles.strategist import StrategistAgent
+from tribal_assistant.core.agents.view import ContextView
+from tribal_assistant.core.schemas.agent_settings import AgentSettings
+from tribal_assistant.core.schemas.plan import PlanStep
 
 
 def test_tracker_marks_each_step_from_real_state() -> None:

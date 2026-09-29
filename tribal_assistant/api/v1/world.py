@@ -4,8 +4,8 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 
-from tribal_assistant.schemas.world import NearbyVillage, WorldStatus
-from tribal_assistant.services.world import WorldService
+from tribal_assistant.core.schemas.world import NearbyVillage, WorldStatus
+from tribal_assistant.core.services.world import WorldService
 
 world_router = APIRouter()
 

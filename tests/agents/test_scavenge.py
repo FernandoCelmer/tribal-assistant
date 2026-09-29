@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.agents.builders import context, scavenge, unit
-from tribal_assistant.agents.guardrails import Guardrails
-from tribal_assistant.schemas.agent_settings import AgentSettings
+from tribal_assistant.core.agents.guardrails import Guardrails
+from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
 
 def _guard(session: AsyncSession) -> Guardrails:

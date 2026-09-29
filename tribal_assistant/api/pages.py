@@ -103,8 +103,8 @@ class WebPages:
 
     @staticmethod
     async def _accounts(request: Request) -> tuple[list, int | None]:
-        from tribal_assistant.db.session import SessionFactory, requested_account
-        from tribal_assistant.repositories.accounts import AccountRepository
+        from tribal_assistant.core.db.session import SessionFactory, requested_account
+        from tribal_assistant.core.repositories.accounts import AccountRepository
 
         try:
             async with SessionFactory() as session:

@@ -5,12 +5,12 @@ from typing import Annotated, Literal
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
+from tribal_assistant.core.repositories.farm import FarmTargetRepository
+from tribal_assistant.core.schemas.farm import FarmTarget, FarmTargetCreate
+from tribal_assistant.core.services.farm import FarmService
 from tribal_assistant.mcp.annotations import READ_ONLY, REPLACES_LOCAL, WRITES_LOCAL, GuardedTool
 from tribal_assistant.mcp.schemas import FarmTargets
 from tribal_assistant.mcp.tools.base import ToolGroup
-from tribal_assistant.repositories.farm import FarmTargetRepository
-from tribal_assistant.schemas.farm import FarmTarget, FarmTargetCreate
-from tribal_assistant.services.farm import FarmService
 
 
 class FarmTools(ToolGroup):

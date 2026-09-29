@@ -1,8 +1,8 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from tribal_assistant.agents.context import VillageContext
-from tribal_assistant.schemas.game import BuildingOut, ScavengeOut, UnitOut, VillageOverview
+from tribal_assistant.core.agents.context import VillageContext
+from tribal_assistant.core.schemas.game import BuildingOut, ScavengeOut, UnitOut, VillageOverview
 
 
 def building(name: str, level: int, *, cost: int = 100, pop: int = 1, can_build: bool = True, **extra: Any) -> BuildingOut:

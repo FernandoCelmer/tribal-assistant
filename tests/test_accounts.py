@@ -1,11 +1,11 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tribal_assistant.accounts.context import AccountContext, use_account
+from tribal_assistant.core.accounts.context import AccountContext, use_account
 from tribal_assistant.core.crypto import Vault
-from tribal_assistant.models.lesson import Lesson
-from tribal_assistant.models.village import Village
-from tribal_assistant.models.world import WorldVillage
+from tribal_assistant.core.models.lesson import Lesson
+from tribal_assistant.core.models.village import Village
+from tribal_assistant.core.models.world import WorldVillage
 
 A = AccountContext(id=1, name="a", server="br144", world_url="https://br144.x", username="a", password="p")
 B = AccountContext(id=2, name="b", server="br145", world_url="https://br145.x", username="b", password="p")

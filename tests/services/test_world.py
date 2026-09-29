@@ -1,4 +1,4 @@
-from tribal_assistant.client.world import parse_allies, parse_players, parse_villages, parse_xml
+from tribal_assistant.core.game.world import parse_allies, parse_players, parse_villages, parse_xml
 
 
 def test_parse_map_files() -> None:

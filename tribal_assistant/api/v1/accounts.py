@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, Depends
 
-from tribal_assistant.schemas.accounts import AccountIn, AccountOut, AccountUpdate
-from tribal_assistant.services.accounts import AccountService
+from tribal_assistant.core.schemas.accounts import AccountIn, AccountOut, AccountUpdate
+from tribal_assistant.core.services.accounts import AccountService
 
 accounts_router = APIRouter()
 

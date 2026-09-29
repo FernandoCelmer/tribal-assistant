@@ -2,11 +2,11 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from tribal_assistant.client.actions import ActionResult
-from tribal_assistant.client.modules import free_finish
-from tribal_assistant.client.modules.free_finish import FreeFinishWatcher
-from tribal_assistant.models.building import Building
-from tribal_assistant.models.village import Village
+from tribal_assistant.core.game.actions import ActionResult
+from tribal_assistant.core.game.modules import free_finish
+from tribal_assistant.core.game.modules.free_finish import FreeFinishWatcher
+from tribal_assistant.core.models.building import Building
+from tribal_assistant.core.models.village import Village
 
 
 class FakeActions:

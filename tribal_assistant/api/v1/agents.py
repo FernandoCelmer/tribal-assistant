@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, Depends, Query
 
-from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
-from tribal_assistant.schemas.agents import (
+from tribal_assistant.core.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
+from tribal_assistant.core.schemas.agents import (
     AgentActOut,
     AgentActRequest,
     AgentConfigOut,
@@ -13,9 +13,9 @@ from tribal_assistant.schemas.agents import (
     LessonOut,
     QuestsOut,
 )
-from tribal_assistant.schemas.coordination import CoordinationOut, ProposerOut, RoleIn, RoleOut
-from tribal_assistant.schemas.plan import VillagePlanOut
-from tribal_assistant.services.agents import AgentService
+from tribal_assistant.core.schemas.coordination import CoordinationOut, ProposerOut, RoleIn, RoleOut
+from tribal_assistant.core.schemas.plan import VillagePlanOut
+from tribal_assistant.core.services.agents import AgentService
 
 agents_router = APIRouter()
 

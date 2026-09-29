@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from tribal_assistant.schemas.health import Health
+from tribal_assistant.core.schemas.health import Health
 
 health_router = APIRouter(tags=["Health"])
 

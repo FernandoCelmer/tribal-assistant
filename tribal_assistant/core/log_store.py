@@ -9,9 +9,9 @@ from typing import Any
 from sqlalchemy import create_engine, delete, insert
 from sqlalchemy.engine import Engine
 
-from tribal_assistant.accounts.context import current_account_id
+from tribal_assistant.core.accounts.context import current_account_id
 from tribal_assistant.core.events import event_bus
-from tribal_assistant.models.log import AppLog
+from tribal_assistant.core.models.log import AppLog
 
 SYNC_DRIVERS = {"sqlite+aiosqlite": "sqlite", "postgresql+asyncpg": "postgresql+psycopg"}
 

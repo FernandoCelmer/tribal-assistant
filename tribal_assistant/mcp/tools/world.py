@@ -6,12 +6,12 @@ from typing import Annotated, Literal
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
+from tribal_assistant.core.schemas.world import WorldStatus
+from tribal_assistant.core.services.world import WorldService
 from tribal_assistant.mcp.annotations import READ_ONLY, READS_GAME, GuardedTool
 from tribal_assistant.mcp.schemas import BarbarianTarget, BarbarianTargets, Nearby, SyncOutcome
 from tribal_assistant.mcp.tools.base import ToolGroup
 from tribal_assistant.mcp.tools.bridge import ToolboxBridge
-from tribal_assistant.schemas.world import WorldStatus
-from tribal_assistant.services.world import WorldService
 
 
 class WorldTools(ToolGroup):
@@ -67,8 +67,8 @@ class WorldTools(ToolGroup):
             database. Read-only on the game side and account-independent; the files change about
             once an hour, so once a day is enough for looting.
             """
-            from tribal_assistant.client.modules.world_sync import sync_world as download
-            from tribal_assistant.db.session import init_db
+            from tribal_assistant.core.db.session import init_db
+            from tribal_assistant.core.game.modules.world_sync import sync_world as download
 
             await init_db()
             await download()

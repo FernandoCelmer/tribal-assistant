@@ -5,7 +5,8 @@ from typing import Annotated, Any, Literal
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
-from tribal_assistant.agents.runner import AgentRunner
+from tribal_assistant.core.agents.runner import AgentRunner
+from tribal_assistant.core.schemas.agents import AgentRunOut
 from tribal_assistant.mcp.annotations import (
     DESTRUCTIVE,
     REACHES_OUT,
@@ -16,7 +17,6 @@ from tribal_assistant.mcp.annotations import (
 from tribal_assistant.mcp.schemas import ActionOutcome, PlanStepIn, SyncOutcome
 from tribal_assistant.mcp.tools.base import ToolGroup
 from tribal_assistant.mcp.tools.bridge import ToolboxBridge
-from tribal_assistant.schemas.agents import AgentRunOut
 
 VillageId = Annotated[int, Field(description="Own village id (the `id` field of a village in get_overview), not its coordinates.")]
 DryRun = Annotated[bool, Field(description="true (default) only simulates and logs the decision; false acts in the game. Use false only after the user said yes to the dry run.")]
@@ -51,7 +51,7 @@ class GameActionTools(ToolGroup):
             reports and quests. Changes nothing in the game. Takes tens of seconds and opens real
             pages, so call it once at the start of a session or after acting, not before every read.
             """
-            from tribal_assistant.services.assistant import AssistantService
+            from tribal_assistant.core.services.assistant import AssistantService
 
             result = await AssistantService().sync()
             return SyncOutcome(ok=result.ok, message=result.message)

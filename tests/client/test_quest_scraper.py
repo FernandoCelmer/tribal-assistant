@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from tribal_assistant.client.scraper.quests import parse_quest_body, parse_quest_list, parse_rewards
+from tribal_assistant.core.game.scraper.quests import (
+    parse_quest_body,
+    parse_quest_list,
+    parse_rewards,
+)
 
 HTML = (Path(__file__).parents[1] / "fixtures" / "html" / "quests.html").read_text(encoding="utf-8")
 

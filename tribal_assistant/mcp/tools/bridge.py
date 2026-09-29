@@ -3,13 +3,13 @@
 from typing import Any
 from uuid import uuid4
 
-from tribal_assistant.agents.context import ContextLoader
-from tribal_assistant.agents.roles.operator import OperatorAgent
-from tribal_assistant.agents.toolbox import Toolbox
-from tribal_assistant.agents.tools.base import ToolOutcome
+from tribal_assistant.core.agents.context import ContextLoader
+from tribal_assistant.core.agents.roles.operator import OperatorAgent
+from tribal_assistant.core.agents.toolbox import Toolbox
+from tribal_assistant.core.agents.tools.base import ToolOutcome
 from tribal_assistant.core.errors import NotFoundError
+from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.mcp.tools.base import ToolGroup
-from tribal_assistant.repositories.agent_settings import AgentSettingsRepository
 
 
 class ToolboxBridge:

@@ -1,7 +1,7 @@
 import pytest
 
-from tribal_assistant.agents.learning import LessonBook
-from tribal_assistant.repositories.lessons import LessonRepository
+from tribal_assistant.core.agents.learning import LessonBook
+from tribal_assistant.core.repositories.lessons import LessonRepository
 
 
 @pytest.mark.asyncio
@@ -41,7 +41,7 @@ async def test_rules_quests_and_notices_are_stored_and_summarized(session):
 
 @pytest.mark.asyncio
 async def test_reports_teach_target_results(session):
-    from tribal_assistant.client.scraper.game import ReportSnapshot
+    from tribal_assistant.core.game.scraper.game import ReportSnapshot
 
     book = LessonBook(session)
     reports = [

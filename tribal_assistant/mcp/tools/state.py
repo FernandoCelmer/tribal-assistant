@@ -5,18 +5,18 @@ from typing import Annotated, Literal
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
-from tribal_assistant.agents.knowledge import GameKnowledge
+from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.errors import NotFoundError
+from tribal_assistant.core.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
+from tribal_assistant.core.schemas.agents import AgentConfigOut, AgentDecisionOut, QuestsOut
+from tribal_assistant.core.schemas.coordination import RoleIn, RoleOut
+from tribal_assistant.core.schemas.game import GameOverview
+from tribal_assistant.core.services.agents import AgentService
+from tribal_assistant.core.services.game import GameService
 from tribal_assistant.mcp.annotations import READ_ONLY, REPLACES_LOCAL, GuardedTool
 from tribal_assistant.mcp.schemas import Coordination, Decisions, Knowledge, Plans, VillageState
 from tribal_assistant.mcp.tools.base import ToolGroup
 from tribal_assistant.mcp.tools.bridge import ToolboxBridge
-from tribal_assistant.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
-from tribal_assistant.schemas.agents import AgentConfigOut, AgentDecisionOut, QuestsOut
-from tribal_assistant.schemas.coordination import RoleIn, RoleOut
-from tribal_assistant.schemas.game import GameOverview
-from tribal_assistant.services.agents import AgentService
-from tribal_assistant.services.game import GameService
 
 
 class StateTools(ToolGroup):

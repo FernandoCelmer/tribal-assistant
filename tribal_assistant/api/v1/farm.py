@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, Depends
 
-from tribal_assistant.schemas.farm import FarmTarget, FarmTargetCreate, FarmTickResult
-from tribal_assistant.services.farm import FarmService
+from tribal_assistant.core.schemas.farm import FarmTarget, FarmTargetCreate, FarmTickResult
+from tribal_assistant.core.services.farm import FarmService
 
 farm_router = APIRouter()
 
