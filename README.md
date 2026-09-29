@@ -266,7 +266,7 @@ In Dokploy: create a **Compose** service from the Git repository, set the compos
 | `DATABASE_URL` | the PostgreSQL database (`postgresql+asyncpg://...`) |
 | `APP_SECRET` | the key that decrypts the stored game passwords: the content of `storage/secret.key` from the machine that created the accounts |
 | `WEB_PASSWORD` | the panel asks for it (HTTP basic auth, user `WEB_USER`, default `admin`) |
-| `AI_*`, `TELEGRAM_*`, `QUIET_HOURS` | same as the local `.env` |
+| `AI_*`, `QUIET_HOURS` | same as the local `.env` |
 
 The API is reached only through the web service, which proxies `/api/v1`, `/docs` and `/openapi.json` behind the same password. `storage/` (browser state, captures) lives in the `storage` volume.
 
