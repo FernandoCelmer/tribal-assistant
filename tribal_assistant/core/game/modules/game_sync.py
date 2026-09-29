@@ -12,6 +12,7 @@ from tribal_assistant.core.accounts.context import current_account, current_acco
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.session import SessionFactory
 from tribal_assistant.core.errors import UpstreamError
+from tribal_assistant.core.events import event_bus
 from tribal_assistant.core.game.human import human_click, reading_pause
 from tribal_assistant.core.game.login import VILLAGE_MENU_SELECTOR, login
 from tribal_assistant.core.game.scraper.game import (
@@ -538,6 +539,7 @@ async def sync_game() -> GameSnapshot:
     session_state.logged_in = True
     session_state.last_error = None
     session_state.last_sync_at = datetime.now(UTC)
+    event_bus.publish("sync", {"villages": len(snapshot.villages), "reports": len(snapshot.reports)})
     logger.info(
         "{} aldeia(s) e {} relatório(s) sincronizados", len(snapshot.villages), len(snapshot.reports)
     )

@@ -52,6 +52,7 @@ from tribal_assistant.core.agents.tools.read import (
     SearchDocs,
 )
 from tribal_assistant.core.ai.types import ToolCall, ToolResult, ToolSpec
+from tribal_assistant.core.events import event_bus
 from tribal_assistant.core.game.actions import GameActions
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
@@ -206,6 +207,8 @@ class Toolbox:
         )
 
         if not self.dry_run:
+            event_bus.publish("decision", {"action": tool.name, "ok": outcome.ok, "village_id": self.ctx.id})
+
             await self.lessons.action(self.agent.key, tool.name, arguments, outcome.ok, outcome.text)
             await self.lessons.notices(tool.name, list(outcome.data.get("notices", [])))
 
