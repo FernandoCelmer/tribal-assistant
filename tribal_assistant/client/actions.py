@@ -659,6 +659,31 @@ class GameActions:
         logger.info("Used item {} ({}) in village {}", key, name, village_id)
         return ActionResult(True, "use_item", f"{name} usado", {"item": name, "notices": messages["notices"]})
 
+    async def choose_relic(self, village_id: str, index: int) -> ActionResult:
+        """Pick one of the starter relics offered in the treasury (relic_system)."""
+        async with game_session.lock:
+            page = await self._in_game(village_id, "relic_system")
+
+            link = page.locator(f'a.btn[href*="mode=choose_relic"][href*="index={index}"]')
+            if not await link.count():
+                return ActionResult(False, "choose_relic", "nenhuma relíquia inicial para escolher")
+
+            await self._click_and_settle(page, link.first)
+            await human_delay(700, 1400)
+
+            confirm = page.locator(".popup_box_container .btn-confirm-yes, .popup_box_container a.btn:visible")
+            if await confirm.count():
+                await human_click(page, confirm.first)
+                await page.wait_for_timeout(1_500)
+
+            self._capture(await page.content(), "relic-chosen")
+            messages = await self.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "choose_relic", " | ".join(messages["errors"]))
+
+        logger.info("Chose starter relic {} in village {}", index, village_id)
+        return ActionResult(True, "choose_relic", f"relíquia {index} escolhida", {"notices": messages["notices"]})
+
     async def claim_rewards(self, village_id: str) -> ActionResult:
         """Claim every reward waiting in the "Recompensas" tab (resources land in this village)."""
         async with game_session.lock:

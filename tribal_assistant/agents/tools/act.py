@@ -456,6 +456,30 @@ class UseItem(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class ChooseRelic(AgentTool):
+    name = "choose_relic"
+    description = (
+        "Escolhe uma das relíquias iniciais da Tesouraria (escolha única). "
+        "index 0 bárbaro, 1 lanceiro, 2 produção de recursos, 3 velocidade de recrutamento."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"index": {"type": "integer", "minimum": 0, "maximum": 3}, "reason": REASON},
+        "required": ["index", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        index = int(args["index"])
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) escolher relíquia {index}")
+
+        result = await box.actions.choose_relic(box.ctx.game_id, index)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class SetVillageGoal(AgentTool):
     name = "set_village_goal"
     description = (

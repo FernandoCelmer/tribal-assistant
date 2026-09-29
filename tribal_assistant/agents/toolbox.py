@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tribal_assistant.agents.context import VillageContext
 from tribal_assistant.agents.guardrails import Guardrails
 from tribal_assistant.agents.tools.act import (
+    ChooseRelic,
     ClaimQuestRewards,
     CompleteQuest,
     OpenDailyBonus,
@@ -55,6 +56,7 @@ class Toolbox:
         CompleteQuest,
         RecruitKnight,
         UseItem,
+        ChooseRelic,
         SetVillageGoal,
         SetVillagePlan,
         UnlockScavenge,
