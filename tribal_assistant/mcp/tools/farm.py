@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
-from tribal_assistant.mcp.annotations import READ_ONLY, WRITES_LOCAL, GuardedTool
+from tribal_assistant.mcp.annotations import READ_ONLY, REPLACES_LOCAL, WRITES_LOCAL, GuardedTool
 from tribal_assistant.mcp.schemas import FarmTargets
 from tribal_assistant.mcp.tools.base import ToolGroup
 from tribal_assistant.repositories.farm import FarmTargetRepository
@@ -15,32 +15,39 @@ from tribal_assistant.services.farm import FarmService
 
 class FarmTools(ToolGroup):
     def register(self, mcp: MCPServer) -> None:
-        @GuardedTool(mcp, annotations=READ_ONLY)
+        @GuardedTool(mcp, title="Farm list", annotations=READ_ONLY)
         async def list_farm_targets(
             include_disabled: Annotated[bool, Field(description="Also list disabled targets.")] = False,
         ) -> FarmTargets:
-            """Farm targets the raider agent may use when world data is missing."""
+            """Local list of barbarian farm targets with template, known wall level, last attack and
+            last loot. The raider and list_barbarians fall back on it when world data is missing, and
+            the guardrails accept its coords as barbarian. Not the game's loot assistant.
+            """
             rows = await self.with_session(
                 lambda s: FarmTargetRepository(s).list(enabled_only=not include_disabled)
             )
             return FarmTargets(targets=[FarmTarget.model_validate(r) for r in rows])
 
-        @GuardedTool(mcp, annotations=WRITES_LOCAL)
+        @GuardedTool(mcp, title="Add farm target", annotations=WRITES_LOCAL)
         async def add_farm_target(
-            coords: Annotated[str, Field(description="Barbarian village coordinates x|y.")],
-            template: Annotated[Literal["A", "B", "C"], Field(description="Loot assistant template.")] = "A",
-            wall_level: Annotated[int, Field(ge=0, le=20, description="Known wall level.")] = 0,
+            coords: Annotated[str, Field(pattern=r"^\d{1,3}\|\d{1,3}$", description="Barbarian village coordinates x|y, e.g. 498|503.")],
+            template: Annotated[Literal["A", "B", "C"], Field(description="Squad template label: A small, B larger, C sized from a spy report.")] = "A",
+            wall_level: Annotated[int, Field(ge=0, le=20, description="Known wall level from a report; above 0 means the squad takes losses.")] = 0,
         ) -> FarmTarget:
-            """Add a farm target to the local list. Nothing is sent to the game."""
+            """Add a barbarian village to the local farm list. Nothing is sent to the game.
+
+            Only add villages confirmed barbarian (list_nearby kind=barbarian): anything on this
+            list passes the barbarian-only guardrail, so a player village here would be attacked.
+            """
             payload = FarmTargetCreate(coords=coords, template=template, wall_level=wall_level)
             row = await self.with_session(lambda s: FarmService(s).add(payload))
             return FarmTarget.model_validate(row)
 
-        @GuardedTool(mcp, annotations=WRITES_LOCAL)
+        @GuardedTool(mcp, title="Remove farm target", annotations=REPLACES_LOCAL)
         async def remove_farm_target(
-            target_id: Annotated[int, Field(description="Target id from list_farm_targets.")],
+            target_id: Annotated[int, Field(ge=1, description="Target id from list_farm_targets.")],
         ) -> FarmTargets:
-            """Remove a farm target from the local list and return what remains."""
+            """Delete a target from the local farm list (e.g. it became a player village or has a wall) and return what remains."""
             await self.with_session(lambda s: FarmService(s).remove(target_id))
             rows = await self.with_session(lambda s: FarmTargetRepository(s).list(enabled_only=False))
             return FarmTargets(targets=[FarmTarget.model_validate(r) for r in rows])

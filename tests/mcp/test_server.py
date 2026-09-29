@@ -5,6 +5,8 @@ from tribal_assistant.mcp.server import INSTRUCTIONS, RULES, TribalMcpServer
 
 READ_ONLY_TOOLS = {
     "get_overview",
+    "get_village_state",
+    "list_barbarians",
     "get_quests",
     "get_agent_decisions",
     "get_agents_config",
@@ -21,7 +23,12 @@ GAME_ACTIONS = {
     "send_farm_attack",
     "claim_quest_rewards",
     "complete_quest",
+    "send_scavenge",
+    "unlock_scavenge",
+    "open_daily_bonus",
 }
+LOCAL_WRITES = {"set_village_goal", "set_village_plan", "update_agent_settings", "remove_farm_target"}
+PROMPTS = {"grow_village", "farm_round", "first_noble_plan", "agent_round", "daily_routine"}
 
 
 @pytest.fixture
@@ -36,16 +43,11 @@ async def _tools(server) -> dict:
 async def test_tool_surface(server) -> None:
     tools = await _tools(server)
 
-    assert set(tools) == READ_ONLY_TOOLS | GAME_ACTIONS | {
-        "sync_account",
-        "sync_world",
-        "add_farm_target",
-        "remove_farm_target",
-        "set_village_goal",
-        "update_agent_settings",
-    }
+    assert set(tools) == READ_ONLY_TOOLS | GAME_ACTIONS | LOCAL_WRITES | {"sync_account", "sync_world", "add_farm_target"}
+    assert len(tools) == 27
     for tool in tools.values():
         assert tool.description
+        assert tool.title
         assert tool.input_schema["type"] == "object"
         assert tool.output_schema is not None
         assert tool.annotations is not None
@@ -59,6 +61,11 @@ async def test_annotations_match_side_effects(server) -> None:
     for name in GAME_ACTIONS:
         assert not tools[name].annotations.read_only_hint, name
         assert tools[name].annotations.open_world_hint, name
+    for name in LOCAL_WRITES:
+        assert not tools[name].annotations.open_world_hint, name
+        assert tools[name].annotations.destructive_hint, name
+    assert tools["send_farm_attack"].annotations.destructive_hint
+    assert tools["sync_account"].annotations.read_only_hint
 
 
 async def test_game_actions_default_to_dry_run(server) -> None:
@@ -87,7 +94,38 @@ async def test_unknown_knowledge_is_a_tool_error(server) -> None:
 
 async def test_prompts_name_tools_in_order(server) -> None:
     prompts = {p.name for p in await server.list_prompts()}
-    assert prompts == {"grow_village", "farm_round", "first_noble_plan", "agent_round"}
+    assert prompts == PROMPTS
 
     text = "\n".join(m.content.text for m in (await server.get_prompt("agent_round", {})).messages)
     assert text.index("get_agents_config") < text.index("run_agents") < text.index("get_agent_decisions")
+
+
+async def test_prompts_require_dry_run_first(server) -> None:
+    for name in PROMPTS - {"first_noble_plan"}:
+        text = "\n".join(m.content.text for m in (await server.get_prompt(name, {})).messages)
+        assert "dry_run=true" in text, name
+
+
+async def test_prompt_uses_given_village(server) -> None:
+    result = await server.get_prompt("grow_village", {"village_id": "42"})
+
+    assert "Village: 42." in result.messages[0].content.text
+
+
+async def test_plan_tool_bounds_steps(server) -> None:
+    tools = await _tools(server)
+    steps = tools["set_village_plan"].input_schema["properties"]["steps"]
+
+    assert steps["maxItems"] == 12
+    assert steps["minItems"] == 1
+
+
+async def test_knowledge_resources(server) -> None:
+    uris = {str(r.uri) for r in await server.list_resources()}
+    templates = {t.uri_template for t in await server.list_resource_templates()}
+
+    assert {"tribal://knowledge/strategy", "tribal://knowledge/buildings", "tribal://knowledge/units", "tribal://plans"} <= uris
+    assert "tribal://village/{village_id}/state" in templates
+
+    contents = list(await server.read_resource("tribal://knowledge/buildings"))
+    assert '"snob"' in contents[0].content

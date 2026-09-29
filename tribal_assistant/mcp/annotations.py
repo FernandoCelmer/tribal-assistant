@@ -1,4 +1,9 @@
-"""Tool annotation presets and the guard that turns domain errors into MCP tool errors."""
+"""Tool annotation presets and the guard that turns domain errors into MCP tool errors.
+
+READ_ONLY reads the local database; READS_GAME reads the live game or public world files;
+WRITES_LOCAL adds local rows; REPLACES_LOCAL overwrites local state (plan, goal, settings);
+REACHES_OUT acts in the game and spends resources; DESTRUCTIVE can lose troops.
+"""
 
 import functools
 from collections.abc import Awaitable, Callable
@@ -12,7 +17,9 @@ from tribal_assistant.ai.errors import LLMError
 from tribal_assistant.core.errors import DomainError
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
-WRITES_LOCAL = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
+READS_GAME = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True)
+WRITES_LOCAL = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False)
+REPLACES_LOCAL = ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=True, open_world_hint=False)
 REACHES_OUT = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=True)
 DESTRUCTIVE = ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=False, open_world_hint=True)
 
