@@ -1,7 +1,7 @@
 """Assistant control service."""
 
+from tribal_assistant.accounts.context import current_world
 from tribal_assistant.client.state import session_state
-from tribal_assistant.core.config import settings
 from tribal_assistant.scheduler.runtime import scheduler
 from tribal_assistant.schemas.assistant import AssistantStatus, CommandResult
 
@@ -12,7 +12,7 @@ class AssistantService:
         return AssistantStatus(
             running=scheduler.running,
             logged_in=session_state.logged_in,
-            world=settings.tw_server,
+            world=current_world() or "-",
             scheduler_jobs=jobs,
             last_sync_at=session_state.last_sync_at,
             last_error=session_state.last_error,

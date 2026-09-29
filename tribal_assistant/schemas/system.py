@@ -14,8 +14,8 @@ class AIInfo(BaseModel):
 
 class SystemInfo(BaseModel):
     version: str
-    world_url: str
-    server: str
+    world_url: str | None
+    server: str | None
     sync_interval_seconds: int
     world_sync_interval_minutes: int
     quiet_hours: str | None

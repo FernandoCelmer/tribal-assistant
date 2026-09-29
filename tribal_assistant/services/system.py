@@ -12,10 +12,13 @@ from tribal_assistant.version import __version__
 
 class SystemService:
     def info(self) -> SystemInfo:
+        from tribal_assistant.accounts.context import current_account, current_account_id
+
+        account = current_account() if current_account_id() else None
         return SystemInfo(
             version=__version__,
-            world_url=settings.tw_world_url,
-            server=settings.tw_server,
+            world_url=account.world_url if account else None,
+            server=account.server if account else None,
             sync_interval_seconds=settings.sync_interval_seconds,
             world_sync_interval_minutes=settings.world_sync_interval_minutes,
             quiet_hours=settings.quiet_hours,

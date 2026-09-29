@@ -50,6 +50,7 @@ class WebPages:
         PageSpec("charts", "/graficos", "Gráficos", "charts.html", "Agentes", "star"),
         PageSpec("flow", "/grafos", "Grafos", "flow.html", "Agentes", "compass"),
         PageSpec("logs", "/logs", "Logs", "logs.html", "Agentes", "book"),
+        PageSpec("accounts", "/contas", "Contas", "accounts.html", "Sistema", "key"),
         PageSpec("settings", "/configuracoes", "Configurações", "settings.html", "Sistema", "gear"),
         PageSpec("design", "/componentes", "Componentes", "design.html", in_nav=False),
     )
@@ -81,6 +82,7 @@ class WebPages:
 
     def _handler(self, spec: PageSpec) -> Callable[[Request], Awaitable[HTMLResponse]]:
         async def render(request: Request) -> HTMLResponse:
+            accounts, current = await self._accounts(request)
             return self.templates.TemplateResponse(
                 request,
                 f"pages/{spec.template}",
@@ -91,11 +93,29 @@ class WebPages:
                     "current_label": spec.label,
                     "banner_style": self.banner.style() if spec.key == "overview" else "",
                     "version": __version__,
+                    "accounts": accounts,
+                    "current_account": current,
                 },
                 headers={"Cache-Control": "no-cache"},
             )
 
         return render
+
+    @staticmethod
+    async def _accounts(request: Request) -> tuple[list, int | None]:
+        from tribal_assistant.db.session import SessionFactory, requested_account
+        from tribal_assistant.repositories.accounts import AccountRepository
+
+        try:
+            async with SessionFactory() as session:
+                accounts = list(await AccountRepository(session).list())
+        except Exception:
+            return [], None
+
+        wanted = requested_account(request)
+        ids = [a.id for a in accounts]
+        current = wanted if wanted in ids else next((a.id for a in accounts if a.enabled), ids[0] if ids else None)
+        return accounts, current
 
     @staticmethod
     def _redirect(target: str) -> Callable[[], Awaitable[RedirectResponse]]:
