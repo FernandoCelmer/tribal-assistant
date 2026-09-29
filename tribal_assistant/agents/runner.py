@@ -11,13 +11,10 @@ from tribal_assistant.agents.brains.base import Brain
 from tribal_assistant.agents.brains.llm import LLMBrain
 from tribal_assistant.agents.brains.rules import RuleBrain
 from tribal_assistant.agents.context import ContextLoader
+from tribal_assistant.agents.coordination.round import VillageRound
 from tribal_assistant.agents.learning import LessonBook
 from tribal_assistant.agents.roles.base import VillageAgent
-from tribal_assistant.agents.roles.commander import CommanderAgent
-from tribal_assistant.agents.roles.economist import EconomistAgent
 from tribal_assistant.agents.roles.quartermaster import QuartermasterAgent
-from tribal_assistant.agents.roles.raider import RaiderAgent
-from tribal_assistant.agents.roles.steward import StewardAgent
 from tribal_assistant.agents.roles.strategist import StrategistAgent
 from tribal_assistant.agents.toolbox import Toolbox
 from tribal_assistant.agents.trace import RunTrace
@@ -48,16 +45,9 @@ class RunReport:
 
 
 class AgentRunner:
-    """Refreshes quests, runs each specialist per village in order, then re-syncs the account."""
+    """Refreshes quests, runs quests and plan agents, then the coordinator per village, then re-syncs."""
 
-    AGENTS: tuple[type[VillageAgent], ...] = (
-        QuartermasterAgent,
-        StewardAgent,
-        StrategistAgent,
-        EconomistAgent,
-        CommanderAgent,
-        RaiderAgent,
-    )
+    AGENTS: tuple[type[VillageAgent], ...] = (QuartermasterAgent, StrategistAgent)
 
     _lock = asyncio.Lock()
 
@@ -188,6 +178,12 @@ class AgentRunner:
 
                 village.summaries[agent.key] = summary
                 acted = acted or box.acted
+
+            trace.focus(ctx.id, label, "coordinator")
+            coordination = VillageRound(session, config, report.run_id, report.dry_run, self.actions, trace)
+            decision, _ = await coordination.run(ctx)
+            village.summaries["coordinator"] = decision.summary()
+            acted = acted or coordination.acted
 
             report.villages.append(village)
 

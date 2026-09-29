@@ -121,6 +121,10 @@ async def _retention_job() -> None:
     async with SessionFactory() as session:
         removed = await ObservabilityRepository(session).prune(settings.trace_retention_days)
 
+        from tribal_assistant.repositories.coordination import CoordinationRepository
+
+        removed += await CoordinationRepository(session).prune(settings.trace_retention_days)
+
     logger.info("Retention removed {} old agent trace rows", removed)
 
 

@@ -30,6 +30,7 @@ class VillageContext:
     plan_summary: str = ""
     plan_refreshed_at: datetime | None = None
     lessons: str = ""
+    coordination: str = ""
 
     @property
     def id(self) -> int:
@@ -166,6 +167,23 @@ class ContextLoader:
         from tribal_assistant.agents.learning import LessonBook
 
         ctx.lessons = await LessonBook(self.plans.session).summary()
+        ctx.coordination = await self._coordination(ctx.id)
+
+    async def _coordination(self, village_id: int) -> str:
+        from tribal_assistant.repositories.coordination import CoordinationRepository
+
+        rows = await CoordinationRepository(self.plans.session).history(village_id, 1)
+        if not rows:
+            return ""
+
+        data = json.loads(rows[0].data or "{}")
+        deferred = "; ".join(f"{d['title']} ({d['why']})" for d in data.get("deferred", [])[:3])
+        reserved = ", ".join(r["purpose"] for r in data.get("budget", {}).get("reservations", []))
+        return (
+            f"Coordenador: papel {data.get('role')}, modo {data.get('mode')}"
+            + (f"; reservas: {reserved}" if reserved else "")
+            + (f"; adiadas: {deferred}" if deferred else "")
+        )
 
     async def _quests(self) -> list[dict[str, Any]]:
         return [
