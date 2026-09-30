@@ -9,38 +9,38 @@ export const NAV: NavGroup[] = [
     label: "Jogo",
     items: [
       { href: "/", label: "Visão geral", icon: LayoutDashboard, exact: true },
-      { href: "/aldeia", label: "Aldeia", icon: Castle },
-      { href: "/arredores", label: "Arredores", icon: Map },
-      { href: "/relatorios", label: "Relatórios", icon: ScrollText },
-      { href: "/desafios", label: "Desafios", icon: Trophy },
+      { href: "/village", label: "Aldeia", icon: Castle },
+      { href: "/nearby", label: "Arredores", icon: Map },
+      { href: "/reports", label: "Relatórios", icon: ScrollText },
+      { href: "/challenges", label: "Desafios", icon: Trophy },
     ],
   },
   {
     label: "Agentes",
     items: [
-      { href: "/estrategia", label: "Estratégia", icon: Compass },
-      { href: "/agentes", label: "Agentes", icon: Bot },
-      { href: "/graficos", label: "Gráficos", icon: ChartLine },
-      { href: "/grafos", label: "Grafos", icon: Workflow },
-      { href: "/parametros", label: "Parâmetros", icon: SlidersHorizontal },
+      { href: "/strategy", label: "Estratégia", icon: Compass },
+      { href: "/agents", label: "Agentes", icon: Bot },
+      { href: "/charts", label: "Gráficos", icon: ChartLine },
+      { href: "/graph", label: "Grafos", icon: Workflow },
+      { href: "/parameters", label: "Parâmetros", icon: SlidersHorizontal },
       { href: "/logs", label: "Logs", icon: TextSearch },
     ],
   },
   {
     label: "Sistema",
     items: [
-      { href: "/contas", label: "Contas", icon: KeyRound },
-      { href: "/configuracoes", label: "Configurações", icon: Settings },
+      { href: "/accounts", label: "Contas", icon: KeyRound },
+      { href: "/settings", label: "Configurações", icon: Settings },
     ],
   },
 ];
 
 export const MOBILE: NavItem[] = [
   { href: "/", label: "Início", icon: LayoutDashboard, exact: true },
-  { href: "/aldeia", label: "Aldeia", icon: Castle },
-  { href: "/estrategia", label: "Estratégia", icon: Compass },
-  { href: "/agentes", label: "Agentes", icon: Bot },
-  { href: "/configuracoes", label: "Ajustes", icon: Settings },
+  { href: "/village", label: "Aldeia", icon: Castle },
+  { href: "/strategy", label: "Estratégia", icon: Compass },
+  { href: "/agents", label: "Agentes", icon: Bot },
+  { href: "/settings", label: "Ajustes", icon: Settings },
 ];
 
 export function active(pathname: string, item: NavItem): boolean {

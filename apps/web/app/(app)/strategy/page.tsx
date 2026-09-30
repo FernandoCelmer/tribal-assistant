@@ -42,7 +42,7 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
             icon={Compass}
             title="Nenhuma rodada do coordenador ainda"
             text="Rode os agentes para o coordenador decidir o papel de cada aldeia."
-            action={<Link href="/agentes" className={buttonVariants({ variant: "outline", size: "sm" })}><Bot className="size-4" strokeWidth={1.75} />Ir para Agentes</Link>}
+            action={<Link href="/agents" className={buttonVariants({ variant: "outline", size: "sm" })}><Bot className="size-4" strokeWidth={1.75} />Ir para Agentes</Link>}
           />
         </Panel>
         {proposers && proposers.length > 0 && <SpecialistsTable proposers={proposers} />}
@@ -62,7 +62,7 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 text-sm">
           <span className="truncate font-medium">{round.village || `Aldeia ${round.village_id}`}</span>
-          <Link href={`/agentes/${round.run_id}`} className="font-mono text-[12px] text-secondary underline-offset-4 hover:text-foreground hover:underline">rodada {short(round.created_at)}</Link>
+          <Link href={`/agents/${round.run_id}`} className="font-mono text-[12px] text-secondary underline-offset-4 hover:text-foreground hover:underline">rodada {short(round.created_at)}</Link>
         </div>
         <AutoRefresh every={20_000} />
       </div>

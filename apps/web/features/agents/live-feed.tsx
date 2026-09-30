@@ -32,7 +32,7 @@ function Line({ event }: { event: FeedEvent }) {
     const failed = event.kind === "run_finished" && d.status === "failed";
     return (
       <div className="min-w-0 flex-1 text-sm">
-        <Link href={`/agentes/${d.run_id}`} className="font-medium underline-offset-4 hover:underline">
+        <Link href={`/agents/${d.run_id}`} className="font-medium underline-offset-4 hover:underline">
           Rodada {d.run_id} {event.kind === "run_started" ? "começou" : failed ? "falhou" : "terminou"}
         </Link>
         <div className="truncate text-[12px] text-secondary">

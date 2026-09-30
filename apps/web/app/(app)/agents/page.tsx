@@ -28,7 +28,7 @@ export default async function AgentsPage() {
         shortDescription="Especialistas, rodadas e raciocínio ao vivo."
         actions={
           <>
-            <Link href="/configuracoes" className={buttonVariants({ variant: "ghost", className: "hidden md:inline-flex" })}>
+            <Link href="/settings" className={buttonVariants({ variant: "ghost", className: "hidden md:inline-flex" })}>
               <Settings className="size-4" strokeWidth={1.75} />
               Configurar
             </Link>

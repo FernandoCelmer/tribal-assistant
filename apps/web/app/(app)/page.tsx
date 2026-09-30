@@ -43,7 +43,7 @@ export default async function OverviewPage() {
               <RefreshCw className="size-4" strokeWidth={1.75} />
               Sincronizar agora
             </ActionButton>
-            <Link href="/estrategia" className={buttonVariants({ variant: "default" })}><Compass className="size-4" strokeWidth={1.75} />Estratégia</Link>
+            <Link href="/strategy" className={buttonVariants({ variant: "default" })}><Compass className="size-4" strokeWidth={1.75} />Estratégia</Link>
           </>
         }
       />

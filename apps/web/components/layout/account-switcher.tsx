@@ -29,7 +29,7 @@ export function AccountSwitcher({ accounts, current }: { accounts: Account[]; cu
   };
 
   if (!current) {
-    return <a href="/contas" className="flex h-12 items-center rounded-[7px] border border-dashed border-border px-3 text-sm text-secondary hover:text-foreground">Cadastrar uma conta</a>;
+    return <a href="/accounts" className="flex h-12 items-center rounded-[7px] border border-dashed border-border px-3 text-sm text-secondary hover:text-foreground">Cadastrar uma conta</a>;
   }
 
   return (
@@ -54,7 +54,7 @@ export function AccountSwitcher({ accounts, current }: { accounts: Account[]; cu
             </li>
           ))}
           <li className="border-t border-border-subtle">
-            <a href="/contas" className="block px-3 py-2 text-[13px] text-secondary hover:bg-surface-hover hover:text-foreground">Gerenciar contas</a>
+            <a href="/accounts" className="block px-3 py-2 text-[13px] text-secondary hover:bg-surface-hover hover:text-foreground">Gerenciar contas</a>
           </li>
         </ul>
       )}

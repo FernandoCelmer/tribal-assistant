@@ -19,7 +19,7 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
 
   return (
     <div className="space-y-6">
-      <Link href="/agentes" className="inline-flex items-center gap-1.5 text-[13px] text-secondary hover:text-foreground">
+      <Link href="/agents" className="inline-flex items-center gap-1.5 text-[13px] text-secondary hover:text-foreground">
         <ArrowLeft className="size-3.5" strokeWidth={1.75} />
         Agentes
       </Link>

@@ -162,7 +162,7 @@ export function SettingsForm({ initial }: { initial: Settings }) {
             <p>Reserva de recursos, orçamento de recrutamento, raio e ritmo dos saques e a fila de obras mudam sozinhos com o papel de cada aldeia.</p>
             <ul className="flex flex-wrap gap-1.5">{Object.values(ROLES).map((r) => <li key={r}><Badge>{r}</Badge></li>)}</ul>
             <p>Continuam fixas: só aldeias bárbaras são atacadas, pontos premium nunca são gastos e, com ataque chegando, as tropas ficam em casa.</p>
-            <Link href="/estrategia" className="inline-flex items-center gap-1.5 text-foreground underline-offset-4 hover:underline"><Compass className="size-3.5" strokeWidth={1.75} />Ver valores atuais em Estratégia</Link>
+            <Link href="/strategy" className="inline-flex items-center gap-1.5 text-foreground underline-offset-4 hover:underline"><Compass className="size-3.5" strokeWidth={1.75} />Ver valores atuais em Estratégia</Link>
           </div>
         </Section>
 

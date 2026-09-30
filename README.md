@@ -118,9 +118,9 @@ The FastAPI app is `tribal_assistant.api.app:app`; build your own with `tribal_a
 
 The assistant plays **several accounts at once**, each with its own browser session, data, settings, strategy and lessons. Public world data (villages, players, tribes) is stored once per world and shared.
 
-- Add accounts on **Contas** (`/contas`) or with `tribal-assistant accounts add --world-url https://br145.tribalwars.com.br --username NAME`. Passwords are encrypted with `APP_SECRET` (or `storage/secret.key`).
+- Add accounts on **Contas** (`/accounts`) or with `tribal-assistant accounts add --world-url https://br145.tribalwars.com.br --username NAME`. Passwords are encrypted with `APP_SECRET` (or `storage/secret.key`).
 - Pick the account in the sidebar; the API takes `?account=ID`, the `X-Account` header or the `tw_account` cookie; the CLI takes `--account ID`; MCP uses `TRIBAL_ACCOUNT`.
-- Pause an account from `/contas` or `tribal-assistant accounts enable ID --off`.
+- Pause an account from `/accounts` or `tribal-assistant accounts enable ID --off`.
 - The first start creates account 1 from `TW_*` in `.env`.
 
 Game rule: one person may own only one account per world, and accounts on the same connection must never send troops or resources to each other or to the same target. The assistant never acts between the accounts it runs; the market ignores offers from them.
@@ -163,7 +163,7 @@ Each round has three stages per village:
 
 **How the coordinator decides**
 
-- **Role and mode.** Each village has a role (growth, defense, offensive, support, expansion). It is derived from progress or fixed by you on `/estrategia`; an incoming attack switches the round to *emergency* until the impact.
+- **Role and mode.** Each village has a role (growth, defense, offensive, support, expansion). It is derived from progress or fixed by you on `/strategy`; an incoming attack switches the round to *emergency* until the impact.
 - **Proposal format.** Every proposal carries action, arguments, reason, expected benefit, cost, troops, horizon (immediate, tactical, strategic), deadline, confidence, dependencies and risks.
 - **Priority.** `urgency + impact + risk avoided + opportunity − opportunity cost − uncertainty`, with weights that change with the mode (in emergency, urgency and risk dominate; in growth, economic return does).
 - **Reservations.** Defense, strategic goal, the next plan build (when affordable within 1.5 h) and the configured base reserve. "Available" means free after reservations; only the owner of a reservation may spend it.
@@ -177,13 +177,13 @@ New villages are picked up automatically after the next sync.
 
 **AI plans, rules execute.** Only the Strategist calls the model: it writes a **village plan** (up to 12 ordered steps — build X to level N, recruit, unlock scavenging) with `set_village_plan`. The other agents execute the plan with rules, at zero token cost. The plan is rewritten only when it is missing, older than `plan_refresh_minutes`, finished or stuck, so the model runs a few times a day instead of five times per round. Without an AI key the same plan comes from a built-in rule planner (quests, balanced production, path to the first nobleman).
 
-Plan progress is measured from the real village state every round (pending, queued, done, blocked) and shown on `/agentes`.
+Plan progress is measured from the real village state every round (pending, queued, done, blocked) and shown on `/agents`.
 
 Token savings: role-sliced compact text context instead of full JSON, no duplicate state reads, short answers (`AI_MAX_TOKENS`, default 2048), a cap on tool loops (`llm_max_steps`), and `llm_agents` to choose which agents may call the model (default: only the Strategist).
 
 Every action passes the same **guardrails**, enforced in code.
 
-The schedule and AI options are **runtime settings** stored in the database, not `.env`. Change them from the **Configurações** page (`/configuracoes`), the API (`PATCH /api/v1/agents/settings`), the CLI (`tribal-assistant agents set …`) or MCP (`update_agent_settings`). A running server picks up changes within a minute, with no restart.
+The schedule and AI options are **runtime settings** stored in the database, not `.env`. Change them from the **Configurações** page (`/settings`), the API (`PATCH /api/v1/agents/settings`), the CLI (`tribal-assistant agents set …`) or MCP (`update_agent_settings`). A running server picks up changes within a minute, with no restart.
 
 | Setting | Default | Meaning |
 |---------|---------|---------|
@@ -260,16 +260,16 @@ Each topic is its own page, reached from the sidebar (a drawer on phones):
 | Page | What it shows |
 |------|---------------|
 | `/` Visão geral | whether the server plays, account, village resources, next move of the coordinator, scavenging, quests, troop movements |
-| `/aldeia` | troops and buildings |
-| `/arredores` | nearby villages with travel times |
-| `/relatorios` | battle reports with loot |
-| `/desafios` | the game achievements: progress, which agent chases each one, and which stay out (combat against players, social, premium) |
-| `/estrategia` | per village: role and mode, next best action with reason, cost and confidence, the executed sequence, deferred proposals and why, reservations, vetoes, insights, the specialists |
-| `/agentes` | live status of the agents, village plan, rounds, the full reasoning of each round, live feed |
-| `/graficos` | agent metrics (actions per hour, refusals, tokens) and village evolution |
-| `/grafos` | decision graph: agents → tools → results |
+| `/village` | troops and buildings |
+| `/nearby` | nearby villages with travel times |
+| `/reports` | battle reports with loot |
+| `/challenges` | the game achievements: progress, which agent chases each one, and which stay out (combat against players, social, premium) |
+| `/strategy` | per village: role and mode, next best action with reason, cost and confidence, the executed sequence, deferred proposals and why, reservations, vetoes, insights, the specialists |
+| `/agents` | live status of the agents, village plan, rounds, the full reasoning of each round, live feed |
+| `/charts` | agent metrics (actions per hour, refusals, tokens) and village evolution |
+| `/graph` | decision graph: agents → tools → results |
 | `/logs` | application logs with live tail |
-| `/configuracoes` | runtime settings, AI status (provider, model, key present, never the key) and system info |
+| `/settings` | runtime settings, AI status (provider, model, key present, never the key) and system info |
 
 Everything shown there is stored in the database: rounds (`agent_runs`), every reasoning step and tool call (`agent_steps`), decisions (`agent_decisions`), village snapshots at every sync (`village_snapshots`) and application logs (`app_logs`). Live updates arrive over Server-Sent Events at `/api/v1/events`. OpenAPI docs are at `/docs`.
 

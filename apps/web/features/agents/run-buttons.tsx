@@ -30,7 +30,7 @@ export function RunButtons() {
       const report = body as Report;
       if (report.error) toast(report.error, "error");
       else toast(`Rodada ${report.run_id} concluída`);
-      router.push(`/agentes/${report.run_id}`);
+      router.push(`/agents/${report.run_id}`);
     } catch (err) {
       toast((err as Error).message, "error");
       router.refresh();

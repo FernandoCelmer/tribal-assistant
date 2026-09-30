@@ -67,7 +67,7 @@ export function LiveStatus({ initial, brain }: { initial: Live | null; brain: st
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold">{title}</span>
           {running && live?.run_id && (
-            <Link href={`/agentes/${live.run_id}`} className="font-mono text-[12px] text-secondary underline-offset-4 hover:text-foreground hover:underline">{live.run_id}</Link>
+            <Link href={`/agents/${live.run_id}`} className="font-mono text-[12px] text-secondary underline-offset-4 hover:text-foreground hover:underline">{live.run_id}</Link>
           )}
         </div>
         <p className="mt-0.5 truncate text-[13px] text-secondary" suppressHydrationWarning>{detail}</p>

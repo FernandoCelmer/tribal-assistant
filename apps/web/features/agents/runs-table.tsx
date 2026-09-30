@@ -33,7 +33,7 @@ export function RunsTable({ runs }: { runs: Run[] }) {
               const status = runStatus(r.status);
               return (
                 <li key={r.run_id}>
-                  <Link href={`/agentes/${r.run_id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover">
+                  <Link href={`/agents/${r.run_id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         <span className="font-medium">{short(r.started_at)}</span>
@@ -72,7 +72,7 @@ export function RunsTable({ runs }: { runs: Run[] }) {
                   return (
                     <tr key={r.run_id} className="group hover:bg-surface-hover">
                       <Td className="align-middle whitespace-nowrap">
-                        <Link href={`/agentes/${r.run_id}`} className="font-medium underline-offset-4 group-hover:underline">{short(r.started_at)}</Link>
+                        <Link href={`/agents/${r.run_id}`} className="font-medium underline-offset-4 group-hover:underline">{short(r.started_at)}</Link>
                       </Td>
                       <Td className="align-middle text-secondary">{TRIGGERS[r.trigger] ?? r.trigger}</Td>
                       <Td className="max-w-[160px] truncate align-middle font-mono text-[12px] text-secondary">{brainLabel(r)}</Td>

@@ -7,6 +7,21 @@ const config: NextConfig = {
   output: "standalone",
   env: { WEB_VERSION: version },
   images: { remotePatterns: [{ protocol: "https", hostname: "dsbr.innogamescdn.com" }] },
+  async redirects() {
+    return [
+      { source: "/aldeia/:path*", destination: "/village/:path*", permanent: true },
+      { source: "/arredores/:path*", destination: "/nearby/:path*", permanent: true },
+      { source: "/relatorios/:path*", destination: "/reports/:path*", permanent: true },
+      { source: "/desafios/:path*", destination: "/challenges/:path*", permanent: true },
+      { source: "/estrategia/:path*", destination: "/strategy/:path*", permanent: true },
+      { source: "/agentes/:path*", destination: "/agents/:path*", permanent: true },
+      { source: "/graficos/:path*", destination: "/charts/:path*", permanent: true },
+      { source: "/grafos/:path*", destination: "/graph/:path*", permanent: true },
+      { source: "/parametros/:path*", destination: "/parameters/:path*", permanent: true },
+      { source: "/contas/:path*", destination: "/accounts/:path*", permanent: true },
+      { source: "/configuracoes/:path*", destination: "/settings/:path*", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
