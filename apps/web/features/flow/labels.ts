@@ -55,6 +55,7 @@ export const TOOLS: Record<string, string> = {
   simulate_battle: "simular batalha",
   train_knight: "treinar paladino",
   use_item: "usar item",
+  browse_game: "passear pelo jogo",
   summary: "resumo",
   build: "construir",
   recruit: "recrutar",
