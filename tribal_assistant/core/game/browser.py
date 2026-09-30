@@ -8,7 +8,7 @@ from playwright.async_api import Page
 
 from tribal_assistant.core.accounts.context import current_account
 from tribal_assistant.core.game.human import human_click, reading_pause
-from tribal_assistant.core.game.login import VILLAGE_MENU_SELECTOR, login
+from tribal_assistant.core.game.login import VILLAGE_MENU_SELECTOR, login, visit
 from tribal_assistant.core.game.session import game_session
 
 EVALUATE_ATTEMPTS = 3
@@ -97,7 +97,7 @@ async def ensure_in_game(page: Page) -> None:
         VILLAGE_MENU_SELECTOR
     ).count():
         return
-    await page.goto(screen_url("overview"), wait_until="load")
+    await visit(page, screen_url("overview"))
     await reading_pause(page)
     if not await page.locator(VILLAGE_MENU_SELECTOR).count():
         logger.info("Fora do jogo, fazendo login")

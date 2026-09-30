@@ -1,6 +1,7 @@
 """Login + world select."""
 
 from loguru import logger
+from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
@@ -18,8 +19,25 @@ LOGIN_TIMEOUT_MS = 120_000
 WORLD_TIMEOUT_MS = 30_000
 
 
+async def visit(page: Page, url: str) -> None:
+    """Open a page; the site redirecting an active session straight into the game is a success, not an error."""
+    try:
+        await page.goto(url, wait_until="domcontentloaded")
+    except PlaywrightError as exc:
+        if "interrupted by another navigation" not in str(exc):
+            raise
+        logger.info("Site redirecionou a sessão ativa para {}", page.url.split("?")[0])
+        await page.wait_for_load_state("domcontentloaded")
+
+
 async def login(page: Page) -> None:
-    await page.goto(LOGIN_URL, wait_until="domcontentloaded")
+    if page.url.startswith(current_account().base_url) and await page.locator(VILLAGE_MENU_SELECTOR).count():
+        return
+
+    await visit(page, LOGIN_URL)
+    if page.url.startswith(current_account().base_url) and await page.locator(VILLAGE_MENU_SELECTOR).count():
+        logger.info("Sessão já ativa: entrou direto no jogo")
+        return
     await human_delay()
 
     if await page.locator(LOGIN_FORM_SELECTOR).count():
@@ -55,7 +73,7 @@ async def _enter_world(page: Page) -> None:
 
     server = current_account().server
     logger.info("Entrando no mundo {}", server)
-    await page.goto(PLAY_URL.format(server=server), wait_until="domcontentloaded")
+    await visit(page, PLAY_URL.format(server=server))
     try:
         await page.wait_for_selector(VILLAGE_MENU_SELECTOR, timeout=WORLD_TIMEOUT_MS)
     except PlaywrightTimeoutError as exc:
