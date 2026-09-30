@@ -42,7 +42,7 @@ class UpkeepProposer(Proposer):
 
         return items
 
-    def _free(self, action: str, arguments: dict[str, Any], reason: str, benefit: str, impact: float, cost: dict[str, int] | None = None, key: str = "") -> Proposal:
+    def _free(self, action: str, arguments: dict[str, Any], reason: str, benefit: str, impact: float, cost: dict[str, int] | None = None, key: str = "", display: str = "") -> Proposal:
         return Proposal(
             self.key,
             action,
@@ -54,6 +54,7 @@ class UpkeepProposer(Proposer):
             horizon=Horizon.IMMEDIATE,
             confidence=0.9,
             key=key,
+            display=display,
         )
 
     async def _forge(self, view: CoordinationView) -> list[Proposal]:
@@ -157,7 +158,7 @@ class UpkeepProposer(Proposer):
         for item in inventory:
             decision = self.item_decision(item, ctx.stock, ctx.village.storage, bool(ctx.queue), attacked, home, tuning(view))
             if decision:
-                items.append(self._free("use_item", {"key": item["key"]}, decision, str(item.get("name")), 0.5))
+                items.append(self._free("use_item", {"key": item["key"]}, decision, str(item.get("name")), 0.5, display=f"usar {item.get('name')}"))
 
         return items
 

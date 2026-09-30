@@ -45,6 +45,7 @@ class Proposal:
     priority: float = 0.0
     bonus: float = 1.0
     explored: bool = False
+    display: str = ""
 
     def __post_init__(self) -> None:
         self.factors.uncertainty = max(self.factors.uncertainty, 1.0 - self.confidence)
@@ -55,6 +56,8 @@ class Proposal:
         return str(args.get("building") or args.get("unit") or args.get("to_village_id") or args.get("target") or args.get("option_id") or args.get("key") or args.get("skill_id") or args.get("regimen") or args.get("quest_id") or args.get("mail_id") or args.get("to") or args.get("name") or args.get("buddy_id") or args.get("thread_id") or args.get("ally_id") or args.get("invite_id") or args.get("mentor_id") or "")
 
     def title(self) -> str:
+        if self.display:
+            return self.display
         label = self.label()
         return f"{self.action} {label}".strip()
 
