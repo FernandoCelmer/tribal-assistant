@@ -151,11 +151,18 @@ class Social:
 
             await human_fill(field, name)
             await human_delay(500, 1200)
+            await field.press("Escape")
+            await human_delay(200, 500)
             submit = field.locator("xpath=ancestor::form[1]").locator(SUBMIT).first
             if not await submit.count():
                 return ActionResult(False, "add_friend", "botão de adicionar amigo não encontrado")
 
+            before = page.url
             await self.actions._click_and_settle(page, submit)
+            if page.url == before and await field.count() and await field.input_value() == name:
+                await field.press("Enter")
+                await page.wait_for_load_state("load")
+            self.actions._capture(await page.content(), "buddies_after_submit")
             messages = await self.actions.screen_messages(page)
             _, html = await self._html(village_id, "buddies")
 
