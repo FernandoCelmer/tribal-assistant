@@ -14,6 +14,8 @@ from tribal_assistant.core.models.snapshot import VillageSnapshot
 RAIDS = ("send_farm_attack", "send_farm_template")
 GROWTH = ("upgrade_building",)
 ARMY = ("recruit_units",)
+SCOUTS = ("send_spy",)
+GATHER = ("send_scavenge",)
 REFUSED = -1.0
 FAILED = -0.5
 LOST = -1.0
@@ -44,6 +46,13 @@ class Evidence:
             return LOST
         return 1.0 if any(haul > 0 for _, haul in found) else 0.0
 
+    def scouted(self, target: str, at: datetime) -> float | None:
+        """A probe is worth it when its report came back; it carries nothing by design."""
+        found = [result for when, result, _ in self.reports.get(target, []) if when > at]
+        if not found:
+            return None
+        return 0.0 if all(result == "red" for result in found) else 1.0
+
     def grew(self, village_id: int, at: datetime, column: int) -> float | None:
         rows = self.snapshots.get(village_id, [])
         before = [row for row in rows if row[0] <= at]
@@ -57,6 +66,11 @@ class Evidence:
         if action in RAIDS:
             target = str((entry.get("arguments") or {}).get("target") or "")
             return self.raid(target, at) if target else None
+        if action in SCOUTS:
+            target = str((entry.get("arguments") or {}).get("target") or "")
+            return self.scouted(target, at) if target else None
+        if action in GATHER:
+            return 1.0
         if action in GROWTH:
             return self.grew(village_id, at, 1)
         if action in ARMY:

@@ -146,7 +146,7 @@ async def test_exploration_promotes_a_viable_proposal_and_says_so(session: Async
     assert order[0] == "use_item x" and "send_farm_attack 501|500" not in order
     assert data["exploration"]["title"] == "use_item x" and data["exploration"]["instead_of"] == "upgrade_building wood"
     assert data["executed"][0]["exploration"] is True and data["executed"][1]["exploration"] is False
-    assert data["learned"]["bonus"]["steward"] == 2.0 and data["executed"][0]["bonus"] == 2.0
+    assert data["learned"]["bonus"]["steward"] == 1.4 and data["executed"][0]["bonus"] == 1.4
     assert "exploração" in decision.summary()
 
 
@@ -176,3 +176,11 @@ async def test_store_measures_yields_repetition_and_social_idle(session: AsyncSe
     assert metrics.yields == {"economy": 1.0, "attack": 1.0}
     assert metrics.repetition == 1.0
     assert metrics.social_idle == 0.5
+
+
+def test_scouting_and_scavenging_count_as_yield():
+    at = datetime(2026, 9, 30, 12, 0)
+    evidence = Evidence(reports={"487|752": [(at + timedelta(minutes=40), "blue", 0)]})
+
+    assert evidence.confirm({"action": "send_spy", "arguments": {"target": "487|752"}}, 1, at) == 1.0
+    assert evidence.confirm({"action": "send_scavenge", "arguments": {}}, 1, at) == 1.0

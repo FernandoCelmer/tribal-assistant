@@ -82,7 +82,7 @@ class Coordinator:
     def bonus(self, source: str) -> float:
         name = f"bonus.{source}"
         knobs = tuning(self.view)
-        return knobs.get(name) if name in knobs.SPECS else 1.0
+        return min(knobs.get(name), knobs.get("learning.bonus_cap")) if name in knobs.SPECS else 1.0
 
     def score(self, proposals: list[Proposal], mode: Role) -> list[Proposal]:
         weights = self.weights(mode)
