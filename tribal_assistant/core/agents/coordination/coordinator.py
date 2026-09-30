@@ -241,12 +241,14 @@ class Coordinator:
         return entry
 
     def _next_review(self, decision: Decision) -> datetime:
-        floor = now() + timedelta(minutes=self.view.config.interval_minutes)
+        """The first moment something changes (troops home, queue free, cost affordable), never later than the interval."""
+        ceiling = now() + timedelta(minutes=self.view.config.interval_minutes)
+        soonest = now() + timedelta(minutes=knob(self.view, "coordinator.min_review_minutes"))
         estimator = self.view.estimator
         events = [now() + timedelta(hours=e["ready_in_hours"]) for e in decision.deferred if e.get("ready_in_hours")]
 
-        for hours in (estimator.queue_hours(), estimator.hours_to_impact(), estimator.storage_hours()):
+        for hours in (estimator.queue_hours(), estimator.hours_to_impact(), estimator.storage_hours(), estimator.troops_back_hours()):
             if hours and hours != float("inf"):
                 events.append(now() + timedelta(hours=hours))
 
-        return max(floor, min(events)) if events else floor
+        return max(soonest, min([ceiling, *events]))

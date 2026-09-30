@@ -6,6 +6,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
 from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.accounts.context import use_account
 from tribal_assistant.core.accounts.registry import AccountRegistry
@@ -19,6 +20,8 @@ from tribal_assistant.core.game.modules.free_finish import FreeFinishWatcher
 from tribal_assistant.core.game.modules.game_sync import sync_game
 from tribal_assistant.core.game.modules.world_sync import sync_world
 from tribal_assistant.core.models.building import Building
+from tribal_assistant.core.models.command import Command
+from tribal_assistant.core.models.scavenge_option import ScavengeOption
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.core.repositories.coordination import CoordinationRepository
@@ -106,6 +109,18 @@ async def _build_slot_free(session, now: datetime, slots: int) -> bool:
     return any(queued < slots for _, queued in rows.all())
 
 
+async def _troops_back(session: AsyncSession, since: datetime, now: datetime) -> bool:
+    """Troops came home since the last round: a scavenging squad or one of our own commands."""
+    scavenge = await session.scalar(select(func.count(ScavengeOption.id)).where(ScavengeOption.return_at > since, ScavengeOption.return_at <= now))
+    commands = await session.scalar(select(func.count(Command.id)).where(Command.direction != "in", Command.arrival_at > since, Command.arrival_at <= now))
+    return bool(scavenge or commands)
+
+
+async def _review_due(session: AsyncSession, since: datetime, now: datetime) -> bool:
+    """A village asked to be looked at again before the regular interval."""
+    return any(r.next_review_at and since < r.next_review_at <= now for r in await CoordinationRepository(session).latest())
+
+
 async def _agents_job() -> None:
     async with SessionFactory() as session:
         repo = AgentSettingsRepository(session)
@@ -117,8 +132,9 @@ async def _agents_job() -> None:
 
         now = datetime.now(UTC).replace(tzinfo=None)
         waited = now - last if last else None
-        slot_free = await _build_slot_free(session, now, BUILD_SLOTS)
-        early = slot_free and (waited is None or waited >= timedelta(seconds=90))
+        since = last or now - timedelta(days=1)
+        changed = await _build_slot_free(session, now, BUILD_SLOTS) or await _troops_back(session, since, now) or await _review_due(session, since, now)
+        early = changed and (waited is None or waited >= timedelta(seconds=90))
 
         if waited is not None and waited < timedelta(minutes=config.interval_minutes) and not early:
             return

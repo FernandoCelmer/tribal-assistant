@@ -1,6 +1,6 @@
 """Forecasts from the synced state: when storage fills, when population locks, when a cost is affordable."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from tribal_assistant.core.agents.context import VillageContext
@@ -52,6 +52,18 @@ class Estimator:
 
         latest = max(e.replace(tzinfo=None) if isinstance(e, datetime) else datetime.fromisoformat(str(e)).replace(tzinfo=None) for e in ends)
         return max(0.0, (latest - now()).total_seconds() / 3600)
+
+    @staticmethod
+    def moment(value: Any) -> datetime:
+        at = value if isinstance(value, datetime) else datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return at.astimezone(UTC).replace(tzinfo=None) if at.tzinfo else at
+
+    def troops_back_hours(self) -> float | None:
+        """Hours until the next troops come home: scavenging squads or our own commands."""
+        backs = [s.return_at for s in getattr(self.village, "scavenge", None) or [] if getattr(s, "return_at", None)]
+        backs += [c.get("arrival_at") for c in self.ctx.commands if c.get("direction") != "in" and c.get("arrival_at")]
+        ahead = [hours for hours in ((self.moment(b) - now()).total_seconds() / 3600 for b in backs) if hours > 0]
+        return min(ahead) if ahead else None
 
     def incoming(self) -> list[dict[str, Any]]:
         return [c for c in self.ctx.commands if c.get("direction") == "in" and c.get("kind") in ("attack", "noble")]
