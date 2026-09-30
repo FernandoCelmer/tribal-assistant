@@ -84,7 +84,19 @@ class InfrastructureProposer(Proposer):
                     )
                 )
 
-        return items
+        return self.trim(view, items)
+
+    @staticmethod
+    def trim(view: CoordinationView, items: list[Proposal]) -> list[Proposal]:
+        """Builds that fit the stock all compete; of those still saving up, only the strongest stay, so the ranking is not all construction."""
+        stock = view.ctx.stock
+
+        def fits(p: Proposal) -> bool:
+            return all(stock.get(r, 0) >= v for r, v in p.cost.items() if r in ("wood", "clay", "iron"))
+
+        waiting = sorted((p for p in items if not fits(p)), key=lambda p: p.factors.impact, reverse=True)
+        kept = {id(p) for p in waiting[: knob_int(view, "build.unaffordable_kept")]}
+        return [p for p in items if fits(p) or id(p) in kept]
 
     @classmethod
     def filler(cls, view: CoordinationView, plan: list[str]) -> str | None:
