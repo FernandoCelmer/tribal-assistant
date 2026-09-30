@@ -1,19 +1,32 @@
 """Scheduled jobs. Kept trivial: each job calls a service/module coroutine."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
+from sqlalchemy import func, select
 
+from tribal_assistant.core.accounts.context import use_account
+from tribal_assistant.core.accounts.registry import AccountRegistry
 from tribal_assistant.core.agents.coordination.policy import BUILD_SLOTS
+from tribal_assistant.core.agents.knobs import Tuner
+from tribal_assistant.core.agents.runner import AgentRunner
 from tribal_assistant.core.config import settings
+from tribal_assistant.core.db.session import SessionFactory
+from tribal_assistant.core.game.human import in_quiet_hours
+from tribal_assistant.core.game.modules.free_finish import FreeFinishWatcher
+from tribal_assistant.core.game.modules.game_sync import sync_game
+from tribal_assistant.core.game.modules.world_sync import sync_world
+from tribal_assistant.core.models.building import Building
+from tribal_assistant.core.models.village import Village
+from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
+from tribal_assistant.core.repositories.coordination import CoordinationRepository
+from tribal_assistant.core.repositories.observability import ObservabilityRepository
+from tribal_assistant.core.services.docs import DocsService
 
 
 async def _accounts(one_per_world: bool = False) -> list:
-    from tribal_assistant.core.accounts.registry import AccountRegistry
-    from tribal_assistant.core.db.session import SessionFactory
-
     async with SessionFactory() as session:
         accounts = await AccountRegistry(session).contexts(enabled_only=True)
 
@@ -28,7 +41,6 @@ async def _accounts(one_per_world: bool = False) -> list:
 
 def per_account(job, one_per_world: bool = False):
     """Runs `job` once for every enabled account, each inside its own account context."""
-    from tribal_assistant.core.accounts.context import use_account
 
     async def run() -> None:
         for account in await _accounts(one_per_world):
@@ -43,9 +55,6 @@ def per_account(job, one_per_world: bool = False):
 
 
 async def _sync_game_job() -> None:
-    from tribal_assistant.core.game.human import in_quiet_hours
-    from tribal_assistant.core.game.modules.game_sync import sync_game
-
     if in_quiet_hours():
         logger.info("Horário de silêncio, sincronização do jogo ignorada")
         return
@@ -56,8 +65,6 @@ async def _sync_game_job() -> None:
 
 
 async def _sync_world_job() -> None:
-    from tribal_assistant.core.game.modules.world_sync import sync_world
-
     try:
         await sync_world()
     except Exception:
@@ -65,9 +72,6 @@ async def _sync_world_job() -> None:
 
 
 async def _docs_job() -> None:
-    from tribal_assistant.core.db.session import SessionFactory
-    from tribal_assistant.core.services.docs import DocsService
-
     try:
         async with SessionFactory() as session:
             report = await DocsService(session).sync()
@@ -80,9 +84,6 @@ async def _docs_job() -> None:
 
 
 async def _tuning_job() -> None:
-    from tribal_assistant.core.agents.knobs import Tuner
-    from tribal_assistant.core.db.session import SessionFactory
-
     async with SessionFactory() as session:
         changes = await Tuner(session).run()
 
@@ -91,11 +92,6 @@ async def _tuning_job() -> None:
 
 
 async def _build_slot_free(session, now: datetime, slots: int) -> bool:
-    from sqlalchemy import func, select
-
-    from tribal_assistant.core.models.building import Building
-    from tribal_assistant.core.models.village import Village
-
     rows = await session.execute(
         select(Village.id, func.count(Building.id))
         .outerjoin(
@@ -111,13 +107,6 @@ async def _build_slot_free(session, now: datetime, slots: int) -> bool:
 
 
 async def _agents_job() -> None:
-    from datetime import UTC
-
-    from tribal_assistant.core.agents.runner import AgentRunner
-    from tribal_assistant.core.db.session import SessionFactory
-    from tribal_assistant.core.game.human import in_quiet_hours
-    from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
-
     async with SessionFactory() as session:
         repo = AgentSettingsRepository(session)
         config = await repo.get()
@@ -146,9 +135,6 @@ async def _agents_job() -> None:
 
 
 async def _free_finish_job() -> None:
-    from tribal_assistant.core.game.human import in_quiet_hours
-    from tribal_assistant.core.game.modules.free_finish import FreeFinishWatcher
-
     if in_quiet_hours():
         return
 
@@ -159,13 +145,8 @@ async def _free_finish_job() -> None:
 
 
 async def _retention_job() -> None:
-    from tribal_assistant.core.db.session import SessionFactory
-    from tribal_assistant.core.repositories.observability import ObservabilityRepository
-
     async with SessionFactory() as session:
         removed = await ObservabilityRepository(session).prune(settings.trace_retention_days)
-
-        from tribal_assistant.core.repositories.coordination import CoordinationRepository
 
         removed += await CoordinationRepository(session).prune(settings.trace_retention_days)
 

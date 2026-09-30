@@ -52,13 +52,9 @@ async def test_settings_api_roundtrip(client: AsyncClient) -> None:
 
 
 def test_legacy_plan_refresh_hours_becomes_minutes():
-    from tribal_assistant.core.schemas.agent_settings import AgentSettings
-
     assert AgentSettings.model_validate({"plan_refresh_hours": 2}).plan_refresh_minutes == 120
 
 
 def test_legacy_hours_win_over_merged_defaults():
-    from tribal_assistant.core.schemas.agent_settings import AgentSettings
-
     merged = {**AgentSettings().model_dump(), "plan_refresh_hours": 1}
     assert AgentSettings.model_validate(merged).plan_refresh_minutes == 60

@@ -19,8 +19,6 @@ def test_unit_and_building_lookups() -> None:
 
 
 def test_guides_are_packaged_and_readable():
-    from tribal_assistant.core.agents.knowledge import GameKnowledge
-
     for name in GameKnowledge.guides:
         assert len(GameKnowledge.guide(name) or "") > 1000
 

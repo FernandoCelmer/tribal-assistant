@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
 from tribal_assistant.api.deps import ObservabilityServiceDep
+from tribal_assistant.core.accounts.context import current_account_id
 from tribal_assistant.core.schemas.observability import (
     FlowOut,
     LiveOut,
@@ -75,8 +76,6 @@ async def history(
 
 @observability_router.get("/events")
 async def events() -> StreamingResponse:
-    from tribal_assistant.core.accounts.context import current_account_id
-
     return StreamingResponse(
         EventStream(current_account_id())(),
         media_type="text/event-stream",

@@ -6,6 +6,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Query
 
 from tribal_assistant.api.deps import WorldServiceDep
+from tribal_assistant.core.game.modules.world_sync import sync_world
 from tribal_assistant.core.schemas.world import NearbyVillage, WorldStatus
 
 world_router = APIRouter()
@@ -34,7 +35,5 @@ async def nearby(
 
 @world_router.post("/sync", response_model=WorldStatus)
 async def sync(service: WorldServiceDep) -> WorldStatus:
-    from tribal_assistant.core.game.modules.world_sync import sync_world
-
     await sync_world()
     return await service.status()

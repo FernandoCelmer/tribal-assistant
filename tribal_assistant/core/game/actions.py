@@ -5,9 +5,8 @@ would, acts through the game's own buttons and forms, and reports what the game
 answered. Guardrails live one layer up (tribal_assistant.core.agents.guardrails).
 """
 
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from loguru import logger
 from playwright.async_api import Error as PlaywrightError
@@ -16,13 +15,18 @@ from playwright.async_api import Page
 from tribal_assistant.core.accounts.context import current_account
 from tribal_assistant.core.agents.guardrails import SCAVENGE_MIN_POP
 from tribal_assistant.core.agents.knowledge import UNITS
-from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
-from tribal_assistant.core.game.modules.game_sync import (
+from tribal_assistant.core.game.browser import (
     BUILD_QUEUE_JS,
-    _ensure_in_game,
-    _evaluate,
-    _open,
+    ensure_in_game,
+    evaluate_page,
+    open_screen,
 )
+from tribal_assistant.core.game.conquest import Conquest
+from tribal_assistant.core.game.diplomacy import Diplomacy
+from tribal_assistant.core.game.forge import Forge
+from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
+from tribal_assistant.core.game.market import Market
+from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.scraper.quests import (
     Quest,
     QuestReward,
@@ -32,12 +36,6 @@ from tribal_assistant.core.game.scraper.quests import (
 )
 from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
-
-if TYPE_CHECKING:
-    from tribal_assistant.core.game.conquest import Conquest
-    from tribal_assistant.core.game.diplomacy import Diplomacy
-    from tribal_assistant.core.game.forge import Forge
-    from tribal_assistant.core.game.market import Market
 
 UNIT_SCREEN = {
     "spear": "barracks",
@@ -162,39 +160,23 @@ BUILDING_ERROR_JS = """(id) => {
 }"""
 
 
-@dataclass
-class ActionResult:
-    ok: bool
-    action: str
-    detail: str
-    data: dict[str, Any] = field(default_factory=dict)
-
-
 class GameActions:
     """Every state-changing action a player can take, driven through the real game UI."""
 
     @property
-    def diplomacy(self) -> "Diplomacy":
-        from tribal_assistant.core.game.diplomacy import Diplomacy
-
+    def diplomacy(self) -> Diplomacy:
         return Diplomacy(self)
 
     @property
-    def forge(self) -> "Forge":
-        from tribal_assistant.core.game.forge import Forge
-
+    def forge(self) -> Forge:
         return Forge(self)
 
     @property
-    def conquest(self) -> "Conquest":
-        from tribal_assistant.core.game.conquest import Conquest
-
+    def conquest(self) -> Conquest:
         return Conquest(self)
 
     @property
-    def market(self) -> "Market":
-        from tribal_assistant.core.game.market import Market
-
+    def market(self) -> Market:
         return Market(self)
 
     def _capture(self, page_html: str, name: str) -> None:
@@ -208,7 +190,7 @@ class GameActions:
     async def screen_messages(self, page: Page) -> dict[str, list[str]]:
         """Errors and notices the game shows on screen after an action (red boxes, green toasts)."""
         try:
-            found = await _evaluate(page, SCREEN_MESSAGES_JS) or {}
+            found = await evaluate_page(page, SCREEN_MESSAGES_JS) or {}
         except PlaywrightError:
             return {"errors": [], "notices": []}
 
@@ -236,8 +218,8 @@ class GameActions:
 
     async def _in_game(self, village_id: str, screen: str, **params: str) -> Page:
         page = await game_session.page()
-        await _ensure_in_game(page)
-        await _open(page, screen, village_id, **params)
+        await ensure_in_game(page)
+        await open_screen(page, screen, village_id, **params)
 
         return page
 
@@ -428,7 +410,7 @@ class GameActions:
         """Queue the next level of `building` from the headquarters screen."""
         async with game_session.lock:
             page = await self._in_game(village_id, "main")
-            before = await _evaluate(page, BUILD_QUEUE_JS) or []
+            before = await evaluate_page(page, BUILD_QUEUE_JS) or []
             next_before = await page.evaluate(NEXT_LEVEL_JS, building)
 
             button = page.locator(f'a.btn-build:not(.btn-bcr)[data-building="{building}"]')
@@ -448,9 +430,9 @@ class GameActions:
                 return ActionResult(False, "upgrade_building", error, {"building": building})
 
             if not await page.locator("#buildqueue").count():
-                await _open(page, "main", village_id)
+                await open_screen(page, "main", village_id)
 
-            after = await _evaluate(page, BUILD_QUEUE_JS) or []
+            after = await evaluate_page(page, BUILD_QUEUE_JS) or []
             next_after = await page.evaluate(NEXT_LEVEL_JS, building)
             finished = (
                 next_before is not None and next_after is not None and next_after > next_before
@@ -859,7 +841,7 @@ class GameActions:
         )
 
     async def _open_relics(self, page: Page, village_id: str) -> None:
-        await _open(page, "relic_system", village_id)
+        await open_screen(page, "relic_system", village_id)
         await page.wait_for_timeout(1_500)
 
     async def equip_relic(self, village_id: str) -> ActionResult:
@@ -987,7 +969,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "assign_flag", " | ".join(messages["errors"]))
 
-            await _open(page, "flags", village_id)
+            await open_screen(page, "flags", village_id)
             current = await page.evaluate(CURRENT_FLAG_JS)
 
         if not current:
@@ -1035,7 +1017,7 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "learn_knight_skill", " | ".join(messages["errors"]))
 
-            await _open(page, "statue", village_id)
+            await open_screen(page, "statue", village_id)
             await page.wait_for_timeout(1_200)
             learned = await page.locator(
                 f'.skill_node[data-skill="{skill_id}"]:not(.learnable):not(.unknown)'

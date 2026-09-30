@@ -4,7 +4,10 @@ import os
 
 from tribal_assistant.core.ai.abc.llm import LLM
 from tribal_assistant.core.ai.errors import LLMError
+from tribal_assistant.core.ai.providers.anthropic import AnthropicLLM
+from tribal_assistant.core.ai.providers.openai_compatible import OpenAICompatibleLLM
 from tribal_assistant.core.ai.providers.registry import PROVIDERS, Provider
+from tribal_assistant.core.ai.providers.vertex import VertexLLM
 from tribal_assistant.core.config import settings
 
 
@@ -46,22 +49,13 @@ class LLMFactory:
         if spec.key_env and not key:
             raise LLMError(f"sem chave para {self.name}: defina AI_API_KEY ou {spec.key_env}")
 
-        try:
-            if spec.kind == "anthropic":
-                from tribal_assistant.core.ai.providers.anthropic import AnthropicLLM
+        if spec.kind == "anthropic":
+            return AnthropicLLM(model, key, settings.ai_max_tokens)
 
-                return AnthropicLLM(model, key, settings.ai_max_tokens)
+        if spec.kind == "vertex":
+            return VertexLLM(model, key, url or "", settings.ai_max_tokens)
 
-            if spec.kind == "vertex":
-                from tribal_assistant.core.ai.providers.vertex import VertexLLM
-
-                return VertexLLM(model, key, url or "", settings.ai_max_tokens)
-
-            from tribal_assistant.core.ai.providers.openai_compatible import OpenAICompatibleLLM
-
-            return OpenAICompatibleLLM(self.name, model, key, url, settings.ai_max_tokens)
-        except ImportError as exc:
-            raise LLMError(f"SDK do provedor {self.name} não encontrado: rode poetry install") from exc
+        return OpenAICompatibleLLM(self.name, model, key, url, settings.ai_max_tokens)
 
     def _spec(self) -> Provider:
         spec = PROVIDERS.get(self.name)

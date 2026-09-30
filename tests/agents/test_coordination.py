@@ -7,8 +7,10 @@ from tribal_assistant.core.agents.coordination.budget import Budget, Reservation
 from tribal_assistant.core.agents.coordination.constraints import Constraint
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight
 from tribal_assistant.core.agents.coordination.proposal import Factors, Proposal
+from tribal_assistant.core.agents.coordination.roles import RoleSelector
 from tribal_assistant.core.agents.coordination.round import VillageRound
 from tribal_assistant.core.agents.coordination.strategy import WEIGHTS, Role
+from tribal_assistant.core.agents.coordination.threat import Threat
 from tribal_assistant.core.game.actions import GameActions
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.models.world import WorldVillage
@@ -95,9 +97,6 @@ async def test_incoming_attack_switches_to_emergency_and_keeps_troops_home(sessi
 
 
 def test_role_rules_pick_defense_offensive_support_expansion_or_growth() -> None:
-    from tribal_assistant.core.agents.coordination.roles import RoleSelector
-    from tribal_assistant.core.agents.coordination.threat import Threat
-
     ctx = context(units=[unit("spear", 10), unit("light", 30)])
     near = [Threat("Vizinho", 5000, 3.2)]
 
@@ -115,8 +114,6 @@ def test_role_rules_pick_defense_offensive_support_expansion_or_growth() -> None
 
 
 async def test_role_switches_only_after_it_repeats(session: AsyncSession) -> None:
-    from tribal_assistant.core.agents.coordination.roles import RoleSelector
-
     selector = RoleSelector(session)
     ctx = context()
 

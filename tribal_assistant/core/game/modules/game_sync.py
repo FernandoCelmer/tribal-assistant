@@ -8,13 +8,19 @@ from loguru import logger
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 
-from tribal_assistant.core.accounts.context import current_account, current_account_id
+from tribal_assistant.core.accounts.context import current_account_id
+from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.session import SessionFactory
 from tribal_assistant.core.errors import UpstreamError
 from tribal_assistant.core.events import event_bus
-from tribal_assistant.core.game.human import human_click, reading_pause
-from tribal_assistant.core.game.login import VILLAGE_MENU_SELECTOR, login
+from tribal_assistant.core.game.actions import GameActions
+from tribal_assistant.core.game.browser import (
+    BUILD_QUEUE_JS,
+    ensure_in_game,
+    evaluate_page,
+    open_screen,
+)
 from tribal_assistant.core.game.scraper.game import (
     GameSnapshot,
     GameVillage,
@@ -28,6 +34,7 @@ from tribal_assistant.core.game.session import game_session
 from tribal_assistant.core.game.state import session_state
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.core.repositories.game import GameRepository
+from tribal_assistant.core.repositories.lessons import LessonRepository
 
 GAME_DATA_JS = "() => window.game_data || null"
 
@@ -40,14 +47,6 @@ UPGRADES_JS = """() => {
   }
   return out;
 }"""
-
-BUILD_QUEUE_JS = """() => [...document.querySelectorAll('#buildqueue tr[class*="buildorder_"]')].map(tr => {
-  const cls = [...tr.classList].find(c => c.startsWith('buildorder_')) || '';
-  const timer = tr.querySelector('[data-endtime]');
-  const cell = tr.querySelector('td');
-  return {building: cls.slice('buildorder_'.length), text: cell ? cell.innerText : '',
-    end: timer ? timer.dataset.endtime : null};
-})"""
 
 TRAIN_JS = r"""() => {
   const units = ((window.game_data && game_data.units) || []).filter(u => u !== 'militia');
@@ -153,7 +152,6 @@ REPORT_DETAIL_JS = r"""() => {
     sections: html('#attack_spy_resources, #attack_spy_building_data, [id^="attack_spy_buildings"], #attack_info_att_units, #attack_info_def_units')};
 }"""
 
-EVALUATE_ATTEMPTS = 3
 REPORT_DETAILS_PER_SYNC = 5
 TEXTS_PER_SYNC = 5
 
@@ -169,141 +167,55 @@ MAIL_LIST_JS = """() => [...document.querySelectorAll('#content_value a[href*="s
   .filter((m, i, all) => m.id && m.title && all.findIndex(o => o.id === m.id) === i)"""
 
 
-FIND_LINK_JS = """(want) => {
-  const current = String((window.game_data && game_data.village && game_data.village.id) || '');
-  document.querySelectorAll('a[data-tw-nav]').forEach(a => a.removeAttribute('data-tw-nav'));
-  const link = [...document.querySelectorAll('a[href]')].find(a => {
-    if (!a.offsetParent) return false;
-    let url;
-    try { url = new URL(a.getAttribute('href'), location.href); } catch { return false; }
-    if (url.origin !== location.origin || !url.pathname.endsWith('/game.php')) return false;
-    const q = url.searchParams;
-    if (q.get('h') || q.get('action') || q.get('ajaxaction') || q.get('ajax')) return false;
-    if ((q.get('village') || current) !== want.village) return false;
-    for (const key of ['screen', 'mode', 'view']) {
-      if ((q.get(key) || '') !== (want[key] || '')) return false;
-    }
-    return true;
-  });
-  if (!link) return false;
-  link.setAttribute('data-tw-nav', '1');
-  return true;
-}"""
-
-
-def _url(screen: str, village_id: str | None = None, **params: str) -> str:
-    query = {"screen": screen, **params}
-    if village_id:
-        query = {"village": village_id, **query}
-    return f"{current_account().base_url}/game.php?" + "&".join(
-        f"{k}={v}" for k, v in query.items()
-    )
-
-
-async def _open(page: Page, screen: str, village_id: str | None = None, **params: str) -> None:
-    """Reach a screen the way a player would: click its link when one is on the page."""
-    found = False
-    if village_id and page.url.startswith(current_account().base_url):
-        want = {"screen": screen, "village": village_id, **params}
-        try:
-            found = bool(await page.evaluate(FIND_LINK_JS, want))
-        except PlaywrightError:
-            found = False
-
-    if found:
-        try:
-            async with page.expect_navigation(wait_until="load", timeout=20_000):
-                await human_click(page, page.locator('a[data-tw-nav="1"]').first)
-        except PlaywrightError:
-            logger.debug("Clique no link para {} não navegou, carregando URL", screen)
-            found = False
-
-    wanted = [f"screen={screen}", *(f"{k}={v}" for k, v in params.items())]
-    if found and not all(part in page.url for part in wanted):
-        logger.debug("Clique no link caiu em {} em vez de {}, carregando URL", page.url, screen)
-        found = False
-
-    if not found:
-        await page.goto(_url(screen, village_id, **params), wait_until="load")
-    await reading_pause(page)
-
-
-async def _evaluate(page: Page, script: str) -> Any:
-    """Evaluate, retrying when the game redirects or reloads mid-read."""
-    for attempt in range(1, EVALUATE_ATTEMPTS + 1):
-        try:
-            return await page.evaluate(script)
-        except PlaywrightError as exc:
-            if "Execution context was destroyed" not in str(exc) or attempt == EVALUATE_ATTEMPTS:
-                raise
-            logger.debug("Página navegou durante a leitura, tentando de novo ({}/{})", attempt, EVALUATE_ATTEMPTS)
-            await page.wait_for_load_state("load")
-
-
 async def _game_data(page: Page) -> dict[str, Any]:
-    data = await _evaluate(page, GAME_DATA_JS)
+    data = await evaluate_page(page, GAME_DATA_JS)
     if not data:
         raise UpstreamError(f"game_data ausente em {page.url}")
     return data
-
-
-async def _ensure_in_game(page: Page) -> None:
-    if page.url.startswith(current_account().base_url) and await page.locator(
-        VILLAGE_MENU_SELECTOR
-    ).count():
-        return
-    await page.goto(_url("overview"), wait_until="load")
-    await reading_pause(page)
-    if not await page.locator(VILLAGE_MENU_SELECTOR).count():
-        logger.info("Fora do jogo, fazendo login")
-        await login(page)
-        await game_session.save_state()
 
 
 async def _own_village_ids(page: Page, game_data: dict[str, Any], count: int) -> list[str]:
     current = str(game_data["village"]["id"])
     if count <= 1:
         return [current]
-    await _open(page, "overview_villages", current, mode="prod")
-    ids = await _evaluate(page, VILLAGE_IDS_JS)
+    await open_screen(page, "overview_villages", current, mode="prod")
+    ids = await evaluate_page(page, VILLAGE_IDS_JS)
     return ids or [current]
 
 
 async def _read_village(page: Page, village_id: str, finish_free: bool = False) -> tuple[GameVillage, str]:
     async def overview() -> dict[str, Any]:
-        await _open(page, "overview", village_id)
-        data = await _evaluate(page, OVERVIEW_JS)
+        await open_screen(page, "overview", village_id)
+        data = await evaluate_page(page, OVERVIEW_JS)
         await IncomingDetails.enrich(page, village_id, data.get("commands") or [])
         return {"overview": data}
 
     async def main() -> dict[str, Any]:
-        await _open(page, "main", village_id)
+        await open_screen(page, "main", village_id)
 
         if finish_free:
-            from tribal_assistant.core.game.actions import GameActions
-
             await GameActions().click_free_finish(page)
 
         return {
             "game_data": await _game_data(page),
-            "upgrades": await _evaluate(page, UPGRADES_JS),
-            "build_queue": await _evaluate(page, BUILD_QUEUE_JS),
+            "upgrades": await evaluate_page(page, UPGRADES_JS),
+            "build_queue": await evaluate_page(page, BUILD_QUEUE_JS),
         }
 
     async def train() -> dict[str, Any]:
-        await _open(page, "train", village_id)
+        await open_screen(page, "train", village_id)
         return {
-            "units": await _evaluate(page, TRAIN_JS),
-            "recruit": await _evaluate(page, RECRUIT_QUEUE_JS),
+            "units": await evaluate_page(page, TRAIN_JS),
+            "recruit": await evaluate_page(page, RECRUIT_QUEUE_JS),
         }
 
     async def place() -> dict[str, Any]:
-        await _open(page, "place", village_id)
-        return {"home": await _evaluate(page, HOME_UNITS_JS)}
+        await open_screen(page, "place", village_id)
+        return {"home": await evaluate_page(page, HOME_UNITS_JS)}
 
     async def scavenge() -> dict[str, Any]:
-        await _open(page, "place", village_id, mode="scavenge")
-        return {"scavenge": await _evaluate(page, SCAVENGE_JS)}
+        await open_screen(page, "place", village_id, mode="scavenge")
+        return {"scavenge": await evaluate_page(page, SCAVENGE_JS)}
 
     readers = [overview, main, train, place, scavenge]
     random.shuffle(readers)
@@ -394,8 +306,8 @@ class IncomingDetails:
             if key not in cls.known and budget > 0:
                 budget -= 1
                 try:
-                    await _open(page, "info_command", village_id, id=str(row["id"]), type="other")
-                    cls.known[key] = await _evaluate(page, INFO_COMMAND_JS) or {}
+                    await open_screen(page, "info_command", village_id, id=str(row["id"]), type="other")
+                    cls.known[key] = await evaluate_page(page, INFO_COMMAND_JS) or {}
                 except PlaywrightError as exc:
                     logger.debug("Não foi possível ler o comando recebido {}: {}", row["id"], exc)
                     continue
@@ -420,8 +332,8 @@ class ReportClock:
 
 
 async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[dict[str, Any]]:
-    await _open(page, "report", village_id, mode="all")
-    rows: list[dict[str, Any]] = await _evaluate(page, REPORTS_JS)
+    await open_screen(page, "report", village_id, mode="all")
+    rows: list[dict[str, Any]] = await evaluate_page(page, REPORTS_JS)
     if not settings.sync_report_details:
         return rows
 
@@ -429,8 +341,8 @@ async def _read_reports(page: Page, village_id: str, known: set[str]) -> list[di
         r for r in rows if r["id"] not in known and any(word in str(r.get("title", "")).lower() for word in ("atac", "espi"))
     ][:REPORT_DETAILS_PER_SYNC]
     for row in pending:
-        await _open(page, "report", village_id, mode="all", view=row["id"])
-        row["detail"] = await _evaluate(page, REPORT_DETAIL_JS)
+        await open_screen(page, "report", village_id, mode="all", view=row["id"])
+        row["detail"] = await evaluate_page(page, REPORT_DETAIL_JS)
         if isinstance(row["detail"], dict):
             ReportIntel.keep(row["id"], row["detail"])
     return rows
@@ -449,15 +361,15 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
             continue
 
         try:
-            await _open(page, "report", village_id, mode="all", view=row["id"])
-            Findings.texts().append((key, "report", str(row.get("title", ""))[:255], await _evaluate(page, CONTENT_TEXT_JS)))
+            await open_screen(page, "report", village_id, mode="all", view=row["id"])
+            Findings.texts().append((key, "report", str(row.get("title", ""))[:255], await evaluate_page(page, CONTENT_TEXT_JS)))
             budget -= 1
         except PlaywrightError as exc:
             logger.debug("Não foi possível ler o relatório {}: {}", row["id"], exc)
 
     try:
-        await _open(page, "mail", village_id)
-        mails = await _evaluate(page, MAIL_LIST_JS) or []
+        await open_screen(page, "mail", village_id)
+        mails = await evaluate_page(page, MAIL_LIST_JS) or []
     except PlaywrightError:
         mails = []
 
@@ -470,8 +382,8 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
             continue
 
         try:
-            await _open(page, "mail", village_id, mode="view", view=mail["id"])
-            Findings.texts().append((key, "mail", mail["title"][:255], await _evaluate(page, CONTENT_TEXT_JS)))
+            await open_screen(page, "mail", village_id, mode="view", view=mail["id"])
+            Findings.texts().append((key, "mail", mail["title"][:255], await evaluate_page(page, CONTENT_TEXT_JS)))
             budget -= 1
         except PlaywrightError as exc:
             logger.debug("Não foi possível ler a mensagem {}: {}", mail["id"], exc)
@@ -481,7 +393,7 @@ async def _read_game(
     known_reports: set[str], finish_free: bool = False, learned: set[str] | None = None
 ) -> GameSnapshot:
     page = await game_session.page()
-    await _ensure_in_game(page)
+    await ensure_in_game(page)
 
     game_data = await _game_data(page)
     first = parse_player(game_data)
@@ -518,14 +430,10 @@ async def sync_game() -> GameSnapshot:
                 known = await GameRepository(session).report_ids()
                 config = await AgentSettingsRepository(session).get()
 
-                from tribal_assistant.core.repositories.lessons import LessonRepository
-
                 learned = await LessonRepository(session).keys(("report", "mail"))
             snapshot = await _read_game(known, config.auto_finish_free, learned)
             async with SessionFactory() as session:
                 await GameRepository(session).persist(snapshot)
-
-                from tribal_assistant.core.agents.learning import LessonBook
 
                 book = LessonBook(session)
                 await book.reports(snapshot.reports, known, ReportIntel.take())

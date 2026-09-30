@@ -3,6 +3,9 @@
 import math
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import select
+
+from tribal_assistant.core.accounts.context import current_account
 from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
@@ -10,6 +13,8 @@ from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
 from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
+from tribal_assistant.core.models.player import Player
+from tribal_assistant.core.repositories.game import GameRepository
 
 SPENDING = ("recruit_units", "train_knight", "use_item", "research_unit")
 LIGHT_RESEARCH_IRON = 2000
@@ -258,8 +263,6 @@ class EconomyProposer(Proposer):
 
     @staticmethod
     async def _pop_samples(view: CoordinationView) -> list[tuple[datetime, int]]:
-        from tribal_assistant.core.repositories.game import GameRepository
-
         since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=knob(view, "economy.pop_window_hours"))
         rows = await GameRepository(view.session).snapshots(view.ctx.id, since)
         return [(row.taken_at, row.pop_current) for row in rows]
@@ -319,10 +322,6 @@ class EconomyProposer(Proposer):
     @staticmethod
     async def managed_players(view: CoordinationView) -> set[str]:
         """Players of the other accounts this assistant runs in the same world: never trade with them."""
-        from sqlalchemy import select
-
-        from tribal_assistant.core.accounts.context import current_account
-        from tribal_assistant.core.models.player import Player
 
         account = current_account()
         rows = await view.session.execute(

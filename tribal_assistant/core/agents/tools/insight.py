@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
+from tribal_assistant.core.services.forecast import ForecastService, ScavengePlanner
 
 if TYPE_CHECKING:
     from tribal_assistant.core.agents.toolbox import Toolbox
@@ -24,8 +25,6 @@ class GetForecast(AgentTool):
     }
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        from tribal_assistant.core.services.forecast import ForecastService
-
         cost = {r: int(args.get(r) or 0) for r in ("wood", "clay", "iron")}
         forecast = await ForecastService(box.session).build(box.ctx, cost)
         return ToolOutcome(True, forecast.model_dump_json(), forecast.model_dump(mode="json"))
@@ -51,8 +50,6 @@ class PlanScavenge(AgentTool):
     }
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        from tribal_assistant.core.services.forecast import ScavengePlanner
-
         plan = ScavengePlanner.plan(box.ctx, args.get("units") or None)
         return ToolOutcome(True, plan.model_dump_json(), plan.model_dump(mode="json"))
 

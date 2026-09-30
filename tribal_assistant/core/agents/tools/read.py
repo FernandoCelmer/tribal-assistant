@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
-from tribal_assistant.core.errors import DomainError
+from tribal_assistant.core.agents.view import ContextView
+from tribal_assistant.core.errors import DomainError, NotFoundError
+from tribal_assistant.core.services.docs import DocsService
 from tribal_assistant.core.services.world import WorldService
 
 if TYPE_CHECKING:
@@ -19,8 +21,6 @@ class GetVillageState(AgentTool):
     )
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        from tribal_assistant.core.agents.view import ContextView
-
         return ToolOutcome(True, ContextView(box.ctx, box.ctx.policy.build_queue_slots).render(box.agent.key))
 
 
@@ -94,8 +94,6 @@ class SearchDocs(AgentTool):
     }
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        from tribal_assistant.core.services.docs import DocsService
-
         hits = await DocsService(box.session).search(str(args["query"]), int(args.get("limit") or 4), args.get("category"))
         if not hits:
             return ToolOutcome(True, "nada encontrado na biblioteca; tente outras palavras")
@@ -114,9 +112,6 @@ class ReadDoc(AgentTool):
     }
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        from tribal_assistant.core.errors import NotFoundError
-        from tribal_assistant.core.services.docs import DocsService
-
         try:
             doc = await DocsService(box.session).read(str(args["path"]))
         except NotFoundError as exc:

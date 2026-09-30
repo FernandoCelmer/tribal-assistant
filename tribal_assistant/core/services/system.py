@@ -2,6 +2,7 @@
 
 import os
 
+from tribal_assistant.core.accounts.context import current_account, current_account_id
 from tribal_assistant.core.ai.errors import LLMError
 from tribal_assistant.core.ai.factory import LLMFactory
 from tribal_assistant.core.ai.providers.registry import PROVIDERS
@@ -12,8 +13,6 @@ from tribal_assistant.version import __version__
 
 class SystemService:
     def info(self) -> SystemInfo:
-        from tribal_assistant.core.accounts.context import current_account, current_account_id
-
         account = current_account() if current_account_id() else None
         return SystemInfo(
             version=__version__,

@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from tribal_assistant.core.accounts.context import current_account_id
+
 
 @dataclass
 class SessionState:
@@ -18,8 +20,6 @@ class SessionStates:
         object.__setattr__(self, "states", {})
 
     def get(self) -> SessionState:
-        from tribal_assistant.core.accounts.context import current_account_id
-
         key = current_account_id() or 0
         return self.states.setdefault(key, SessionState())
 

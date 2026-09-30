@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
 
 if TYPE_CHECKING:
-    from tribal_assistant.core.game.actions import ActionResult, GameActions
+    from tribal_assistant.core.game.actions import GameActions
 
 TRIBES_JS = """() => {
   const num = (t) => Number((t || '').replace(/\\D/g, '')) || 0;
@@ -73,8 +74,6 @@ class Diplomacy:
             return await page.evaluate(MENTORS_JS)
 
     async def apply(self, village_id: str, ally_id: str) -> ActionResult:
-        from tribal_assistant.core.game.actions import ActionResult
-
         async with game_session.lock:
             page = await self.actions._in_game(village_id, "info_ally", mode="apply", id=ally_id)
             self.actions._capture(await page.content(), "tribe_apply")
@@ -99,8 +98,6 @@ class Diplomacy:
         return ActionResult(True, "apply_to_tribe", "candidatura enviada", {"ally_id": ally_id, "notices": messages["notices"]})
 
     async def accept_invite(self, village_id: str, invite_id: str) -> ActionResult:
-        from tribal_assistant.core.game.actions import ActionResult
-
         async with game_session.lock:
             page = await self.actions._in_game(village_id, "ally")
             link = page.locator(f'table.vis a[href*="accept"][href*="{invite_id}"]').first
@@ -124,8 +121,6 @@ class Diplomacy:
         return ActionResult(True, "accept_tribe_invite", "entrou na tribo", {"notices": messages["notices"]})
 
     async def accept_mentor(self, village_id: str, mentor_id: str) -> ActionResult:
-        from tribal_assistant.core.game.actions import ActionResult
-
         async with game_session.lock:
             page = await self.actions._in_game(village_id, "mentor")
             link = page.locator(f'a[href*="action=accept_mentor"][href*="mentor_id={mentor_id}"]').first

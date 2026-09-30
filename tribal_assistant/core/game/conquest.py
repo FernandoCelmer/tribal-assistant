@@ -9,10 +9,11 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
+from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
 
 if TYPE_CHECKING:
-    from tribal_assistant.core.game.actions import ActionResult, GameActions
+    from tribal_assistant.core.game.actions import GameActions
 
 COORDS_RE = re.compile(r"\((\d{1,3}\|\d{1,3})\)")
 
@@ -73,8 +74,6 @@ class Conquest:
         self.actions = actions
 
     async def send_train(self, village_id: str, x: int, y: int, waves: list[dict[str, int]]) -> ActionResult:
-        from tribal_assistant.core.game.actions import ActionResult
-
         target = f"{x}|{y}"
         if not waves or any(w.get("snob", 0) != 1 for w in waves):
             return ActionResult(False, "send_noble", "cada ataque do trem leva exatamente um nobre")

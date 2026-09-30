@@ -4,9 +4,10 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tribal_assistant.core.agents.context import ContextLoader, VillageContext
+from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.estimates import RESOURCES, Estimator
 from tribal_assistant.core.agents.knobs import knob
+from tribal_assistant.core.agents.loader import ContextLoader
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.attack import SCAVENGERS, AttackProposer
 from tribal_assistant.core.agents.proposers.economy import EconomyProposer

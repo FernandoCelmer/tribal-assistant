@@ -7,6 +7,7 @@ from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.economy import EconomyProposer
+from tribal_assistant.core.game.diplomacy import Diplomacy
 
 
 class DiplomacyProposer(Proposer):
@@ -42,8 +43,6 @@ class DiplomacyProposer(Proposer):
         )
 
     async def _tribe(self, view: CoordinationView) -> list[Proposal]:
-        from tribal_assistant.core.game.diplomacy import Diplomacy
-
         if (view.ctx.player or {}).get("ally_id") or not await view.cooldown("tribe"):
             return []
 
@@ -64,8 +63,6 @@ class DiplomacyProposer(Proposer):
         return [self._social("apply_to_tribe", {"ally_id": str(best["id"])}, f"tribo mais forte da região: {best['tag']}", f"{best['members']} membros, {best['points']} pontos", 0.6)]
 
     async def _mentor(self, view: CoordinationView) -> list[Proposal]:
-        from tribal_assistant.core.game.diplomacy import Diplomacy
-
         if not await view.cooldown("mentor"):
             return []
 

@@ -1,3 +1,4 @@
+from tribal_assistant.core.game.diplomacy import Diplomacy
 from tribal_assistant.core.game.forge import Forge
 
 
@@ -14,8 +15,6 @@ def test_forge_waits_for_three_materials() -> None:
 
 
 def test_diplomacy_picks_the_strongest_tribe_and_the_recommended_mentor() -> None:
-    from tribal_assistant.core.game.diplomacy import Diplomacy
-
     nearby = [{"id": "239", "tag": "LARGA3", "members": 31, "points": 44304}, {"id": "1289", "tag": "UKR", "members": 1, "points": 183}, {"id": "1165", "tag": "MINA3", "members": 59, "points": 144071}]
     assert Diplomacy.best_tribe(nearby, set())["tag"] == "MINA3"
     assert Diplomacy.best_tribe(nearby, {"1165"})["tag"] == "LARGA3"

@@ -1,6 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.agents.coordination.policy import Policy
 from tribal_assistant.core.agents.knobs import Knobs, KnobStore, Metrics, Tuner
+from tribal_assistant.core.agents.pacing import BuildPacing
+from tribal_assistant.core.agents.proposers.raid import RaidPlanner
 
 
 def test_knobs_move_the_way_their_rule_asks() -> None:
@@ -49,8 +52,6 @@ def test_every_knob_starts_positive_and_shares_stay_within_the_whole() -> None:
 
 
 def test_policy_limits_come_from_the_knobs_and_emergency_never_raids() -> None:
-    from tribal_assistant.core.agents.coordination.policy import Policy
-
     knobs = Knobs({"policy.offensive.attack_radius": 20, "policy.offensive.recruit_budget": 0.5, "policy.emergency.recruit_budget": 0.6})
     offensive = Policy.for_role("offensive", knobs)
     emergency = Policy.for_role("emergency", knobs)
@@ -109,9 +110,6 @@ def test_new_metrics_come_from_rounds_and_decisions() -> None:
 
 
 def test_pure_planners_read_the_knobs_they_are_given() -> None:
-    from tribal_assistant.core.agents.pacing import BuildPacing
-    from tribal_assistant.core.agents.proposers.raid import RaidPlanner
-
     wider = Knobs({"raid.radius_infantry": 6, "raid.max_cap": 20})
     assert RaidPlanner.in_range("spear", 5, wider) and not RaidPlanner.in_range("spear", 5)
     assert RaidPlanner.max_raids(1000, 30, 0, wider) == 20

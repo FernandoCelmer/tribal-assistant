@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from loguru import logger
 from sqlalchemy import Engine, MetaData, create_engine, func, insert, inspect, select, text
 
+from tribal_assistant.core import models  # noqa: F401
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.crypto import vault
 from tribal_assistant.core.db.base import Base
@@ -34,8 +35,6 @@ class DatabaseCopier:
         self.target: Engine = create_engine(sync_url(target_url))
 
     def run(self, wipe: bool = False) -> CopyReport:
-        from tribal_assistant.core import models  # noqa: F401
-
         if wipe:
             Base.metadata.drop_all(self.target)
         Base.metadata.create_all(self.target)

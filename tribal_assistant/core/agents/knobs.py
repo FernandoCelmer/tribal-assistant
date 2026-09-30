@@ -18,6 +18,9 @@ from tribal_assistant.core.agents.knob_rules import (
     more_when,
     settle,
 )
+from tribal_assistant.core.models.agent import AgentDecision
+from tribal_assistant.core.models.coordination import CoordinationRound
+from tribal_assistant.core.models.knob import TuningKnob
 
 __all__ = ["KnobSpec", "KnobStore", "Knobs", "Metrics", "Rule", "Tuner", "cooldown", "either", "knob", "knob_int", "less_when", "more_when", "settle", "tuning"]
 
@@ -85,14 +88,10 @@ class KnobStore:
         self.session = session
 
     async def load(self) -> Knobs:
-        from tribal_assistant.core.models.knob import TuningKnob
-
         rows = (await self.session.execute(select(TuningKnob))).scalars().all()
         return Knobs({r.name: r.value for r in rows if r.name in Knobs.SPECS})
 
     async def rows(self) -> list[dict[str, Any]]:
-        from tribal_assistant.core.models.knob import TuningKnob
-
         stored = {r.name: r for r in (await self.session.execute(select(TuningKnob))).scalars().all()}
         items = []
         for name, spec in Knobs.SPECS.items():
@@ -112,8 +111,6 @@ class KnobStore:
         return items
 
     async def set(self, name: str, value: float, reason: str) -> None:
-        from tribal_assistant.core.models.knob import TuningKnob
-
         now = datetime.now(UTC).replace(tzinfo=None)
         row = (await self.session.execute(select(TuningKnob).where(TuningKnob.name == name))).scalar_one_or_none()
         if row is None:
@@ -125,9 +122,6 @@ class KnobStore:
         row.value, row.reason, row.updated_at, row.history = value, reason, now, json.dumps(history[-HISTORY:], ensure_ascii=False)
 
     async def metrics(self) -> Metrics:
-        from tribal_assistant.core.models.agent import AgentDecision
-        from tribal_assistant.core.models.coordination import CoordinationRound
-
         since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=WINDOW_HOURS)
         rounds = (await self.session.execute(select(CoordinationRound.data).where(CoordinationRound.created_at >= since))).scalars().all()
         decisions = (

@@ -10,6 +10,7 @@ from loguru import logger
 from playwright.async_api import Page
 
 from tribal_assistant.core.accounts.context import current_account
+from tribal_assistant.core.game.browser import open_screen
 
 WATCHED = ("smith", "market", "snob", "stable", "garage", "statue")
 
@@ -89,15 +90,13 @@ class ScreenCatalog:
             logger.info("Tela {} capturada para mapeamento ({} bytes)", name, len(html))
 
     async def capture(self, page: Page, village_id: str, name: str) -> None:
-        from tribal_assistant.core.game.modules.game_sync import _open
-
         if name == "menu":
-            await _open(page, "overview", village_id)
+            await open_screen(page, "overview", village_id)
             self.save(name, await page.evaluate(MENU_JS))
             return
 
         if name == "inventory_details":
-            await _open(page, "inventory", village_id)
+            await open_screen(page, "inventory", village_id)
             await page.wait_for_timeout(2_500)
             parts = []
             for item in await page.locator(".inventory_items .item").all():
@@ -108,7 +107,7 @@ class ScreenCatalog:
             return
 
         if name == "statue_train":
-            await _open(page, "statue", village_id)
+            await open_screen(page, "statue", village_id)
             launch = page.locator(".knight_train_launch")
             if await launch.count() and await launch.first.is_visible():
                 await launch.first.click()
@@ -118,7 +117,7 @@ class ScreenCatalog:
             return
 
         if name == "statue_recruit":
-            await _open(page, "statue", village_id)
+            await open_screen(page, "statue", village_id)
             launch = page.locator(".knight_recruit_launch")
             if await launch.count() and await launch.first.is_visible():
                 await launch.first.click()
@@ -128,7 +127,7 @@ class ScreenCatalog:
             return
 
         screen, params = self.ACCOUNT.get(name, (name, {}))
-        await _open(page, screen, village_id, **params)
+        await open_screen(page, screen, village_id, **params)
         await page.wait_for_timeout(2_500)
         html = await page.evaluate("(document.querySelector('#content_value') || document.body).outerHTML")
         self.save(name, html)

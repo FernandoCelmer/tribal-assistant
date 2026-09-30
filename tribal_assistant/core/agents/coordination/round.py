@@ -1,6 +1,7 @@
 """One coordinated round on one village: proposals from every specialist, one decision, one executor."""
 
 import json
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -29,6 +30,7 @@ from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
 from tribal_assistant.core.agents.roles.base import VillageAgent
 from tribal_assistant.core.agents.toolbox import Toolbox
 from tribal_assistant.core.game.actions import GameActions
+from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.repositories.coordination import CoordinationRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
@@ -149,10 +151,6 @@ class VillageRound:
         return decision, insights
 
     async def _recent(self, ctx: VillageContext, minutes: int = 10) -> set[str]:
-        from datetime import timedelta
-
-        from tribal_assistant.core.repositories.agents import AgentRepository
-
         keys = set()
         since = now() - timedelta(minutes=minutes)
         for decision in await AgentRepository(self.session).decisions(village_id=ctx.id, limit=30):

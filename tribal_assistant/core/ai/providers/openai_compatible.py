@@ -3,6 +3,8 @@
 import json
 from typing import Any
 
+import openai
+
 from tribal_assistant.core.ai.abc.llm import LLM, Conversation
 from tribal_assistant.core.ai.errors import LLMError
 from tribal_assistant.core.ai.types import Reply, ToolCall, ToolResult, ToolSpec
@@ -26,8 +28,6 @@ class OpenAICompatibleConversation(Conversation):
         ]
 
     async def send(self, results: list[ToolResult] | None = None) -> Reply:
-        import openai
-
         for result in results or []:
             content = f"ERRO: {result.content}" if result.is_error else result.content
             self.messages.append({"role": "tool", "tool_call_id": result.call_id, "content": content})
@@ -76,8 +76,6 @@ class OpenAICompatibleLLM(LLM):
         base_url: str | None,
         max_tokens: int,
     ) -> None:
-        import openai
-
         self.provider = provider
         self.model = model
         self.max_tokens = max_tokens

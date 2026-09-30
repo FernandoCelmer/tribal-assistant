@@ -1,7 +1,10 @@
+from datetime import datetime
+
 import pytest
 from httpx import AsyncClient
 
 from tribal_assistant.core.config import settings
+from tribal_assistant.core.models.report import Report
 
 
 async def test_reports_page_is_empty_without_sync(client: AsyncClient) -> None:
@@ -12,10 +15,6 @@ async def test_reports_page_is_empty_without_sync(client: AsyncClient) -> None:
 
 
 async def test_reports_page_pages_newest_first(client: AsyncClient, session) -> None:
-    from datetime import datetime
-
-    from tribal_assistant.core.models.report import Report
-
     for day in range(1, 4):
         session.add(Report(game_id=str(day), title=f"r{day}", category="attack", result="green", received_at=datetime(2026, 9, day), target_coords="500|500"))
     await session.commit()

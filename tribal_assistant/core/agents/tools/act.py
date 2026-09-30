@@ -4,9 +4,14 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from tribal_assistant.core.agents.knobs import Knobs, knob
+from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.agents.logistics import CARRY, Merchants
 from tribal_assistant.core.agents.market import MarketRule
+from tribal_assistant.core.agents.plan import PlanTracker
+from tribal_assistant.core.agents.quests import QuestRules
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
+from tribal_assistant.core.repositories.plans import PlanRepository
+from tribal_assistant.core.schemas.plan import PlanStep
 
 if TYPE_CHECKING:
     from tribal_assistant.core.agents.toolbox import Toolbox
@@ -51,8 +56,6 @@ class UpgradeBuilding(AgentTool):
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
         building = str(args["building"])
-
-        from tribal_assistant.core.agents.plan import PlanTracker
 
         planned = building in PlanTracker.next_builds(box.ctx.plan)
         if box.agent.buildings and building not in box.agent.buildings and not planned:
@@ -412,8 +415,6 @@ class CompleteQuest(AgentTool):
         if not quest["can_complete"]:
             return ToolOutcome(False, f"missão {quest_id} ainda não concluída")
 
-        from tribal_assistant.core.agents.quests import QuestRules
-
         if QuestRules.forbidden(quest):
             return ToolOutcome(False, "RECUSADO: missão de milícia corta a produção pela metade; nunca ativar")
 
@@ -471,11 +472,6 @@ class SetVillagePlan(AgentTool):
     acts = True
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
-        from tribal_assistant.core.agents.knowledge import GameKnowledge
-        from tribal_assistant.core.agents.plan import PlanTracker
-        from tribal_assistant.core.repositories.plans import PlanRepository
-        from tribal_assistant.core.schemas.plan import PlanStep
-
         steps, rejected = [], []
         for raw in list(args.get("steps", []))[:12]:
             kind, target, amount = (

@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,8 +44,6 @@ async def test_world_data_is_shared_by_world_not_by_account(session: AsyncSessio
 
 
 async def test_same_lesson_key_can_exist_per_account(session: AsyncSession) -> None:
-    from datetime import UTC, datetime
-
     now = datetime.now(UTC).replace(tzinfo=None)
     for account in (A, B):
         with use_account(account):

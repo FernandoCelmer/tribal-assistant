@@ -4,6 +4,8 @@ from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from tribal_assistant.core import models  # noqa: F401
+from tribal_assistant.core.accounts.registry import AccountRegistry
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.base import Base
 
@@ -21,12 +23,8 @@ SessionFactory = async_sessionmaker(engine, expire_on_commit=False, class_=Async
 
 
 async def init_db() -> None:
-    from tribal_assistant.core import models  # noqa: F401
-
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    from tribal_assistant.core.accounts.registry import AccountRegistry
 
     async with SessionFactory() as session:
         await AccountRegistry(session).bootstrap()

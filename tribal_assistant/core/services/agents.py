@@ -4,17 +4,22 @@ import json
 from dataclasses import asdict
 from uuid import uuid4
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tribal_assistant.core.agents.context import ContextLoader
+from tribal_assistant.core.agents.coordination.roles import RoleSelector
+from tribal_assistant.core.agents.coordination.round import VillageRound
+from tribal_assistant.core.agents.loader import ContextLoader
 from tribal_assistant.core.agents.roles.operator import OperatorAgent
 from tribal_assistant.core.agents.runner import AgentRunner
 from tribal_assistant.core.agents.toolbox import Toolbox
 from tribal_assistant.core.errors import NotFoundError
+from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.repositories.coordination import CoordinationRepository
 from tribal_assistant.core.repositories.lessons import LessonRepository
+from tribal_assistant.core.repositories.plans import PlanRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings, AgentSettingsUpdate
 from tribal_assistant.core.schemas.agents import (
     AgentActOut,
@@ -72,8 +77,6 @@ class AgentService:
         return sorted(items, key=lambda o: o.village_id)
 
     async def set_role(self, village_id: int, body: RoleIn) -> RoleOut:
-        from tribal_assistant.core.agents.coordination.roles import RoleSelector
-
         repo = CoordinationRepository(self.session)
         if body.role is None:
             contexts = await ContextLoader(self.session).load([village_id])
@@ -89,15 +92,9 @@ class AgentService:
 
     @staticmethod
     def proposers() -> list[ProposerOut]:
-        from tribal_assistant.core.agents.coordination.round import VillageRound
-
         return [ProposerOut(**item) for item in VillageRound.describe()]
 
     async def _own_villages(self):
-        from sqlalchemy import select
-
-        from tribal_assistant.core.models.village import Village
-
         return (await self.session.execute(select(Village).where(Village.is_own.is_(True)))).scalars().all()
 
     async def lessons(self, topic: str | None = None, limit: int = 100) -> list[LessonOut]:
@@ -129,8 +126,6 @@ class AgentService:
         )
 
     async def plans(self) -> list[VillagePlanOut]:
-        from tribal_assistant.core.agents.context import ContextLoader
-
         contexts = await ContextLoader(self.repository.session).load()
         return [
             VillagePlanOut(
@@ -147,8 +142,6 @@ class AgentService:
         ]
 
     async def _plan_source(self, village_id: int) -> str:
-        from tribal_assistant.core.repositories.plans import PlanRepository
-
         row = await PlanRepository(self.repository.session).get(village_id)
         return row.source if row else "nenhum"
 
@@ -159,8 +152,6 @@ class AgentService:
         return await self.settings_repository.update(patch)
 
     async def config(self) -> AgentConfigOut:
-        from tribal_assistant.core.agents.coordination.round import VillageRound
-
         runner = AgentRunner()
         llm = getattr(runner.brain, "llm", None)
 

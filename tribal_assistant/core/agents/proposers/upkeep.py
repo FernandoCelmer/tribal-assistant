@@ -9,6 +9,7 @@ from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon,
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import Knobs, tuning
 from tribal_assistant.core.agents.proposers.base import Proposer
+from tribal_assistant.core.game.forge import Forge
 
 TRAINING_COST = {21: 100, 22: 200, 23: 400, 24: 700, 25: 1000}
 UNIT_BONUS = {"lanceiro": "spear", "espadachim": "sword", "machado": "axe", "arqueiro": "archer", "cavalaria leve": "light", "cavalaria pesada": "heavy"}
@@ -54,8 +55,6 @@ class UpkeepProposer(Proposer):
         )
 
     async def _forge(self, view: CoordinationView) -> list[Proposal]:
-        from tribal_assistant.core.game.forge import Forge
-
         if not await view.cooldown("forge"):
             return []
 

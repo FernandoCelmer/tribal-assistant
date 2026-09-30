@@ -1,6 +1,9 @@
 import pytest
+from httpx import ASGITransport
 from mcp.server.mcpserver.exceptions import ToolError
 
+from tribal_assistant.api.app import app
+from tribal_assistant.mcp.client import ApiClient
 from tribal_assistant.mcp.server import INSTRUCTIONS, RULES, TribalMcpServer
 
 READ_ONLY_TOOLS = {
@@ -43,11 +46,6 @@ PROMPTS = {"grow_village", "farm_round", "first_noble_plan", "agent_round", "dai
 
 @pytest.fixture
 def server(client):
-    from httpx import ASGITransport
-
-    from tribal_assistant.api.app import app
-    from tribal_assistant.mcp.client import ApiClient
-
     api = ApiClient(base_url="http://test", transport=ASGITransport(app=app))
     return TribalMcpServer(api).build()
 

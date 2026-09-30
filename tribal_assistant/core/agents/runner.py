@@ -10,9 +10,9 @@ from loguru import logger
 from tribal_assistant.core.agents.brains.base import Brain
 from tribal_assistant.core.agents.brains.llm import LLMBrain
 from tribal_assistant.core.agents.brains.rules import RuleBrain
-from tribal_assistant.core.agents.context import ContextLoader
 from tribal_assistant.core.agents.coordination.round import VillageRound
 from tribal_assistant.core.agents.learning import LessonBook
+from tribal_assistant.core.agents.loader import ContextLoader
 from tribal_assistant.core.agents.roles.base import VillageAgent
 from tribal_assistant.core.agents.roles.quartermaster import QuartermasterAgent
 from tribal_assistant.core.agents.roles.strategist import StrategistAgent
@@ -22,6 +22,7 @@ from tribal_assistant.core.ai.errors import LLMError
 from tribal_assistant.core.ai.factory import LLMFactory
 from tribal_assistant.core.db.session import SessionFactory
 from tribal_assistant.core.game.actions import GameActions
+from tribal_assistant.core.game.modules.game_sync import sync_game
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.repositories.observability import ObservabilityRepository
@@ -220,8 +221,6 @@ class AgentRunner:
 
     @staticmethod
     async def _resync() -> None:
-        from tribal_assistant.core.game.modules.game_sync import sync_game
-
         try:
             await sync_game()
         except Exception as exc:

@@ -3,12 +3,17 @@
 import hashlib
 import json
 import re
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.agents.target_intel import TargetIntel
+from tribal_assistant.core.game.scraper.awards import AwardsParser
+from tribal_assistant.core.models.village import Village
+from tribal_assistant.core.models.world import WorldAlly, WorldPlayer, WorldVillage
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
 CHALLENGES = "challenges"
@@ -97,8 +102,6 @@ class LessonBook:
         if state == "finished" and (
             row is None or json.loads(row.data or "{}").get("state") != "finished"
         ):
-            from datetime import UTC, datetime
-
             data["finished_at"] = datetime.now(UTC).isoformat()
 
         await self.repo.observe(
@@ -165,7 +168,6 @@ class LessonBook:
 
     async def challenges(self, path: Any) -> None:
         """The achievements screen becomes the list of challenges the agents chase."""
-        from tribal_assistant.core.game.scraper.awards import AwardsParser
 
         if not path.exists():
             return
@@ -183,10 +185,6 @@ class LessonBook:
 
     async def neighbourhood(self, radius: int = 15) -> None:
         """Which tribes and players surround each own village, from the public world files."""
-        from sqlalchemy import select
-
-        from tribal_assistant.core.models.village import Village
-        from tribal_assistant.core.models.world import WorldAlly, WorldPlayer, WorldVillage
 
         session = self.repo.session
         own = (
@@ -259,8 +257,6 @@ class LessonBook:
         return json.loads(row.data) if row else {}
 
     async def due(self, name: str, hours: float) -> bool:
-        from datetime import UTC, datetime, timedelta
-
         row = await self.repo.get(f"cooldown:{name}")
         if row is None:
             return True

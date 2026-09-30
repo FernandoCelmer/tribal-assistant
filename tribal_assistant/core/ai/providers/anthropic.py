@@ -2,6 +2,8 @@
 
 from typing import Any
 
+import anthropic
+
 from tribal_assistant.core.ai.abc.llm import LLM, Conversation
 from tribal_assistant.core.ai.errors import LLMError
 from tribal_assistant.core.ai.types import Reply, ToolCall, ToolResult, ToolSpec
@@ -28,8 +30,6 @@ class AnthropicConversation(Conversation):
         self.messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
 
     async def send(self, results: list[ToolResult] | None = None) -> Reply:
-        import anthropic
-
         if results:
             self.messages.append(
                 {
@@ -90,8 +90,6 @@ class AnthropicLLM(LLM):
     provider = "anthropic"
 
     def __init__(self, model: str, api_key: str | None, max_tokens: int) -> None:
-        import anthropic
-
         self.model = model
         self.max_tokens = max_tokens
         self.client = anthropic.AsyncAnthropic(api_key=api_key) if api_key else anthropic.AsyncAnthropic()

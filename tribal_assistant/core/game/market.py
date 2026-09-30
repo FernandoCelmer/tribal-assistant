@@ -9,10 +9,11 @@ from bs4 import BeautifulSoup, Tag
 from loguru import logger
 
 from tribal_assistant.core.game.human import human_delay
+from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
 
 if TYPE_CHECKING:
-    from tribal_assistant.core.game.actions import ActionResult, GameActions
+    from tribal_assistant.core.game.actions import GameActions
 
 RESOURCES = ("wood", "stone", "iron")
 DEFAULT_RATIO = (0.9, 1.1)
@@ -146,8 +147,6 @@ class Market:
             return OwnOfferParser.offers(html)
 
     async def cancel_offer(self, village_id: str, offer_id: str) -> ActionResult:
-        from tribal_assistant.core.game.actions import ActionResult
-
         async with game_session.lock:
             page, html = await self._screen(village_id)
             offer = next((o for o in OwnOfferParser.offers(html) if o["id"] == str(offer_id)), None)
@@ -178,7 +177,6 @@ class Market:
 
     async def park(self, village_id: str, sell: str, amount: int, buy: str, lots: int, max_hours: int = 1) -> ActionResult:
         """Own offers asking the highest ratio the world allows, so the resource waits in the merchants, safe from looting."""
-        from tribal_assistant.core.game.actions import ActionResult
 
         async with game_session.lock:
             page, html = await self._screen(village_id)
@@ -219,7 +217,6 @@ class Market:
 
     async def send_resources(self, village_id: str, x: int, y: int, amounts: dict[str, int], owner: str | None = None) -> ActionResult:
         """Send resources to one of our own villages: fill the send form, check the confirmation shows our village, confirm."""
-        from tribal_assistant.core.game.actions import ActionResult
 
         target = f"{x}|{y}"
         fields = {"wood": amounts.get("wood", 0), "stone": amounts.get("clay", 0), "iron": amounts.get("iron", 0)}

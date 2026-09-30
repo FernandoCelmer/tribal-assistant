@@ -11,12 +11,14 @@ from tribal_assistant.core.agents.coordination.incoming import (
 )
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
+from tribal_assistant.core.agents.coordination.roles import RoleSelector
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.threat import ThreatScan
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 from tribal_assistant.core.errors import DomainError
+from tribal_assistant.core.services.world import WorldService
 
 DEFENDERS = ("spear", "sword", "archer", "heavy")
 SPEND_BLOCKED = ("train_knight", "accept_market_offer", "use_item")
@@ -50,8 +52,6 @@ class DefenseProposer(Proposer):
         return self._assessed[1]
 
     async def _dodge_target(self, view: CoordinationView, planner: DodgePlanner, decision: Assessment) -> Assessment:
-        from tribal_assistant.core.services.world import WorldService
-
         try:
             rows = await WorldService(view.session).nearby(view.ctx.id, "barbarian", knob_int(view, "dodge.radius"), 400)
         except DomainError:
@@ -188,7 +188,6 @@ class DefenseProposer(Proposer):
 
     async def _prepare(self, view: CoordinationView) -> list[Proposal]:
         """Before beginner protection ends (from 72h out) or in defense role: wall, hiding place, defenders, spies, watchtower."""
-        from tribal_assistant.core.agents.coordination.roles import RoleSelector
 
         ctx = view.ctx
         protection = RoleSelector.protection_hours(ctx)

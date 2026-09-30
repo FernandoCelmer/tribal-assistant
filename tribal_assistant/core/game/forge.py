@@ -8,10 +8,11 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
 
 if TYPE_CHECKING:
-    from tribal_assistant.core.game.actions import ActionResult, GameActions
+    from tribal_assistant.core.game.actions import GameActions
 
 SCREEN = "event_crafting"
 SLOTS = 3
@@ -57,8 +58,6 @@ class Forge:
             return await page.evaluate(STATE_JS)
 
     async def craft(self, village_id: str, materials: list[str]) -> ActionResult:
-        from tribal_assistant.core.game.actions import ActionResult
-
         async with game_session.lock:
             page = await self.actions._in_game(village_id, SCREEN)
             await page.wait_for_timeout(800)

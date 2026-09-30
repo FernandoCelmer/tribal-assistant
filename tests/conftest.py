@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from tribal_assistant.api.app import app as fastapi_app
 from tribal_assistant.api.deps import get_session
+from tribal_assistant.core import models  # noqa: F401
 from tribal_assistant.core.accounts.context import AccountContext, use_account
 from tribal_assistant.core.db.base import Base
 
@@ -23,8 +24,6 @@ def account_context() -> Iterator[AccountContext]:
 async def test_engine() -> AsyncIterator:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     async with engine.begin() as conn:
-        from tribal_assistant.core import models  # noqa: F401
-
         await conn.run_sync(Base.metadata.create_all)
     yield engine
     await engine.dispose()

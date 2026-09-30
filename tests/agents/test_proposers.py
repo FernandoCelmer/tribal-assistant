@@ -1,5 +1,16 @@
+from datetime import datetime, timedelta
+
+from tests.agents.builders import building, context, scavenge, unit
+from tribal_assistant.core.agents.coordination.budget import Budget, Reservation
+from tribal_assistant.core.agents.coordination.estimates import Estimator
+from tribal_assistant.core.agents.coordination.proposal import Proposal
+from tribal_assistant.core.agents.market import MarketRule
+from tribal_assistant.core.agents.proposers.attack import AttackProposer
 from tribal_assistant.core.agents.proposers.economy import EconomyProposer
+from tribal_assistant.core.agents.proposers.infrastructure import InfrastructureProposer
+from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
 from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
+from tribal_assistant.core.agents.roles.quartermaster import QuartermasterAgent
 
 
 def test_best_flag_prefers_production_then_population():
@@ -51,8 +62,6 @@ def test_small_surplus_still_trades_in_lots_of_a_hundred():
 
 
 def test_trade_never_flips_the_imbalance():
-    from tribal_assistant.core.agents.market import MarketRule
-
     stock = {"wood": 406, "stone": 287, "iron": 1119}
 
     assert MarketRule.refusal(stock, "iron", 400, "stone", 400, 4247) is None
@@ -66,23 +75,17 @@ def test_skill_books_are_used():
 
 
 def test_reward_label_resources():
-    from tribal_assistant.core.agents.roles.quartermaster import QuartermasterAgent
-
     assert QuartermasterAgent.reward_resources("Poço de argila 5 150 150 100   Tudo") == (150, 150, 100)
     assert QuartermasterAgent.reward_resources("Mercado 1 1.000 1.200 1.000 Tudo") == (1000, 1200, 1000)
 
 
 def test_squad_is_sized_by_expected_haul_and_uses_the_paladin():
-    from tribal_assistant.core.agents.proposers.attack import AttackProposer
-
     assert AttackProposer.squad({"light": 10, "spear": 30}, 200) == {"light": 3}
     assert AttackProposer.squad({"knight": 1, "spear": 30}, 300) == {"knight": 1, "spear": 8}
     assert AttackProposer.squad({"spear": 2}, 300) is None
 
 
 def test_scavenging_picks_the_tiers_that_yield_most_per_minute():
-    from tribal_assistant.core.agents.proposers.attack import AttackProposer
-
     tiers = {1: 0.10, 2: 0.25, 3: 0.50, 4: 0.75}
     assert set(AttackProposer.split({"spear": 100}, tiers)) == {2, 3, 4}
     assert set(AttackProposer.split({"spear": 1000}, tiers)) == {1, 2, 3, 4}
@@ -90,25 +93,18 @@ def test_scavenging_picks_the_tiers_that_yield_most_per_minute():
 
 
 def test_scavenging_split_makes_every_run_end_together():
-    from tribal_assistant.core.agents.proposers.attack import AttackProposer
-
     parts = AttackProposer.split({"spear": 1040}, {1: 0.10, 2: 0.25, 3: 0.50, 4: 0.75})
     assert [parts[t]["spear"] for t in (1, 2, 3, 4)] == [600, 240, 120, 80]
     assert all(sum(p.values()) >= 10 for p in parts.values())
 
 
 def test_mine_follows_the_resource_that_blocks_builds():
-    from tests.agents.builders import building, context
-    from tribal_assistant.core.agents.proposers.infrastructure import InfrastructureProposer
-
     class View:
         pass
 
     ctx = context(buildings=[building("main", 7, cost=600), building("wood", 7), building("stone", 7), building("iron", 7), building("storage", 5), building("farm", 5)], stock=300)
     ctx.stock = {"wood": 100, "clay": 900, "iron": 900}
     ctx.village.wood_prod, ctx.village.clay_prod, ctx.village.iron_prod = 160, 130, 110
-
-    from tribal_assistant.core.agents.coordination.estimates import Estimator
 
     view = View()
     view.ctx = ctx
@@ -126,10 +122,6 @@ def test_iron_surplus_buys_wood_when_wood_is_almost_gone():
 
 
 def test_farm_is_built_before_population_locks():
-    from datetime import datetime, timedelta
-
-    from tribal_assistant.core.agents.proposers.economy import EconomyProposer
-
     start = datetime(2026, 9, 29, 12)
     growing = [(start, 200), (start + timedelta(hours=2), 260)]
     assert EconomyProposer.pop_lock_hours(growing, 90) == 3.0
@@ -138,15 +130,11 @@ def test_farm_is_built_before_population_locks():
 
 
 def test_scavenging_army_grows_with_the_farm():
-    from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
-
     assert RecruitmentProposer.scavenge_target(854) == 341
     assert RecruitmentProposer.scavenge_target(24000) == 1000
 
 
 def test_unit_bonus_items_wait_for_an_incoming_attack():
-    from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
-
     sword = {"key": "3040_0", "name": "Bônus de espadachim", "detail": "Espadachim: +5% poder de ataque e defesa", "usable": True}
     stock = {"wood": 300, "clay": 400, "iron": 700}
     assert UpkeepProposer.item_decision(sword, stock, 5222, False) is None
@@ -155,9 +143,6 @@ def test_unit_bonus_items_wait_for_an_incoming_attack():
 
 
 def test_next_build_reservation_lets_small_recruit_batches_through_while_the_queue_runs():
-    from tests.agents.builders import context
-    from tribal_assistant.core.agents.coordination.budget import Budget, Reservation
-
     ctx = context(stock=500)
     budget = Budget(ctx)
     budget.reserve(Reservation("plan:barracks", "operation", "próxima obra", {"wood": 500, "clay": 500, "iron": 500}, exempt=("recruit_units",)))
@@ -167,10 +152,6 @@ def test_next_build_reservation_lets_small_recruit_batches_through_while_the_que
 
 
 async def test_vetoed_raids_do_not_hold_troops_back_from_scavenging():
-    from tests.agents.builders import context, scavenge, unit
-    from tribal_assistant.core.agents.coordination.proposal import Proposal
-    from tribal_assistant.core.agents.proposers.attack import AttackProposer
-
     class View:
         pass
 
@@ -192,10 +173,6 @@ async def test_vetoed_raids_do_not_hold_troops_back_from_scavenging():
 
 
 def test_idle_queue_takes_the_cheapest_pit_that_fits_when_the_plan_is_far():
-    from tests.agents.builders import building, context
-    from tribal_assistant.core.agents.coordination.estimates import Estimator
-    from tribal_assistant.core.agents.proposers.infrastructure import InfrastructureProposer
-
     class Guard:
         @staticmethod
         def check_upgrade(ctx, name):
@@ -220,7 +197,5 @@ def test_idle_queue_takes_the_cheapest_pit_that_fits_when_the_plan_is_far():
 
 
 def test_base_reserve_never_swallows_the_whole_stock():
-    from tribal_assistant.core.agents.proposers.economy import EconomyProposer
-
     assert EconomyProposer.base_reserve(5222, 0.1, {"wood": 495, "clay": 386, "iron": 446}, 0.25) == {"wood": 123, "clay": 96, "iron": 111}
     assert EconomyProposer.base_reserve(5222, 0.1, {"wood": 4000, "clay": 4000, "iron": 4000}, 0.25) == {"wood": 522, "clay": 522, "iron": 522}

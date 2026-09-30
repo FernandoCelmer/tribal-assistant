@@ -3,6 +3,7 @@ import pytest
 from tribal_assistant.core.ai.abc.llm import LLM
 from tribal_assistant.core.ai.errors import LLMError
 from tribal_assistant.core.ai.factory import LLMFactory
+from tribal_assistant.core.config import settings
 
 
 @pytest.mark.parametrize(
@@ -28,8 +29,6 @@ def test_ollama_needs_no_key() -> None:
 
 
 def test_disabled_and_invalid_providers(monkeypatch: pytest.MonkeyPatch) -> None:
-    from tribal_assistant.core.config import settings
-
     monkeypatch.setattr(settings, "ai_api_key", None)
     monkeypatch.delenv("XAI_API_KEY", raising=False)
 

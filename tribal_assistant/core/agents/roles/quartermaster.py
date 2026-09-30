@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.quests import QuestRules
 from tribal_assistant.core.agents.roles.base import VillageAgent
+from tribal_assistant.core.agents.tools.act import OpenDailyBonus
+from tribal_assistant.core.repositories.agents import AgentRepository
 
 if TYPE_CHECKING:
     from tribal_assistant.core.agents.toolbox import Toolbox
@@ -43,8 +45,6 @@ class QuartermasterAgent(VillageAgent):
             if outcome.ok:
                 done.append(outcome.text)
 
-        from tribal_assistant.core.agents.tools.act import OpenDailyBonus
-
         hours = knob(box.ctx, "cooldown.daily_bonus")
         if OpenDailyBonus.due(hours) and await box.lessons.due(f"daily_bonus:{box.ctx.game_id}", hours):
             await box.lessons.mark(f"daily_bonus:{box.ctx.game_id}")
@@ -66,7 +66,6 @@ class QuartermasterAgent(VillageAgent):
 
     async def overflow(self, box: "Toolbox") -> list[str]:
         """Resources that would pass storage if every pending reward were claimed now."""
-        from tribal_assistant.core.repositories.agents import AgentRepository
 
         total = [0, 0, 0]
         for reward in await AgentRepository(box.session).pending_rewards():
