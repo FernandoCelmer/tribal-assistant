@@ -32,6 +32,10 @@ export type Insight = { key?: string; text: string; certainty: string; age_hours
 
 export type Budget = { stock?: Cost; held?: Cost; free?: Cost; reservations?: Reservation[]; troops_committed?: Record<string, number> };
 
+export type Exploration = { title?: string; instead_of?: string; priority?: number; instead_priority?: number; rate?: number; reason?: string };
+
+export type Learned = { bonus?: Record<string, number>; explore_rate?: number; streak?: number; repeated?: boolean };
+
 export type RoundData = {
   role?: string;
   mode?: string;
@@ -42,6 +46,8 @@ export type RoundData = {
   constraints?: Constraint[];
   budget?: Budget;
   insights?: Insight[];
+  exploration?: Exploration | null;
+  learned?: Learned | null;
 };
 
 export const HORIZON: Record<string, string> = { immediate: "imediato", tactical: "tático", strategic: "estratégico" };

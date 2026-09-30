@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { Stat } from "@/components/ui/stat";
-import { BudgetPanel, DeferredTable, ExecutedTable, InsightsTable, NextAction, RoleSelect, SpecialistsTable, VillagePicker, type RoundData } from "@/features/strategy";
+import { BudgetPanel, DeferredTable, ExecutedTable, InsightsTable, LearningPanel, NextAction, RoleSelect, SpecialistsTable, VillagePicker, type RoundData } from "@/features/strategy";
 import { maybe, server } from "@/lib/api";
 import { relative, short } from "@/lib/format";
 import { ROLES } from "@/lib/game";
@@ -91,6 +91,8 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
         <NextAction entry={data.next_action} who={who} />
         <BudgetPanel budget={data.budget} constraints={data.constraints} />
       </div>
+
+      <LearningPanel learned={data.learned} exploration={data.exploration} />
 
       <ExecutedTable entries={data.executed ?? []} who={who} />
 
