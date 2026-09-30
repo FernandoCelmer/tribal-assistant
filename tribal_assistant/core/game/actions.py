@@ -26,6 +26,7 @@ from tribal_assistant.core.game.diplomacy import Diplomacy
 from tribal_assistant.core.game.farm_assistant import FarmAssistant
 from tribal_assistant.core.game.forge import Forge
 from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
+from tribal_assistant.core.game.items import ItemCount
 from tribal_assistant.core.game.market import Market
 from tribal_assistant.core.game.profile import Profile
 from tribal_assistant.core.game.result import ActionResult
@@ -798,6 +799,7 @@ class GameActions:
             name = await item.first.get_attribute("data-title")
             await human_click(page, item.first)
             await human_delay(600, 1200)
+            before = ItemCount.of(await page.locator(".inventory_detail:visible").first.inner_text())
 
             use = page.locator(".inventory_detail .detail_actions a.btn").first
             if not await use.count():
@@ -819,6 +821,19 @@ class GameActions:
                 return ActionResult(
                     False, "use_item", " | ".join(messages["errors"]), {"item": name}
                 )
+
+            page = await self._in_game(village_id, "inventory")
+            await page.wait_for_timeout(2_000)
+            after = 0
+            again = page.locator(f"#item_{key}")
+            if await again.count():
+                await human_click(page, again.first)
+                await human_delay(500, 900)
+                after = ItemCount.of(await page.locator(".inventory_detail:visible").first.inner_text())
+
+            if not ItemCount.consumed(before, after):
+                self._capture(await page.content(), f"use-item-not-consumed-{key}")
+                return ActionResult(False, "use_item", f"{name}: o jogo não consumiu o item (continua com {after})", {"item": name})
 
         logger.info("Item {} ({}) usado na aldeia {}", key, name, village_id)
         return ActionResult(
