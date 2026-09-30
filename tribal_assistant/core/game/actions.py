@@ -584,6 +584,15 @@ class GameActions:
             if error := await self._game_error(page):
                 return ActionResult(False, "send_attack", error, {"target": target})
 
+            if await page.locator("#troop_confirm_submit:visible, #troop_confirm_go:visible").count():
+                self._capture(await page.content(), "place-not-sent")
+                return ActionResult(False, "send_attack", "o jogo não aceitou a confirmação: a tela de confirmar continua aberta", {"target": target})
+
+            listed = await page.locator(f'.commands-container :text("{target}"), #commands_outgoings :text("{target}")').count()
+            if not listed:
+                self._capture(await page.content(), "place-sent-unlisted")
+                logger.warning("Envio para {} confirmado mas o comando não apareceu na lista da praça", target)
+
             logger.info("Ataque enviado de {} para {} com {}", village_id, target, units)
             return ActionResult(
                 True,
