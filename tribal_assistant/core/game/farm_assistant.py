@@ -69,13 +69,14 @@ class FarmAssistant:
                 return ActionResult(False, "set_farm_templates", "formulário dos modelos não encontrado")
 
             for letter, units in wanted.items():
-                fields = (state["templates"].get(letter) or {}).get("units") or {}
+                template = state["templates"].get(letter) or {}
+                fields = template.get("units") or {}
                 missing = [u for u, n in units.items() if n > 0 and u not in fields]
                 if letter not in TEMPLATES or missing:
                     return ActionResult(False, "set_farm_templates", f"modelo {letter.upper()} sem campo para {', '.join(missing) or letter}")
 
                 for unit in fields:
-                    box = form.locator(f'input[name="{unit}[{TEMPLATES[letter]}]"]')
+                    box = form.locator(f'input[name="{unit}[{template['index']}]"]')
                     if await box.count():
                         await box.first.fill(str(int(units.get(unit, 0))))
                         await human_delay(120, 300)

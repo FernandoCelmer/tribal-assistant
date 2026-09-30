@@ -42,6 +42,14 @@ def with_templates() -> str:
     return html[:start] + RESOURCES + html[end:]
 
 
+def test_saved_template_takes_its_game_id_as_field_index():
+    html = real().replace("[0]", "[3098]").replace('name="spear[3098]" size="3" value="0"', 'name="spear[3098]" size="3" value="16"')
+    state = FarmAssistantParser.parse(html)
+
+    assert state["templates"]["a"]["index"] == 3098 and state["templates"]["b"]["index"] == 1
+    assert FarmAssistantParser.squad(state, "a") == {"spear": 16} and FarmAssistantParser.squad(state, "b") == {}
+
+
 def test_real_screen_reads_templates_home_and_targets():
     state = FarmAssistantParser.parse(real())
 

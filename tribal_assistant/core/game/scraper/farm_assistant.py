@@ -6,7 +6,8 @@ from typing import Any
 
 from bs4 import BeautifulSoup, Tag
 
-TEMPLATES = {"a": 0, "b": 1}
+TEMPLATES = ("a", "b")
+TEMPLATE_FIELD = re.compile(r"^template\[(\d+)\]\[id\]$")
 BUTTONS = ("a", "b", "c")
 RESOURCES = {"wood": "wood", "stone": "clay", "clay": "clay", "iron": "iron"}
 UNIT_FIELD = re.compile(r"^([a-z]+)\[(\d+)\]$")
@@ -58,11 +59,9 @@ class FarmAssistantParser:
     @classmethod
     def templates(cls, soup: BeautifulSoup) -> dict[str, dict[str, Any]]:
         found: dict[str, dict[str, Any]] = {}
-        for letter, index in TEMPLATES.items():
-            ident = soup.select_one(f'input[name="template[{index}][id]"]')
-            if ident is None:
-                continue
-
+        idents = [field for field in soup.select('input[name^="template["]') if TEMPLATE_FIELD.match(str(field.get("name", "")))]
+        for letter, ident in zip(TEMPLATES, idents, strict=False):
+            index = int(TEMPLATE_FIELD.match(str(ident.get("name", ""))).group(1))
             fresh = soup.select_one(f'input[name="template[{index}][new]"]')
             units: dict[str, int] = {}
             for field in soup.select("input[name]"):
@@ -72,6 +71,7 @@ class FarmAssistantParser:
 
             found[letter] = {
                 "id": str(ident.get("value", "")),
+                "index": index,
                 "new": fresh is not None and str(fresh.get("value", "")) == "1",
                 "units": units,
             }
