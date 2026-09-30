@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends
 
 from tribal_assistant.api.deps import get_session
+from tribal_assistant.api.readonly import refuse_writes_when_not_playing
 from tribal_assistant.api.v1.accounts import accounts_router
 from tribal_assistant.api.v1.agents import agents_router
 from tribal_assistant.api.v1.assistant import assistant_router
@@ -15,7 +16,7 @@ from tribal_assistant.api.v1.observability import observability_router
 from tribal_assistant.api.v1.system import system_router
 from tribal_assistant.api.v1.world import world_router
 
-v1_router = APIRouter(dependencies=[Depends(get_session)])
+v1_router = APIRouter(dependencies=[Depends(refuse_writes_when_not_playing), Depends(get_session)])
 v1_router.include_router(accounts_router, prefix="/accounts", tags=["Accounts"])
 v1_router.include_router(knowledge_router, prefix="/knowledge", tags=["Knowledge"])
 v1_router.include_router(assistant_router, prefix="/assistant", tags=["Assistant"])

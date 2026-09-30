@@ -14,7 +14,13 @@ from tribal_assistant.core.schemas.agents import (
     LessonOut,
     QuestsOut,
 )
-from tribal_assistant.core.schemas.coordination import CoordinationOut, ProposerOut, RoleIn, RoleOut
+from tribal_assistant.core.schemas.coordination import (
+    CoordinationOut,
+    ProposerOut,
+    RoleIn,
+    RoleOut,
+    RoundSummaryOut,
+)
 from tribal_assistant.core.schemas.plan import VillagePlanOut
 from tribal_assistant.core.services.agents import AgentService
 
@@ -79,6 +85,20 @@ async def lessons(
 @agents_router.get("/coordination", response_model=list[CoordinationOut])
 async def coordination(service: AgentServiceDep) -> list[CoordinationOut]:
     return await service.coordination()
+
+
+@agents_router.get("/coordination/history", response_model=list[RoundSummaryOut])
+async def coordination_history(
+    service: AgentServiceDep,
+    village_id: int | None = None,
+    limit: int = Query(default=48, ge=1, le=200),
+) -> list[RoundSummaryOut]:
+    return await service.coordination_history(limit, village_id)
+
+
+@agents_router.get("/coordination/runs/{run_id}", response_model=list[CoordinationOut])
+async def coordination_run(run_id: str, service: AgentServiceDep) -> list[CoordinationOut]:
+    return await service.coordination_run(run_id)
 
 
 @agents_router.put("/villages/{village_id}/role", response_model=RoleOut)
