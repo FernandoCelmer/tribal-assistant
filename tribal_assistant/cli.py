@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import sys
 from collections.abc import Awaitable, Callable
 from dataclasses import asdict
 from typing import Annotated, Any, Literal
@@ -128,8 +129,15 @@ def serve(
 ) -> None:
     """Run the API and the engine (scheduler, agents, game browser)."""
 
+    # On Windows uvicorn picks a selector loop under --reload, which can't spawn Playwright's driver.
+    loop = "asyncio:ProactorEventLoop" if sys.platform == "win32" else "auto"
     uvicorn.run(
-        "tribal_assistant.api.app:app", host=host, port=port, reload=reload, timeout_graceful_shutdown=5
+        "tribal_assistant.api.app:app",
+        host=host,
+        port=port,
+        reload=reload,
+        loop=loop,
+        timeout_graceful_shutdown=5,
     )
 
 
