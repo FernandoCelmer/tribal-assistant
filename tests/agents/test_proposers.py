@@ -208,3 +208,28 @@ def test_profile_quest_is_detected_until_finished():
     assert UpkeepProposer.profile_quest([quest])
     assert not UpkeepProposer.profile_quest([{**quest, "finished": True}])
     assert not UpkeepProposer.profile_quest([{"id": "1", "title": "Construa o quartel"}])
+
+
+async def test_profile_text_comes_from_the_model_and_is_skipped_without_it():
+    from tribal_assistant.core.agents.writer import ProfileWriter
+    from tribal_assistant.core.ai.types import Reply
+
+    class Chat:
+        async def send(self, results=None):
+            return Reply(text='"Jogo com calma no br144 e gosto de ajudar a tribo."')
+
+    class Llm:
+        def conversation(self, system, prompt, tools):
+            assert "Frenor" in prompt
+            return Chat()
+
+    class Factory:
+        def __init__(self, llm):
+            self.llm = llm
+
+        def build(self):
+            return self.llm
+
+    facts = ProfileWriter.facts({"name": "Frenor", "world": "br144", "points": 300}, 1, "growth", None)
+    assert await ProfileWriter(Factory(Llm())).write(facts) == "Jogo com calma no br144 e gosto de ajudar a tribo."
+    assert await ProfileWriter(Factory(None)).write(facts) is None

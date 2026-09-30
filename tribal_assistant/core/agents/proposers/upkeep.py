@@ -10,9 +10,9 @@ from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon,
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import Knobs, tuning
 from tribal_assistant.core.agents.proposers.base import Proposer
+from tribal_assistant.core.agents.writer import ProfileWriter
 from tribal_assistant.core.game.forge import Forge
 
-PROFILE_TEXT = "Jogador ativo todos os dias no br144. Crescendo com calma, comércio justo e sempre pronto para apoiar a tribo."
 TRAINING_COST = {21: 100, 22: 200, 23: 400, 24: 700, 25: 1000}
 UNIT_BONUS = {"lanceiro": "spear", "espadachim": "sword", "machado": "axe", "arqueiro": "archer", "cavalaria leve": "light", "cavalaria pesada": "heavy"}
 
@@ -199,7 +199,12 @@ class UpkeepProposer(Proposer):
         if not self.profile_quest(ctx.quests) or not await view.cooldown("profile"):
             return []
 
-        return [self._free("set_profile_text", {"text": PROFILE_TEXT}, "missão: A aparência importa", "recompensa da missão", 0.5)]
+        tribe = (ctx.player or {}).get("ally_tag") or (ctx.player or {}).get("ally_id")
+        text = await ProfileWriter().write(ProfileWriter.facts(ctx.player, int((ctx.player or {}).get("villages") or 1), view.role.value, tribe))
+        if text is None:
+            return []
+
+        return [self._free("set_profile_text", {"text": text}, "missão: A aparência importa", "recompensa da missão", 0.5)]
 
     async def _name(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
