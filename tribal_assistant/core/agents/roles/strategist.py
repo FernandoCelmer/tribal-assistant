@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from tribal_assistant.core.agents.context import VillageContext
+from tribal_assistant.core.agents.knobs import knob
 from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.agents.plan import PlanTracker, RulePlanner
 from tribal_assistant.core.agents.roles.base import VillageAgent
@@ -47,7 +48,7 @@ class StrategistAgent(VillageAgent):
             return True
 
         age = datetime.now(UTC).replace(tzinfo=None) - ctx.plan_refreshed_at
-        return age > timedelta(minutes=config.plan_refresh_minutes)
+        return age > timedelta(minutes=max(config.plan_refresh_minutes, knob(ctx, "plan.refresh_minutes")))
 
     def needs_llm(self, ctx: VillageContext, config: AgentSettings) -> bool:
         return self.stale(ctx, config) or PlanTracker.needs_refresh(ctx.plan)

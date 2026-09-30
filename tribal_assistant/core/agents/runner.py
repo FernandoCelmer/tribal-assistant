@@ -11,7 +11,7 @@ from tribal_assistant.core.agents.brains.base import Brain
 from tribal_assistant.core.agents.brains.llm import LLMBrain
 from tribal_assistant.core.agents.brains.rules import RuleBrain
 from tribal_assistant.core.agents.coordination.round import VillageRound
-from tribal_assistant.core.agents.knobs import KnobStore
+from tribal_assistant.core.agents.knobs import KnobStore, knob
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.loader import ContextLoader
 from tribal_assistant.core.agents.roles.base import VillageAgent
@@ -150,10 +150,11 @@ class AgentRunner:
             await trace.step("error", report.error, is_error=True)
             return False
 
-        trace.focus(None, "", "quartermaster")
-        await trace.step("info", "lendo missões e recompensas no jogo")
-        await self._refresh_quests(session, contexts[0].game_id)
-        contexts = await ContextLoader(session).load(village_ids)
+        if await self._quests_due(session, contexts[0]):
+            trace.focus(None, "", "quartermaster")
+            await trace.step("info", "lendo missões e recompensas no jogo")
+            await self._refresh_quests(session, contexts[0].game_id)
+            contexts = await ContextLoader(session).load(village_ids)
 
         acted = False
         siblings = await ContextLoader(session).load() if village_ids else contexts
@@ -205,6 +206,13 @@ class AgentRunner:
         self.brain.max_steps = config.llm_max_steps
         return self.brain
 
+    @staticmethod
+    async def _quests_due(session: Any, ctx: Any) -> bool:
+        """The quest window is read again only when the game flags news or the tuned interval passed."""
+        if (ctx.player or {}).get("new_quests") or ctx.rewards_pending:
+            return True
+        return await LessonBook(session).due(f"quests_read:{ctx.game_id}", knob(ctx, "quests.refresh_minutes") / 60)
+
     async def _refresh_quests(self, session, game_id: str) -> None:
         if not game_id:
             return
@@ -216,6 +224,7 @@ class AgentRunner:
             return
 
         await AgentRepository(session).save_quests(quests, rewards)
+        await LessonBook(session).mark(f"quests_read:{game_id}")
 
         book = LessonBook(session)
         for quest in quests:

@@ -153,6 +153,8 @@ CATALOG: dict[str, KnobSpec] = {
     "learning.bonus_cap": KnobSpec(1.4, "maior bônus aprendido que um especialista pode ter no ranking", more_when("repetition", 0.5, "rodadas repetindo as mesmas ações")),
     "build.unaffordable_kept": KnobSpec(1, "obras que ainda não cabem no estoque mantidas no ranking de uma rodada", integer=True),
     "raid.probe_fresh_hours": KnobSpec(6, "horas em que uma sonda recente dispensa sondar o mesmo alvo de novo"),
+    "plan.refresh_minutes": KnobSpec(120, "minutos até o estrategista refazer o plano da aldeia com a IA quando nada mudou"),
+    "quests.refresh_minutes": KnobSpec(15, "minutos entre leituras da janela de missões quando o jogo não avisa novidade"),
     "spy.min_send": KnobSpec(5, "exploradores mínimos por envio de espionagem (o jogo recusa menos)", integer=True),
     "spy.per_light": KnobSpec(5, "cavalarias leves por explorador mantido", integer=True),
     "plan_reserve.idle_hours": KnobSpec(0.25, "horas até a próxima obra para reservar com a fila parada", either(IDLE_QUEUE_UP, STARVED)),
