@@ -180,6 +180,8 @@ class RecruitmentProposer(Proposer):
             return None
 
         techs = await view.actions.smith(ctx.game_id)
+        if any(t.get("busy") for t in techs):
+            return None
         ready = {t["unit"]: t for t in techs if t.get("level", 0) == 0 and not t.get("blocked")}
         unit = next((u for u in self.RESEARCH_PRIORITY if u in ready), None)
         if unit is None:

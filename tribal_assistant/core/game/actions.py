@@ -119,8 +119,9 @@ MERCHANTS_JS = """() => {
 
 SMITH_JS = """() => {
   const techs = (window.BuildingSmith && BuildingSmith.techs && BuildingSmith.techs.available) || {};
+  const busy = document.querySelectorAll('#current_research tbody tr.lit, #techqueue_smithy tr').length > 0;
   return Object.values(techs).map(t => ({
-    unit: t.id, level: Number(t.level || 0),
+    unit: t.id, level: Number(t.level || 0), busy,
     blocked: Object.keys(t).filter(k => k.startsWith('error_') && t[k]),
     cost: {wood: Number(t.wood || 0), clay: Number(t.stone || 0), iron: Number(t.iron || 0)},
   }));

@@ -138,6 +138,9 @@ class Routines:
         stale = row is None or _now() - row.last_seen > timedelta(hours=knob(ctx, "cooldown.smith"))
         if stale:
             techs = await self.actions.smith(ctx.game_id)
+            if any(t.get("busy") for t in techs):
+                await needs.save(None, {})
+                return None
             ready = {t["unit"]: t for t in techs if t.get("level", 0) == 0 and not t.get("blocked")}
             unit = next((u for u in RecruitmentProposer.RESEARCH_PRIORITY if u in ready), None)
             cost = {k: v for k, v in (ready[unit].get("cost", {}) if unit else {}).items() if v}
