@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.agents.builders import building, context
+from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.constraints import Constraint
 from tribal_assistant.core.agents.coordination.coordinator import Coordinator
 from tribal_assistant.core.agents.coordination.outcomes import Evidence, Outcomes, RoundRecord
@@ -184,3 +185,15 @@ def test_scouting_and_scavenging_count_as_yield():
 
     assert evidence.confirm({"action": "send_spy", "arguments": {"target": "487|752"}}, 1, at) == 1.0
     assert evidence.confirm({"action": "send_scavenge", "arguments": {}}, 1, at) == 1.0
+
+
+async def test_an_idle_reservation_already_in_stock_is_dropped(session: AsyncSession) -> None:
+    coordinator = Coordinator(_view(session), Rng(0.9))
+    idle = Reservation("research:axe", "strategic", "pesquisa", {"wood": 700, "clay": 840, "iron": 820})
+    owned = Reservation("plan:wall", "operation", "muralha", {"wood": 300})
+    base = Reservation("base", "base", "reserva", {"wood": 100})
+    proposals = [Proposal("infrastructure", "upgrade_building", {"building": "wall"}, "", purpose="plan:wall")]
+
+    kept = coordinator.live([idle, owned, base], proposals)
+
+    assert [r.purpose for r in kept] == ["plan:wall", "base"]

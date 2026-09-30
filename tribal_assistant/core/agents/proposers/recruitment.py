@@ -30,7 +30,8 @@ class RecruitmentProposer(Proposer):
             return []
 
         unit = need["unit"]
-        return [Reservation(f"research:{unit}", "strategic", f"pesquisa de {unit} em ~{hours:.1f}h", cost, exempt=("research_unit",))]
+        exempt = ("research_unit",) if view.ctx.queue else ("research_unit", "upgrade_building")
+        return [Reservation(f"research:{unit}", "strategic", f"pesquisa de {unit} em ~{hours:.1f}h", cost, exempt=exempt)]
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx

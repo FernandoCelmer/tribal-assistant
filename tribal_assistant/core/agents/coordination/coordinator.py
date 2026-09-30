@@ -8,7 +8,7 @@ from typing import Any
 
 from tribal_assistant.core.agents.coordination.budget import Budget, Reservation
 from tribal_assistant.core.agents.coordination.constraints import Constraint
-from tribal_assistant.core.agents.coordination.insight import now
+from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
 from tribal_assistant.core.agents.coordination.live import FlowFeed
 from tribal_assistant.core.agents.coordination.proposal import Proposal
 from tribal_assistant.core.agents.coordination.strategy import GOALS, LABELS, Role, Weights
@@ -102,7 +102,7 @@ class Coordinator:
         view = self.view
         decision = Decision(role=view.base_role, mode=view.role, goal=GOALS[view.role], constraints=constraints, budget=self.budget)
 
-        for reservation in sorted(reservations, key=lambda r: Budget.KINDS.index(r.kind) if r.kind in Budget.KINDS else 9):
+        for reservation in sorted(self.live(reservations, proposals), key=lambda r: Budget.KINDS.index(r.kind) if r.kind in Budget.KINDS else 9):
             self.budget.reserve(reservation)
 
         chosen: set[str] = set()
@@ -144,6 +144,20 @@ class Coordinator:
 
         decision.next_review_at = self._next_review(decision)
         return decision
+
+    def live(self, reservations: list[Reservation], proposals: list[Proposal]) -> list[Reservation]:
+        """A reservation whose owner is absent from the round while its cost is already in stock only blocks others: it is dropped."""
+        stock = self.view.ctx.stock
+        purposes = {p.purpose for p in proposals if p.purpose}
+        kept = []
+        for reservation in reservations:
+            idle = reservation.kind not in ("base", "defense") and reservation.purpose not in purposes
+            covered = reservation.cost and all(stock.get(r, 0) >= v for r, v in reservation.cost.items())
+            if idle and covered:
+                self.view.note(Insight("reservation_dropped", f"reserva {reservation.purpose} liberada: o custo já está no estoque e ninguém a usa nesta rodada", Certainty.FACT, now(), 1.0, reservation.purpose, "coordenador"))
+                continue
+            kept.append(reservation)
+        return kept
 
     async def _learned(self, proposal: Proposal) -> str | None:
         if self.view.dry_run:
