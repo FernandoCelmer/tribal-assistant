@@ -27,7 +27,7 @@ class Profile:
         self.actions = actions
 
     async def _form(self, village_id: str) -> Page:
-        page = await self.actions._in_game(village_id, SCREEN)
+        page = await self.actions._in_game(village_id, SCREEN, edit="1")
         await page.wait_for_timeout(800)
         if not await page.locator(TEXT_FIELD).count():
             edit = page.locator(EDIT).first
