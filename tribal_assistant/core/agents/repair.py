@@ -14,7 +14,7 @@ SYSTEM = (
     "argumentos corrigidos e completos. Se não há correção pelos argumentos (faltam recursos, requisito não atendido, "
     "espera, limite por hora, tela indisponível), responda null. Nunca troque o alvo por um jogador, nunca use pontos premium."
 )
-UNFIXABLE = re.compile(r"^RECUSADO|faltam |recursos insuficientes|aguard|limite|requisito|deve ter pelo menos|já |indisponível", re.I)
+UNFIXABLE = re.compile(r"^RECUSADO|faltam |recursos insuficientes|aguard|limite|requisito|deve ter pelo menos|já |indisponível|não está livre|não está disponível|em andamento|só há|em casa|não encontrad|não mudou", re.I)
 FENCE = re.compile(r"^```(?:json)?\s*|\s*```$")
 
 

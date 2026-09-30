@@ -38,3 +38,11 @@ def test_answers_outside_the_schema_or_unchanged_are_dropped():
     assert fix(Model("null"), "erro estranho") is None
     assert fix(Model("não sei"), "erro estranho") is None
     assert fix(Model('{"target": "500|500", "count": 1, "reason": "sondar"}'), "erro estranho") is None
+
+
+def test_state_errors_are_not_argument_errors():
+    model = Model('{"target": "500|500", "count": 5}')
+
+    for error in ("coleta 2 não está livre para enviar", "só há 0 spy em casa", "fila de construção não mudou"):
+        assert fix(model, error) is None
+    assert model.asked == 0

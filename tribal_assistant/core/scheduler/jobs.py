@@ -154,7 +154,7 @@ async def _agents_job() -> None:
 
 async def _routines_job() -> None:
     """Small routine work between rounds, without the model or the coordinator; waits while a round holds the browser."""
-    if in_quiet_hours() or game_session.lock.locked():
+    if in_quiet_hours() or game_session.lock.locked() or AgentRunner.busy():
         return
 
     async with SessionFactory() as session:

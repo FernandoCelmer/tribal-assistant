@@ -51,6 +51,10 @@ class AgentRunner:
 
     _lock = asyncio.Lock()
 
+    @classmethod
+    def busy(cls) -> bool:
+        return cls._lock.locked()
+
     def __init__(self, dry_run: bool | None = None, brain: Brain | None = None, trigger: str = "manual") -> None:
         self.dry_run = dry_run
         self.trigger = trigger
