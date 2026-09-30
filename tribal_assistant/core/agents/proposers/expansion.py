@@ -69,9 +69,11 @@ class ExpansionProposer(Proposer):
             if json.loads(lesson.data or "{}").get("last_result") == "green":
                 known.add(lesson.key.removeprefix("target:"))
 
+        own = set((await view.session.execute(select(Village.coords).where(Village.is_own.is_(True)))).scalars().all())
         candidates = [
             Candidate(f"{v.x}|{v.y}", v.points, round(math.hypot(v.x - ox, v.y - oy), 1), v.bonus_id, f"{v.x}|{v.y}" in known)
             for v in rows
+            if f"{v.x}|{v.y}" not in own
         ]
         return NobleTarget.pick(candidates, radius)
 

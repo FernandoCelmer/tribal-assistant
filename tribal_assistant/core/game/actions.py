@@ -34,6 +34,7 @@ from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
 
 if TYPE_CHECKING:
+    from tribal_assistant.core.game.conquest import Conquest
     from tribal_assistant.core.game.diplomacy import Diplomacy
     from tribal_assistant.core.game.forge import Forge
     from tribal_assistant.core.game.market import Market
@@ -183,6 +184,12 @@ class GameActions:
         from tribal_assistant.core.game.forge import Forge
 
         return Forge(self)
+
+    @property
+    def conquest(self) -> "Conquest":
+        from tribal_assistant.core.game.conquest import Conquest
+
+        return Conquest(self)
 
     @property
     def market(self) -> "Market":

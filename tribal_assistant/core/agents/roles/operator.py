@@ -31,6 +31,8 @@ class OperatorAgent(VillageAgent):
         "send_spy",
         "park_market_offer",
         "cancel_market_offer",
+        "send_resources",
+        "send_noble",
         "upgrade_building",
         "recruit_units",
         "send_farm_attack",

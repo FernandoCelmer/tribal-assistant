@@ -104,6 +104,10 @@ Nobre
 - Primeiro alvo: bárbara próxima já espionada (melhor se tiver bônus de fazenda) ou a bárbara grande mais perto.
 - Nobre nunca vai sozinho; cada ataque tira 20-35 de lealdade. Trem de 4 conquista em ~85%, 5 em 100%.
 - Lealdade volta ~2 por hora na velocidade 2: não espace os nobres.
+- Conquista: espione o alvo, limpe com a tropa ofensiva e só então mande os nobres; com vários, no mesmo trem (send_noble).
+Várias aldeias
+- A aldeia mais exposta defende, a com academia expande e a mais afastada com estábulo saqueia.
+- Recursos só vão para aldeias suas da mesma conta (send_resources): quem tem sobra alimenta quem está travado, academia primeiro.
 Aldeia final: recursos, Fazenda e Armazém 30; Edifício principal 20; Ferreiro 20; Muralha 20.
 Nunca gaste pontos premium.
 Guias completos: lookup_knowledge kind=guide id=inicio (primeiros dias), coleta, avancado (várias aldeias, tribo), nobre (conquista) ou tribo.

@@ -88,6 +88,48 @@ class OwnOfferParser:
         }
 
 
+class SendParser:
+    """The market's send screen and its confirmation: merchants, stock the form offers and who receives."""
+
+    INSERT_RE = re.compile(r"\((\d[\d.]*)\)")
+    COORDS_RE = re.compile(r"\((\d{1,3}\|\d{1,3})\)")
+
+    @classmethod
+    def form(cls, html: str) -> dict[str, Any]:
+        soup = BeautifulSoup(html, "lxml")
+        form = soup.select_one("#market-send-form")
+        merchants = OwnOfferParser.merchants(html)
+        limit = soup.select_one("#market_merchant_max_transport") or soup.select_one("#carry_max")
+        stock = {}
+        for link in soup.select("a.insert[data-res]"):
+            found = cls.INSERT_RE.search(link.get_text())
+            stock[str(link["data-res"])] = OwnOfferParser._number(found.group(1)) if found else 0
+
+        return {
+            "ready": form is not None and all(form.select_one(f'input[name="{r}"]') for r in RESOURCES),
+            "free": merchants["free"],
+            "total": merchants["total"],
+            "carry": merchants["carry"],
+            "max_transport": OwnOfferParser._number(limit.get("value") or limit.get_text()) if limit else merchants["free"] * merchants["carry"],
+            "stock": stock,
+        }
+
+    @classmethod
+    def confirmation(cls, html: str) -> dict[str, Any]:
+        """Target coordinates and owner shown before the final click."""
+        soup = BeautifulSoup(html, "lxml")
+        content = soup.select_one("#content_value") or soup
+        text = content.get_text(" ", strip=True)
+        coords = cls.COORDS_RE.findall(text)
+        player = None
+        for row in content.select("tr"):
+            cells = row.find_all("td")
+            if len(cells) >= 2 and cells[0].get_text(strip=True).rstrip(":").lower() in ("jogador", "proprietário", "dono"):
+                player = cells[1].get_text(" ", strip=True)
+
+        return {"coords": coords, "player": player}
+
+
 class Market:
     """Own offers of one village, through the market's own-offer screen."""
 
@@ -173,4 +215,72 @@ class Market:
             "park_market_offer",
             f"{lots}x {amount} {sell} estacionado(s) pedindo {wanted} {buy} (até {max_hours}h)",
             {"offers": [o["id"] for o in parked], "buy_amount": wanted, "notices": messages["notices"]},
+        )
+
+    async def send_resources(self, village_id: str, x: int, y: int, amounts: dict[str, int], owner: str | None = None) -> ActionResult:
+        """Send resources to one of our own villages: fill the send form, check the confirmation shows our village, confirm."""
+        from tribal_assistant.core.game.actions import ActionResult
+
+        target = f"{x}|{y}"
+        fields = {"wood": amounts.get("wood", 0), "stone": amounts.get("clay", 0), "iron": amounts.get("iron", 0)}
+        if sum(fields.values()) <= 0:
+            return ActionResult(False, "send_resources", "nenhum recurso informado")
+
+        async with game_session.lock:
+            page, html = await self._screen(village_id, "send")
+            form = SendParser.form(html)
+            if not form["ready"]:
+                return ActionResult(False, "send_resources", "formulário de envio não encontrado")
+
+            needed = -(-sum(fields.values()) // (form["carry"] or LOAD))
+            if form["free"] < needed:
+                return ActionResult(False, "send_resources", f"comerciantes livres {form['free']}, precisa de {needed}")
+
+            short = [r for r, v in fields.items() if v > form["stock"].get(r, v)]
+            if short:
+                return ActionResult(False, "send_resources", "estoque mudou: falta " + ", ".join(short))
+
+            sender = page.locator("#market-send-form")
+            for resource, amount in fields.items():
+                if amount > 0:
+                    await sender.locator(f'input[name="{resource}"]').fill(str(amount))
+                    await human_delay(200, 500)
+
+            await sender.locator('input[name="target_type"][value="coord"]').check()
+            coords = sender.locator("input.target-input-field").first
+            await coords.click()
+            await coords.type(target, delay=70)
+            await page.evaluate("([x, y]) => { const ix = document.querySelector('#inputx'); const iy = document.querySelector('#inputy'); if (ix) ix.value = x; if (iy) iy.value = y; }", [str(x), str(y)])
+            await human_delay(400, 900)
+            await self.actions._click_and_settle(page, sender.locator('input[type="submit"]').first)
+
+            confirm_html = await page.content()
+            self.actions._capture(confirm_html, "market-send-confirm")
+            messages = await self.actions.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "send_resources", " | ".join(messages["errors"]))
+
+            shown = SendParser.confirmation(confirm_html)
+            if target not in shown["coords"]:
+                return ActionResult(False, "send_resources", f"confirmação não mostra o destino {target}")
+
+            if owner and shown["player"] and owner.lower() not in shown["player"].lower():
+                return ActionResult(False, "send_resources", f"destino pertence a {shown['player']}, não a {owner}")
+
+            button = page.locator('#content_value form[action*="action=send"] input[type="submit"], #content_value form[action*="action=send"] .btn').first
+            if not await button.count():
+                return ActionResult(False, "send_resources", "botão de confirmação não encontrado")
+
+            await human_delay(500, 1100)
+            await self.actions._click_and_settle(page, button)
+            messages = await self.actions.screen_messages(page)
+            if messages["errors"]:
+                return ActionResult(False, "send_resources", " | ".join(messages["errors"]))
+
+        logger.info("Enviados {} de {} para {}", fields, village_id, target)
+        return ActionResult(
+            True,
+            "send_resources",
+            f"enviado {fields['wood']} madeira, {fields['stone']} argila, {fields['iron']} ferro para {target}",
+            {"target": target, "amounts": amounts, "merchants": needed, "notices": messages["notices"]},
         )

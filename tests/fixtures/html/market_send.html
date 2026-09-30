@@ -1,0 +1,173 @@
+<td id="content_value">
+                                            
+                                            <table width="100%">
+	<tbody><tr>
+		<td valign="top"><img src="https://dsbr.innogamescdn.com/asset/07afad24/graphic/big_buildings/market2.webp" class="" data-title="Mercado"></td>
+		<td valign="top" width="100%">
+			<h2>Mercado (Nível 5) </h2>
+			No mercado, você pode trocar recursos com outros jogadores.
+		</td>
+	</tr>
+</tbody></table>
+
+<script type="text/javascript">
+    var Data = {
+        Trader : {
+            carry: 1000,
+            amount: 4,
+            total: 4,
+            capacity : function () {
+                return Data.Trader.carry * Data.Trader.amount;
+            }
+        },
+
+        Res : {
+            wood: 0,
+            stone: 0,
+            iron: 0
+        }
+    };
+
+    $(document).ready(function() {
+        Market.init(Data, 'send');
+    });
+</script>
+<table>
+	<tbody><tr>
+		<td valign="top">
+			<table class="vis modemenu">
+                                    <tbody><tr id="id_other_offer"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=other_offer">Comércio </a></td></tr>
+                                    <tr id="id_exchange"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=exchange">Troca Premium </a></td></tr>
+                                    <tr id="id_own_offer"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=own_offer">Criar ofertas </a></td></tr>
+                                    <tr id="id_send"><td class="selected" style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=send">Enviar recursos </a></td></tr>
+                                    <tr id="id_transports"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=transports">Transporte </a></td></tr>
+                                    <tr id="id_traders"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=traders">Estado do comerciante </a></td></tr>
+                                    <tr id="id_all_own_offer"><td style="min-width: 80px"><a href="/game.php?village=105765&amp;screen=market&amp;mode=all_own_offer">Todas as suas ofertas </a></td></tr>
+                			</tbody></table>
+		</td>
+		<td valign="top">
+<div id="market_status_bar">
+	<table class="vis">
+		<tbody><tr>
+			<th>Comerciantes: <span id="market_merchant_available_count">4</span>/<span id="market_merchant_total_count">5</span></th>
+			<th>Quantidade máxima de transporte: <span id="market_merchant_max_transport">4000</span></th>
+					</tr>
+	</tbody></table>
+
+			<table class="vis">
+			<tbody><tr>
+									<th>Entrada: <span class="nowrap"><span class="icon header wood" data-title="Madeira"> </span>300</span> </th>
+													<th>Saída: <span class="nowrap"><span class="icon header iron" data-title="Ferro"> </span>300</span> </th>
+							</tr>
+		</tbody></table>
+	</div>
+<p>No momento está desativado o livre envio de recursos no Mercado. No entanto, você pode enviar recursos para as suas próprias aldeias e criar ofertas.</p><h3>Enviar recursos</h3>
+
+
+<form name="market" action="/game.php?village=105765&amp;screen=market&amp;mode=send&amp;try=confirm_send" method="post" id="market-send-form">
+	<input type="hidden" id="carry_max" value="4000">
+	<table>
+		<tbody><tr>
+			<td valign="top">
+				<table class="vis">
+					<tbody><tr>
+						<th>Recursos</th>
+					</tr>
+					<tr>
+						<td>
+							<label for="wood"><span class="icon header wood"> </span></label>
+							<input name="wood" type="text" value="" size="5" tabindex="1" class="resources_max">
+							&nbsp;
+							<a href="#" class="insert" data-res="wood">(155)</a>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label for="stone"><span class="icon header stone"> </span></label>
+							<input name="stone" type="text" value="" size="5" tabindex="2" class="resources_max">
+							&nbsp;
+							<a href="#" class="insert" data-res="stone">(481)</a>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label for="iron"><span class="icon header iron"> </span></label>
+							<input name="iron" type="text" value="" size="5" tabindex="3" class="resources_max">
+							&nbsp;
+							<a href="#" class="insert" data-res="iron">(525)</a>
+						</td>
+					</tr>
+				</tbody></table>
+			</td>
+			<td valign="top">
+								<input type="hidden" name="x" id="inputx">
+				<input type="hidden" name="y" id="inputy">
+
+									<div id="delivery_target" class="target-select clearfix vis float_left" data-on-choice="onMarketTargetChoice">
+						<h4>Destino</h4>
+
+						<table class="vis" style="width: 100%">
+							<tbody><tr>
+								<td>
+									<div class="target-types">
+										<label><input type="radio" name="target_type" tabindex="4" value="coord" checked="checked"> Coordenada</label>
+										<label><input type="radio" name="target_type" tabindex="4" value="village_name"> Nome da aldeia</label>
+										<label><input type="radio" name="target_type" tabindex="4" value="player_name"> Nome do jogador</label>
+									</div>
+
+									<div id="market_target" class="target-input float_left">
+										<input type="text" name="input" class="target-input-field target-input-autocomplete ui-autocomplete-input" data-type="player" value="" autocomplete="off" tabindex="5" data-no-suggestions-hint="Não há resultados" data-ignore-single-exact-match="1" placeholder="123|456">
+									</div>
+									<a href="#" class="target-quickbutton target-last-attacked" tabindex="6" data-title="Anterior"></a>
+								</td>
+								<td><input class="btn" type="submit" value="Enviar" tabindex="8"></td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div class="target-select-links">
+																															<span></span>
+																					<span></span>
+																					<span></span>
+																			</div>
+								</td>
+							</tr>
+						</tbody></table>
+					</div>
+							</td>
+		</tr>
+	</tbody></table>
+</form>
+<script type="text/javascript">
+	var popup_options = {
+		image_base: 'https://dsbr.innogamescdn.com/asset/07afad24/graphic/',
+		offset_x: -300,
+		offset_y: -200
+	};
+
+	var res = {
+		wood : 155,
+		stone : 481,
+		iron : 525
+	};
+
+	// this will be attached to the target widget
+	var onMarketTargetChoice = function(village) {
+		$('#market-send-form .btn').eq(0).focus();
+	};
+
+	$(function() {
+		Market.Set.maxRes(res);
+		var market_target_widget = new TargetSelection($('#delivery_target')[0]);
+
+		market_target_widget.initScriptCompatibility();
+
+		
+		
+		
+		$('.insert').on('click', function (ev) {
+			ev.preventDefault();
+			Market.Modes.send.insertMax($(this).data('res'));
+		});
+	});
+</script></td></tr></tbody></table>
+	                               		</td>

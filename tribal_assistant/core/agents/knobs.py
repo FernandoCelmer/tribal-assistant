@@ -189,6 +189,10 @@ class Tuner:
         probes = [str(result or "") for action, _, result in decisions or [] if action in ("send_farm_attack", "send_spy")]
         if probes:
             metrics.raids_capped = sum(1 for text in probes if "ataques por hora" in text) / len(probes)
+        for action, name in (("send_noble", "nobles_failed"), ("send_resources", "shipments_failed")):
+            sent = [ok for kind, ok, _ in decisions or [] if kind == action]
+            if sent:
+                setattr(metrics, name, sum(1 for ok in sent if not ok) / len(sent))
         metrics.nothing_to_do = {a: sum(v) / len(v) for a, v in attempts.items() if not a.startswith("_") and len(v) >= 3}
         return metrics
 

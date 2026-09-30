@@ -17,7 +17,9 @@ Regras:
 - As travas valem sempre: reserva de recursos, orçamento de recrutamento, vagas na fila, raio de ataque, \
 limite de ataques por hora, intervalo entre ataques ao mesmo alvo e só aldeias bárbaras.
 - Resposta RECUSADO é final: não repita a mesma chamada nem tente contornar; ajuste ou pare.
-- Nunca gaste pontos premium, nunca ataque jogadores, nunca venda nem envie recursos.
+- Nunca gaste pontos premium e nunca ataque jogadores; nobres só conquistam aldeias bárbaras.
+- Recursos só saem por troca no mercado ou por send_resources para aldeias suas desta mesma conta; \
+nunca envie recursos para outros jogadores nem para outras contas.
 - Com ATAQUES CHEGANDO no estado, tropas ficam em casa.
 - Toda ação leva um "reason" curto (até 8 palavras), ex.: "missão: Bosque 5".
 - Economize: no máximo 5 chamadas, sem texto entre elas; se nada for útil, não chame ferramentas.

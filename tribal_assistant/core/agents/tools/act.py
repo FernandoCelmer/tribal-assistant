@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from tribal_assistant.core.agents.knobs import Knobs, knob
+from tribal_assistant.core.agents.logistics import CARRY, Merchants
 from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 
@@ -1029,3 +1030,47 @@ class ParkMarketOffer(AgentTool):
             box.ctx.stock[key] -= amount * lots
 
         return ToolOutcome(result.ok, result.detail, result.data)
+
+
+class SendResources(AgentTool):
+    name = "send_resources"
+    description = (
+        "Envia madeira, argila e ferro pelo mercado desta aldeia para OUTRA ALDEIA SUA da mesma conta (id de aldeia do painel). "
+        "Nunca para outros jogadores. RECUSADO se o destino não for aldeia própria, faltar comerciante livre, a origem ficar "
+        "abaixo da reserva ou o armazém do destino estourar."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {
+            "to_village_id": {"type": "integer", "minimum": 1, "description": "Id da aldeia própria que recebe."},
+            "wood": {"type": "integer", "minimum": 0},
+            "clay": {"type": "integer", "minimum": 0},
+            "iron": {"type": "integer", "minimum": 0},
+            "reason": REASON,
+        },
+        "required": ["to_village_id", "wood", "clay", "iron", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        to = int(args["to_village_id"])
+        amounts = {r: int(args.get(r) or 0) for r in ("wood", "clay", "iron")}
+        merchants = {"free": Merchants.total(box.ctx.levels.get("market", 0)), "carry": CARRY}
+
+        refusal = await box.guard.check_send_resources(box.ctx, to, amounts, merchants)
+        if refusal:
+            return ToolOutcome(False, f"RECUSADO: {refusal}")
+
+        target = await box.guard.own_village(to)
+        data = {"to_village_id": to, "target": target.coords, **amounts}
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) enviar {amounts} para {target.name} ({target.coords})", data)
+
+        x, y = (int(part) for part in target.coords.split("|"))
+        result = await box.actions.market.send_resources(box.ctx.game_id, x, y, amounts, (box.ctx.player or {}).get("name"))
+        if result.ok:
+            box.ctx.spend(amounts["wood"], amounts["clay"], amounts["iron"])
+            await box.lessons.mark(f"logistics:{to}")
+
+        return ToolOutcome(result.ok, result.detail, data | {k: v for k, v in result.data.items() if k == "notices"})

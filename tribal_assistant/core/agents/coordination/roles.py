@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
+from tribal_assistant.core.agents.coordination.account import AccountRoles
 from tribal_assistant.core.agents.coordination.estimates import Estimator
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.threat import ThreatScan
@@ -26,14 +27,17 @@ class RoleSelector:
         self.repo = CoordinationRepository(session)
         self.lessons = LessonBook(session)
 
-    async def select(self, ctx: VillageContext) -> tuple[Role, Role, str]:
-        """Returns (base role, mode for this round, reason)."""
+    async def select(self, ctx: VillageContext, siblings: list[VillageContext] | None = None) -> tuple[Role, Role, str]:
+        """Returns (base role, mode for this round, reason); with siblings the account shares the roles out."""
         row = await self.repo.strategy(ctx.id)
 
         if row is not None and row.manual:
             base, reason = Role(row.role), f"escolhido pelo jogador: {row.reason}".strip(": ")
         else:
             wanted, reason = await self.evaluate(ctx)
+            if siblings and len(siblings) >= 2:
+                roles = await AccountRoles(self.session, self.knobs or tuning(ctx)).roles(siblings)
+                wanted, reason = AccountRoles.merge(wanted, reason, roles.get(ctx.id), roles)
             base = await self._confirm(ctx, Role(row.role) if row else None, wanted)
             if base != wanted:
                 reason = f"mantém {base.value} até {wanted.value} se confirmar ({reason})"

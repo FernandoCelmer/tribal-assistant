@@ -23,6 +23,8 @@ class Metrics:
     iron_short: float = 0.0
     actions_capped: float = 0.0
     dodge_stuck: float = 0.0
+    nobles_failed: float = 0.0
+    shipments_failed: float = 0.0
     nothing_to_do: dict[str, float] = field(default_factory=dict)
 
 

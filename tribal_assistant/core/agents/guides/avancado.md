@@ -6,7 +6,7 @@ Com várias aldeias, evite manter todas mistas. Uma organização comum é:
 Tipo de aldeia	Função	Construções e tropas
 Ofensiva	Romper defesas e atacar	Cavalaria, infantaria ofensiva, aríetes e catapultas
 Defensiva	Proteger aldeias e fornecer apoio	Lanceiros, espadachins, arqueiros e muralha
-Apoio	Enviar recursos e tropas	Mercado, tropas defensivas e grande produção
+Apoio	Enviar recursos (só para aldeias suas) e tropas	Mercado, tropas defensivas e grande produção
 Conquista	Produzir nobres	Academia, tropas de escolta e moedas
 Destruição	Derrubar edifícios estratégicos	Catapultas, batedores e tropas ofensivas
 Uma aldeia ofensiva não deve desperdiçar espaço e recursos produzindo grandes quantidades de defesa. Da mesma forma, uma aldeia defensiva deve priorizar tropas de resistência e apoio, não ataques contra alvos distantes.
@@ -77,9 +77,9 @@ Ataque de sabotagem com catapultas.
 Não revele seu alvo antes da hora. Um inimigo que conhece seu plano pode enviar apoio, retirar tropas ou sincronizar uma retomada.
 
 4. Economia avançada
-Quando você tiver muitas aldeias, a produção local deixa de ser suficiente para tudo. Use o Mercado para:
+Quando você tiver muitas aldeias, a produção local deixa de ser suficiente para tudo. Use o Mercado para enviar recursos entre as suas próprias aldeias da mesma conta (nunca para outros jogadores, nem para outras contas):
 
-Enviar recursos para aldeias que produzem tropas.
+Enviar recursos para aldeias suas que produzem tropas.
 
 Financiar Academias e nobres.
 

@@ -40,6 +40,8 @@ IRON_SHORT_UP = more_when("iron_short", 0.3, "obras esperando ferro")
 IRON_SHORT_DOWN = less_when("iron_short", 0.3, "obras esperando ferro")
 STORAGE_UP_OR_CALM = either(STORAGE_FULL_UP, STORAGE_CALM)
 STORAGE_DOWN_OR_CALM = either(STORAGE_FULL_DOWN, STORAGE_CALM)
+NOBLES_FAILED_UP = either(more_when("nobles_failed", 0.3, "nobres falhando"), settle("nobles_failed", 0.05, "nobres falhando"))
+SHIPMENTS_FAILED_UP = either(more_when("shipments_failed", 0.3, "envios entre aldeias falhando"), settle("shipments_failed", 0.05, "envios entre aldeias falhando"))
 
 
 def _policy() -> dict[str, KnobSpec]:
@@ -179,4 +181,22 @@ CATALOG: dict[str, KnobSpec] = {
     "plan.light_min": KnobSpec(10, "cavalaria leve mínima pedida pelo plano automático", integer=True),
     "plan.light_step": KnobSpec(5, "cavalarias leves a mais por plano automático", integer=True),
     "plan.farm_min_free": KnobSpec(20, "população livre mínima antes da fazenda no plano", POP_LOCKED_UP, integer=True),
+    "logistics.keep_share": KnobSpec(0.3, "fração do armazém que a aldeia de origem nunca envia", either(STOCK_EMPTY, STORAGE_FULL_DOWN), share=True),
+    "logistics.surplus_share": KnobSpec(0.6, "estoque nesta fração do armazém torna a aldeia doadora", STORAGE_DOWN_OR_CALM, share=True),
+    "logistics.full_hours": KnobSpec(4.0, "armazém que enche antes destas horas libera o envio", STORAGE_UP_OR_CALM),
+    "logistics.min_lot": KnobSpec(1000, "menor envio entre aldeias próprias", either(STORAGE_FULL_DOWN, SHIPMENTS_FAILED_UP), integer=True),
+    "logistics.dest_hours": KnobSpec(2.0, "horas entre envios para a mesma aldeia", cooldown("send_resources")),
+    "logistics.stall_hours": KnobSpec(1.0, "horas de espera por recurso que tornam a aldeia travada", either(less_when("idle_queue", 0.3, "fila de obras parada"), settle("idle_queue", 0.05, "fila de obras parada"))),
+    "logistics.dest_fill_share": KnobSpec(0.9, "fração do armazém de destino que um envio pode encher", share=True),
+    "conquest.escort_pop": KnobSpec(200, "população mínima de escolta por nobre", NOBLES_FAILED_UP, integer=True),
+    "conquest.cleanup_pop": KnobSpec(500, "população ofensiva mínima da limpeza antes do nobre", NOBLES_FAILED_UP, integer=True),
+    "conquest.cleanup_share": KnobSpec(0.8, "fração da tropa ofensiva em casa enviada na limpeza", share=True),
+    "conquest.train_max": KnobSpec(5, "nobres no mesmo trem", integer=True),
+    "conquest.scout_hours": KnobSpec(12, "horas em que a espionagem do alvo vale para a conquista"),
+    "conquest.clean_hours": KnobSpec(3, "horas em que a limpeza vale antes do nobre"),
+    "conquest.loyalty_hit": KnobSpec(20, "lealdade que um nobre tira no pior caso", integer=True),
+    "conquest.noble_gap_minutes": KnobSpec(30, "minutos entre ataques com nobre no mesmo alvo", NOBLES_FAILED_UP, integer=True),
+    "account.exposed_distance": KnobSpec(8.0, "jogador mais perto que isto torna a aldeia a exposta da conta", THREAT_UP),
+    "account.offensive_stable": KnobSpec(1, "estábulo mínimo da aldeia ofensiva da conta", integer=True),
+    "account.expansion_snob": KnobSpec(1, "academia mínima da aldeia de expansão da conta", integer=True),
 }

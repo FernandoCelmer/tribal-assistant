@@ -151,6 +151,7 @@ class AgentRunner:
         contexts = await ContextLoader(session).load(village_ids)
 
         acted = False
+        siblings = await ContextLoader(session).load() if village_ids else contexts
 
         for ctx in contexts:
             label = f"{ctx.village.name} ({ctx.village.coords})"
@@ -181,7 +182,7 @@ class AgentRunner:
 
             trace.focus(ctx.id, label, "coordinator")
             coordination = VillageRound(session, config, report.run_id, report.dry_run, self.actions, trace)
-            decision, _ = await coordination.run(ctx)
+            decision, _ = await coordination.run(ctx, siblings)
             village.summaries["coordinator"] = decision.summary()
             acted = acted or coordination.acted
 

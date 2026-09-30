@@ -37,6 +37,7 @@ class CoordinationView:
     note_error: str = ""
     recent: set[str] = field(default_factory=set)
     knobs: Knobs = field(default_factory=Knobs)
+    siblings: list[VillageContext] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.estimator = Estimator(self.ctx)
@@ -65,6 +66,11 @@ class CoordinationView:
             "iron": (u.cost_iron or 0) * count,
             "pop": (u.cost_pop or 0) * count,
         }
+
+    @property
+    def others(self) -> list[VillageContext]:
+        """The other own villages of this account."""
+        return [s for s in self.siblings if s.id != self.ctx.id]
 
     async def read(self, tool: str, arguments: dict[str, Any] | None = None) -> Any:
         return await self.reader.invoke(tool, arguments or {})

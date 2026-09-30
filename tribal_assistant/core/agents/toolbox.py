@@ -30,6 +30,7 @@ from tribal_assistant.core.agents.tools.act import (
     RenameVillage,
     ResearchUnit,
     SendFarmAttack,
+    SendResources,
     SendScavenge,
     SendSpy,
     SetVillageGoal,
@@ -40,6 +41,7 @@ from tribal_assistant.core.agents.tools.act import (
     UseItem,
 )
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
+from tribal_assistant.core.agents.tools.conquest import SendNoble
 from tribal_assistant.core.agents.tools.defense import GetIncoming, SimulateBattle
 from tribal_assistant.core.agents.tools.insight import GetForecast, GetOwnOffers, PlanScavenge
 from tribal_assistant.core.agents.tools.intel import GetTargetIntel
@@ -102,6 +104,8 @@ class Toolbox:
         CreateMarketOffer,
         ParkMarketOffer,
         CancelMarketOffer,
+        SendResources,
+        SendNoble,
         ResearchUnit,
         SetVillageGoal,
         SetVillagePlan,

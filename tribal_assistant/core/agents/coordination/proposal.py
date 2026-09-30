@@ -50,7 +50,7 @@ class Proposal:
 
     def label(self) -> str:
         args = self.arguments
-        return str(args.get("building") or args.get("unit") or args.get("target") or args.get("option_id") or args.get("key") or args.get("skill_id") or args.get("regimen") or args.get("quest_id") or "")
+        return str(args.get("building") or args.get("unit") or args.get("to_village_id") or args.get("target") or args.get("option_id") or args.get("key") or args.get("skill_id") or args.get("regimen") or args.get("quest_id") or "")
 
     def title(self) -> str:
         label = self.label()

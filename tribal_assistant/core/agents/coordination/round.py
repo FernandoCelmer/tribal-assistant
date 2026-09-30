@@ -16,12 +16,14 @@ from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import KnobStore
 from tribal_assistant.core.agents.proposers.attack import AttackProposer
 from tribal_assistant.core.agents.proposers.base import Proposer
+from tribal_assistant.core.agents.proposers.conquest import ConquestProposer
 from tribal_assistant.core.agents.proposers.defense import DefenseProposer
 from tribal_assistant.core.agents.proposers.diplomacy import DiplomacyProposer
 from tribal_assistant.core.agents.proposers.economy import EconomyProposer
 from tribal_assistant.core.agents.proposers.expansion import ExpansionProposer
 from tribal_assistant.core.agents.proposers.infrastructure import InfrastructureProposer
 from tribal_assistant.core.agents.proposers.intelligence import IntelligenceProposer
+from tribal_assistant.core.agents.proposers.logistics import LogisticsProposer
 from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
 from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
 from tribal_assistant.core.agents.roles.base import VillageAgent
@@ -56,6 +58,8 @@ class VillageRound:
         RecruitmentProposer,
         AttackProposer,
         ExpansionProposer,
+        ConquestProposer,
+        LogisticsProposer,
         IntelligenceProposer,
         UpkeepProposer,
         DiplomacyProposer,
@@ -93,12 +97,13 @@ class VillageRound:
         box.brain_name = "coordinator"
         return box
 
-    async def run(self, ctx: VillageContext) -> tuple[Decision, list[Insight]]:
+    async def run(self, ctx: VillageContext, siblings: list[VillageContext] | None = None) -> tuple[Decision, list[Insight]]:
         knobs = await KnobStore(self.session).load()
-        base, mode, reason = await RoleSelector(self.session, knobs).select(ctx)
+        base, mode, reason = await RoleSelector(self.session, knobs).select(ctx, siblings)
         ctx.policy = Policy.for_role(mode.value, knobs)
         view = CoordinationView(ctx, self.session, self.config, self.actions, self.dry_run, mode, base, self._box(ctx, "coordinator", "Coordenador"))
         view.knobs = knobs
+        view.siblings = list(siblings or [])
         view.recent = await self._recent(ctx, knobs.int("coordinator.recent_minutes"))
         view.note(Insight("policy", f"limites do modo {mode.value}: {ctx.policy.describe()}", Certainty.FACT, now(), 1.0, None, "coordenador"))
         view.note(Insight("role", f"papel {base.value}: {reason}", Certainty.FACT, now(), 1.0, base.value, "coordenador"))
