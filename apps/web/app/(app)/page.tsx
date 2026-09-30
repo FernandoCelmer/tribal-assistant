@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelBody, PanelHeader } from "@/components/ui/panel";
 import { Stat } from "@/components/ui/stat";
-import { VillageSummary } from "@/features/overview";
+import { AccountVillages, VillageSummary } from "@/features/overview";
 import { maybe, server } from "@/lib/api";
 import { num, relative, when } from "@/lib/format";
 import { ROLES } from "@/lib/game";
@@ -23,8 +23,10 @@ export default async function OverviewPage() {
   ]);
 
   const player = overview?.player;
-  const village = overview?.villages[0];
-  const round = coordination?.[0];
+  const villages = overview?.villages ?? [];
+  const village = villages[0];
+  const roles = Object.fromEntries((coordination ?? []).map((c) => [c.village_id, c.mode]));
+  const round = coordination?.find((c) => (c.data?.next_action as { title?: string } | undefined)?.title) ?? coordination?.[0];
   const state = !status ? { label: "sem API", tone: "danger" as const } : !status.playing ? { label: "só painel", tone: "neutral" as const } : !status.running ? { label: "parado", tone: "danger" as const } : !status.agents_enabled ? { label: "agentes desligados", tone: "warning" as const } : { label: "jogando", tone: "success" as const };
   const next = round?.data?.next_action as { title?: string; reason?: string; why?: string } | undefined;
   const incoming = overview?.commands.filter((c) => c.direction === "in") ?? [];
@@ -50,13 +52,13 @@ export default async function OverviewPage() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Pontos" value={num(player?.points)} hint={player ? `ranking #${num(player.rank)}` : undefined} icon={Trophy} />
-        <Stat label="Aldeias" value={num(player?.villages)} icon={Crown} />
+        <Stat label="Aldeias" value={num(player?.villages ?? villages.length)} icon={Crown} />
         <Stat label="Ataques chegando" value={num(incoming.length)} tone={incoming.length ? "bad" : undefined} icon={Swords} hint={incoming.length ? "tropas ficam em casa" : "tudo calmo"} />
         <Stat label="Proteção de iniciante" value={protectedUntil && new Date(protectedUntil) > new Date() ? relative(protectedUntil).replace("em ", "") : "—"} icon={Shield} hint={protectedUntil ? when(protectedUntil) : "sem proteção"} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-        {village ? <VillageSummary village={village} /> : (
+        {villages.length > 1 ? <AccountVillages villages={villages} commands={overview?.commands ?? []} roles={roles} /> : village ? <VillageSummary village={village} /> : (
           <Panel><EmptyState icon={Crown} title="Nenhuma aldeia sincronizada" text="Suba o servidor e clique em Sincronizar agora." /></Panel>
         )}
 
@@ -71,7 +73,7 @@ export default async function OverviewPage() {
           </Panel>
 
           <Panel>
-            <PanelHeader title="Próxima jogada" aside={round && <Badge>{ROLES[round.mode] ?? round.mode}</Badge>} />
+            <PanelHeader title="Próxima jogada" description={villages.length > 1 ? round?.village : undefined} aside={round && <Badge>{ROLES[round.mode] ?? round.mode}</Badge>} />
             <PanelBody className="text-sm">
               {next?.title ? (
                 <>
