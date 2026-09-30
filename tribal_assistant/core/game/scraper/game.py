@@ -460,6 +460,8 @@ def parse_scavenge(rows: Sequence[Mapping[str, Any]]) -> tuple[ScavengeSnapshot,
 
 def _report_category(title: str) -> str:
     t = title.lower()
+    if "explorador" in t or "espi" in t:
+        return "scout"
     if "atac" in t:
         return "attack"
     if "apoi" in t:
@@ -493,6 +495,9 @@ def parse_reports(
         detail = details.get(game_id) or {}
         attacker = _COORDS.findall(str(detail.get("attacker") or ""))
         defender = _COORDS.findall(str(detail.get("defender") or ""))
+        named = _COORDS.findall(title)
+        if not attacker and not defender and len(named) >= 2:
+            attacker, defender = named[:1], named[-1:]
         loot = [to_int(n) for n in detail.get("loot") or []]
         haul = _NUMBER.findall(str(detail.get("haul") or ""))
         result.append(

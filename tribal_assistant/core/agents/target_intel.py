@@ -28,7 +28,7 @@ class TargetIntel:
         data = dict(past)
         stamp = cls.now()
 
-        if cls.probe(detail):
+        if cls.probe(detail) or getattr(report, "category", "") == "scout":
             data["last_probe"] = report.result
             data["probed_at"] = stamp
         else:
@@ -61,7 +61,7 @@ class TargetIntel:
             data["defender_units"] = detail["defender_units"]
             data["defender_losses"] = detail.get("defender_losses") or {}
             data["defenders_left"] = cls.remaining(detail)
-            if cls.probe(detail) and data["defenders_left"] == 0:
+            if (cls.probe(detail) or getattr(report, "category", "") == "scout") and data["defenders_left"] == 0:
                 data["yellow_streak"] = 0
 
         return data
