@@ -15,6 +15,7 @@ CAPACITY = ("storage", "farm")
 SCAVENGE_UNLOCK = {2: (250, 300, 250), 3: (1000, 1200, 1000), 4: (10000, 12000, 10000)}
 PIT_RESOURCE = {"wood": "wood", "stone": "clay", "iron": "iron"}
 FILLER_EXTRA = ("wall", "hide", "storage", "farm")
+FILLER_DEFENSIVE = ("wall", "hide")
 
 
 class InfrastructureProposer(Proposer):
@@ -95,7 +96,9 @@ class InfrastructureProposer(Proposer):
             return None
 
         stock = view.ctx.stock
-        candidates = dict.fromkeys([*BuildPacing.pits(view.ctx.levels, tuning(view)), *plan[1:4], *FILLER_EXTRA])
+        sheltered = Protection.active(view.ctx) and not Protection.ending(view.ctx)
+        extra = [b for b in FILLER_EXTRA if not (sheltered and b in FILLER_DEFENSIVE)]
+        candidates = dict.fromkeys([*BuildPacing.pits(view.ctx.levels, tuning(view)), *plan[1 : knob_int(view, "build.plan_lookahead")], *extra])
         affordable = [
             pit
             for pit in candidates
