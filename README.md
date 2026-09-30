@@ -159,7 +159,7 @@ Each round has three stages per village:
 | Conquista | nobles at home, target barbarian, scouting, cleanup, loyalty | scout, clear with offensive troops, then nobles (a train in the same second when several; one at a time until loyalty 0 otherwise) |
 | Logística | surplus and full storage per village, stalled builds and academies in the other own villages | `send_resources` only between own villages of the same account, noble packages first |
 | Inteligência | reports, targets, neighbours | labelled insights (fact, estimate, hypothesis) and missing or stale data |
-| Mordomo | relics, flags, paladin, inventory | production relic and best flag assigned, paladin skills and XP training, items used at the right time |
+| Rei | relics, flags, paladin, inventory | production relic and best flag assigned, paladin skills and XP training, items used at the right time |
 
 **How the coordinator decides**
 
@@ -253,7 +253,7 @@ make web-install && make web   # Next.js panel on :3000, proxies /api/v1 to TRIB
 make web-types             # regenerate the panel types from the API's OpenAPI schema
 ```
 
-`WEB_PASSWORD` (and `WEB_USER`, default `admin`) puts the whole panel behind a password; leave it unset locally, or on a PLAY=false server where the panel is read-only.
+The panel has no login: on a PLAY=false server it is read-only and the API refuses every write.
 
 Each topic is its own page, reached from the sidebar (a drawer on phones):
 
@@ -287,7 +287,6 @@ In Dokploy: create a **Compose** service from the Git repository, set the compos
 |----------|-----|
 | `DATABASE_URL` | the PostgreSQL database (`postgresql+asyncpg://...`) |
 | `APP_SECRET` | the key that decrypts the stored game passwords: the content of `storage/secret.key` from the machine that created the accounts |
-| `WEB_PASSWORD` | the panel asks for it (HTTP basic auth, user `WEB_USER`, default `admin`) |
 | `AI_*`, `QUIET_HOURS` | same as the local `.env` |
 
 The API is reached only through the web service, which proxies `/api/v1`, `/docs` and `/openapi.json` behind the same password. `storage/` (browser state, captures) lives in the `storage` volume.
@@ -309,7 +308,7 @@ cli ───────────► core
 |-------|---------|----------------|
 | **core** | `tribal_assistant/core` | The library and the engine: accounts, browser sessions and game actions (`game`), village agents and the coordinator (`agents`), AI providers (`ai`), database models and repositories (`models`, `repositories`, `db`), use cases (`services`), the scheduler and `runtime.Engine`. All rules and decisions live here. No web framework imports. |
 | **api** | `tribal_assistant/api` | FastAPI bridge over the core: resolves the account per request, opens the session, builds core services, translates errors to JSON. |
-| **web** | `apps/web` | Next.js panel. Server components read `/api/v1`; the middleware proxies the API and guards the panel with `WEB_PASSWORD`. |
+| **web** | `apps/web` | Next.js panel. Server components read `/api/v1`; the middleware proxies the API and refuses cross-origin writes. |
 | **mcp** | `tribal_assistant/mcp` | MCP server that only talks to the API over HTTP (`TRIBAL_API_URL`, account from `TRIBAL_ACCOUNT`). The server must be running. |
 | **cli** | `tribal_assistant/cli.py` | Terminal commands on top of the core library. |
 

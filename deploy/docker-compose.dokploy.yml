@@ -32,8 +32,6 @@ services:
         condition: service_healthy
     environment:
       TRIBAL_API: http://api:8000
-      WEB_USER: ${WEB_USER:-admin}
-      WEB_PASSWORD: ${WEB_PASSWORD:-}
 
 volumes:
   storage:
