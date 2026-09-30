@@ -146,7 +146,7 @@ Each round has three stages per village:
 
 1. **Quartermaster** hands in finished quests, claims rewards (unless storage would overflow) and opens daily chests, so free resources arrive before anything is spent.
 2. **Strategist** keeps the **village plan** up to date (AI when enabled, otherwise the rule planner).
-3. **Coordinator** collects structured proposals from eight specialists, reserves resources, applies vetoes, ranks everything with one score and executes in order. What it did not do is recorded with the reason.
+3. **Coordinator** collects structured proposals from the specialists, reserves resources, applies vetoes, ranks everything with one score and executes in order. What it did not do is recorded with the reason.
 
 | Specialist | Observes | Delivers |
 |------------|----------|----------|
@@ -156,6 +156,8 @@ Each round has three stages per village:
 | Defesa | incoming attacks, troops, time to impact | vetoes (troops stay home, no optional spending), a defense reservation, wall and defenders |
 | Ataque | barbarian targets, reports, distance, troops | raids with a confidence from report freshness, idle troops sent scavenging |
 | Expansão | noble path, economy | progress to the academy; in expansion role a 30% strategic reservation |
+| Conquista | nobles at home, target barbarian, scouting, cleanup, loyalty | scout, clear with offensive troops, then nobles (a train in the same second when several; one at a time until loyalty 0 otherwise) |
+| Logística | surplus and full storage per village, stalled builds and academies in the other own villages | `send_resources` only between own villages of the same account, noble packages first |
 | Inteligência | reports, targets, neighbours | labelled insights (fact, estimate, hypothesis) and missing or stale data |
 | Mordomo | relics, flags, paladin, inventory | production relic and best flag assigned, paladin skills and XP training, items used at the right time |
 
@@ -168,6 +170,8 @@ Each round has three stages per village:
 - **Hard vetoes.** Troops committed to an imminent defense never leave; no optional spending that would break an approved defense; no raid below 35% confidence (old or bad information); no repeating an action whose confirmation has not arrived yet; repeated identical failures are refused by the lessons.
 - **Limits by role.** Reserve, recruit budget, raid radius and pace, and the retarget interval come from the village role (growth, defense, offensive, support, expansion, emergency), not from settings. `dry_run` works as a pure diagnosis mode.
 - **Horizons and review.** Each round stores the next review time: the earliest of a deferred proposal becoming affordable, the build queue ending, storage filling or an attack landing.
+
+- **Account roles.** With two or more villages the account shares roles out: the most exposed village defends (or supports), the one with an academy expands and the farthest one with a stable raids. The village's own alarm (danger, another village under attack) still wins, and the usual hysteresis applies before a switch.
 
 New villages are picked up automatically after the next sync.
 
