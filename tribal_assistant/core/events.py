@@ -2,6 +2,7 @@
 
 import asyncio
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -24,6 +25,7 @@ class EventBus:
         self._subscribers: set[asyncio.Queue[Event]] = set()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._lock = threading.Lock()
+        self.relay: Callable[[Event], None] | None = None
 
     def bind(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
@@ -54,9 +56,20 @@ class EventBus:
             running = None
 
         if running is loop:
-            self._deliver(event)
+            self._dispatch(event)
         else:
+            loop.call_soon_threadsafe(self._dispatch, event)
+
+    def receive(self, event: Event) -> None:
+        """An event published by another process, delivered here without being relayed again."""
+        loop = self._loop
+        if loop is not None and not loop.is_closed():
             loop.call_soon_threadsafe(self._deliver, event)
+
+    def _dispatch(self, event: Event) -> None:
+        self._deliver(event)
+        if self.relay is not None:
+            self.relay(event)
 
     def _deliver(self, event: Event) -> None:
         with self._lock:
