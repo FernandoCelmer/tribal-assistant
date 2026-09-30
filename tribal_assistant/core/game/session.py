@@ -16,6 +16,7 @@ from playwright.async_api import Browser, BrowserContext, Page, Playwright, asyn
 from tribal_assistant.core.accounts.context import AccountContext, current_account
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.errors import ConflictError
+from tribal_assistant.core.game.lease import SessionLease
 from tribal_assistant.core.game.narrator import Narrator
 
 VIEWPORTS = ({"width": 1366, "height": 768}, {"width": 1440, "height": 900}, {"width": 1536, "height": 864})
@@ -29,12 +30,14 @@ class GameSession:
         self._browser: Browser | None = None
         self._context: BrowserContext | None = None
         self._page: Page | None = None
+        self.lease = SessionLease()
 
     @property
     def state_file(self) -> Path:
         return self.account.state_path
 
     async def page(self) -> Page:
+        await self.lease.hold()
         alive = (
             self._browser is not None
             and self._browser.is_connected()
@@ -84,6 +87,7 @@ class GameSession:
             logger.debug("Navegador já fechado")
         finally:
             self._playwright = self._browser = self._context = self._page = None
+            await self.lease.release()
 
 
 class SessionPool:
