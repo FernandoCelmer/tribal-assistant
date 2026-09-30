@@ -42,6 +42,7 @@ dependencies = [
     "openai>=3.20.0",
     "psycopg[binary] (>=3.2)",
     "cryptography (>=43)",
+    "mcp>=2.2.0",
 ]
 
 [project.urls]
@@ -50,9 +51,6 @@ Repository = "https://github.com/FernandoCelmer/tribal-assistant"
 Issues = "https://github.com/FernandoCelmer/tribal-assistant/issues"
 
 [project.optional-dependencies]
-mcp = [
-    "mcp>=2.2.0",
-]
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
