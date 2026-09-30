@@ -3,6 +3,7 @@
 import { History, Pencil, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useReadOnly } from "@/components/layout/read-only";
 import { ActionButton } from "@/components/ui/action-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import type { Schemas } from "@/lib/api";
 import { ApiError, errorText } from "@/lib/errors";
 import { relative, short } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { knobLabel, knobValue } from "./labels";
+import { knobDetail, knobLabel, knobValue } from "./labels";
 
 type Knob = Schemas["KnobOut"];
 type Tuned = Schemas["KnobTuneOut"];
@@ -43,7 +44,7 @@ export function TuneButton() {
 function HistoryDialog({ knob, onClose }: { knob: Knob; onClose: () => void }) {
   const rows = knob.history.toReversed();
   return (
-    <Dialog open sheet onClose={onClose} title={knobLabel(knob.name)} description={knob.description} className="sm:max-w-xl">
+    <Dialog open sheet onClose={onClose} title={knobLabel(knob)} description={knobDetail(knob) || undefined} className="sm:max-w-xl">
       {rows.length === 0 ? (
         <p className="py-6 text-center text-[13px] text-secondary">Ainda no valor padrão, nenhuma mudança registrada.</p>
       ) : (
@@ -67,11 +68,12 @@ export function KnobsTable({ items }: { items: Knob[] }) {
   const router = useRouter();
   const [open, setOpen] = useState<Knob | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const locked = useReadOnly();
 
   const edit = async (knob: Knob) => {
     const raw = await promptDialog({
-      title: `Ajustar ${knobLabel(knob.name)}`,
-      description: `${knob.description}. Padrão: ${knobValue(knob, knob.default)}.${knob.share ? " Informe uma fração entre 0 e 1 (0,25 = 25%)." : ""}${knob.self_tuning ? " O autoajuste pode mudar o valor de novo nas próximas horas." : ""}`,
+      title: `Ajustar ${knobLabel(knob)}`,
+      description: `${knobLabel(knob)}. Padrão: ${knobValue(knob, knob.default)}.${knob.share ? " Informe uma fração entre 0 e 1 (0,25 = 25%)." : ""}${knob.self_tuning ? " O autoajuste pode mudar o valor de novo nas próximas horas." : ""}`,
       label: "Novo valor",
       type: "text",
       defaultValue: String(knob.value).replace(".", ","),
@@ -86,7 +88,7 @@ export function KnobsTable({ items }: { items: Knob[] }) {
       const response = await fetch(`/api/v1/knobs/${encodeURIComponent(knob.name)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ value }) });
       const result = await response.json().catch(() => null);
       if (!response.ok) throw new ApiError(response.status, errorText(result, response.status));
-      toast(`${knobLabel(knob.name)}: ${knobValue(knob, (result as Knob).value)}`);
+      toast(`${knobLabel(knob)}: ${knobValue(knob, (result as Knob).value)}`);
       router.refresh();
     } catch (err) {
       toast((err as Error).message, "error");
@@ -102,7 +104,7 @@ export function KnobsTable({ items }: { items: Knob[] }) {
         rows={items}
         rowKey={(k) => k.name}
         noun={["parâmetro", "parâmetros"]}
-        action={<TuneButton />}
+        action={locked ? undefined : <TuneButton />}
         empty={{ icon: SlidersHorizontal, title: "Nenhum parâmetro", text: "Os parâmetros aparecem quando a API responde." }}
         minWidth={1020}
         rowClassName={(k) => (changed(k) ? "bg-surface-hover/40" : undefined)}
@@ -113,8 +115,8 @@ export function KnobsTable({ items }: { items: Knob[] }) {
             width: 32,
             render: (k) => (
               <span className="block min-w-0">
-                <Cell className="font-medium" title={k.name}>{knobLabel(k.name)}</Cell>
-                <Cell muted className="text-[12px]" title={k.description}>{k.description}</Cell>
+                <Cell className="font-medium" title={k.name}>{knobLabel(k)}</Cell>
+                {knobDetail(k) && <Cell muted className="text-[12px]" title={knobDetail(k)}>{knobDetail(k)}</Cell>}
               </span>
             ),
           },
@@ -149,13 +151,15 @@ export function KnobsTable({ items }: { items: Knob[] }) {
             align: "right",
             render: (k) => (
               <span className="inline-flex items-center gap-1">
-                <Button size="icon" variant="ghost" aria-label={`Histórico de ${knobLabel(k.name)}`} title="Histórico" onClick={() => setOpen(k)}>
+                <Button size="icon" variant="ghost" aria-label={`Histórico de ${knobLabel(k)}`} title="Histórico" onClick={() => setOpen(k)}>
                   <History className="size-4" strokeWidth={1.75} />
                   {k.history.length > 0 && <span className="sr-only">{k.history.length} mudanças</span>}
                 </Button>
-                <Button size="icon" variant="ghost" aria-label={`Editar ${knobLabel(k.name)}`} title="Editar valor" loading={busy === k.name} onClick={() => edit(k)}>
-                  {busy !== k.name && <Pencil className="size-4" strokeWidth={1.75} />}
-                </Button>
+                {!locked && (
+                  <Button size="icon" variant="ghost" aria-label={`Editar ${knobLabel(k)}`} title="Editar valor" loading={busy === k.name} onClick={() => edit(k)}>
+                    {busy !== k.name && <Pencil className="size-4" strokeWidth={1.75} />}
+                  </Button>
+                )}
               </span>
             ),
           },

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useReadOnly } from "@/components/layout/read-only";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { errorText } from "@/lib/errors";
@@ -12,6 +13,7 @@ const CHOICES = ["growth", "defense", "offensive", "support", "expansion"] as co
 export function RoleSelect({ villageId, role, manual }: { villageId: number; role: string; manual: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const locked = useReadOnly();
   const [value, setValue] = useState(manual ? role : "");
 
   const change = async (next: string) => {
@@ -34,6 +36,8 @@ export function RoleSelect({ villageId, role, manual }: { villageId: number; rol
       setBusy(false);
     }
   };
+
+  if (locked) return null;
 
   return (
     <Select

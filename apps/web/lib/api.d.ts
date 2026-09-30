@@ -669,6 +669,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/agents/coordination/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coordination History */
+        get: operations["coordination_history_api_v1_agents_coordination_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/coordination/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coordination Run */
+        get: operations["coordination_run_api_v1_agents_coordination_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/agents/villages/{village_id}/role": {
         parameters: {
             query?: never;
@@ -1722,6 +1756,10 @@ export interface components {
             protection_until: string | null;
             /** Synced At */
             synced_at: string | null;
+            /** Game Id */
+            game_id?: string | null;
+            /** Ally Id */
+            ally_id?: string | null;
         };
         /** ProposerOut */
         ProposerOut: {
@@ -1846,6 +1884,28 @@ export interface components {
             manual: boolean;
             /** Reason */
             reason: string;
+        };
+        /** RoundSummaryOut */
+        RoundSummaryOut: {
+            /** Run Id */
+            run_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Villages */
+            villages: number;
+            /** Executed */
+            executed: number;
+            /** Refused */
+            refused: number;
+            /** Failed */
+            failed: number;
+            /** Deferred */
+            deferred: {
+                [key: string]: number;
+            };
         };
         /** RunDetailOut */
         RunDetailOut: {
@@ -3343,6 +3403,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CoordinationOut"][];
+                };
+            };
+        };
+    };
+    coordination_history_api_v1_agents_coordination_history_get: {
+        parameters: {
+            query?: {
+                village_id?: number | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    coordination_run_api_v1_agents_coordination_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoordinationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

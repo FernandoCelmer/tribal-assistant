@@ -23,7 +23,7 @@ type Props = {
 
 const HEIGHTS = { sm: "h-8 text-[13px]", md: "h-9 text-[13px]", lg: "h-10 text-sm" };
 
-export function Select({ value, options, onChange, placeholder = "Select…", disabled, mono, size = "md", icon, className, autoFocus, "aria-label": ariaLabel }: Props) {
+export function Select({ value, options, onChange, placeholder = "Selecionar…", disabled, mono, size = "md", icon, className, autoFocus, "aria-label": ariaLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [rect, setRect] = useState<{ top: number; left: number; width: number; up: boolean } | null>(null);

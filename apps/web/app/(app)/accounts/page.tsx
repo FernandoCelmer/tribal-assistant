@@ -1,10 +1,11 @@
 import { PageHeader } from "@/components/layout/page";
 import { AccountForm, AccountList, RuleNote } from "@/features/accounts";
-import { accounts } from "@/lib/session";
+import { accounts, writableOnly } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function AccountsPage() {
+  await writableOnly();
   const { list, current } = await accounts();
 
   return (

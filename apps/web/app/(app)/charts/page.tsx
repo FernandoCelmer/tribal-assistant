@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { Stat } from "@/components/ui/stat";
 import { AgentMetrics, PeriodControl, VillageEvolution, compact, period } from "@/features/charts";
+import { FlowView } from "@/features/flow";
 import { maybe, server } from "@/lib/api";
 import { num } from "@/lib/format";
 
@@ -19,9 +20,10 @@ export default async function ChartsPage({ searchParams }: { searchParams: Promi
   const asked = Number(query.village);
   const village = villages.find((v) => v.id === asked)?.id ?? villages[0]?.id ?? null;
 
-  const [stats, history] = await Promise.all([
+  const [stats, history, flow] = await Promise.all([
     maybe(server.GET("/api/v1/agents/stats", { params: { query: { hours } } })),
     maybe(server.GET("/api/v1/game/history", { params: { query: { hours, village_id: village } } })),
+    maybe(server.GET("/api/v1/agents/flow", { params: { query: { hours } } })),
   ]);
 
   const tokens = (stats?.tokens_in ?? 0) + (stats?.tokens_out ?? 0);
@@ -37,7 +39,7 @@ export default async function ChartsPage({ searchParams }: { searchParams: Promi
     <div className="space-y-6">
       <PageHeader
         title="Gráficos"
-        description="O que os agentes fizeram e como a aldeia evoluiu no período."
+        description="O que os agentes fizeram, por quais ferramentas, e como a aldeia evoluiu no período."
         shortDescription="Agentes e evolução da aldeia."
         actions={<PeriodControl value={range} />}
       />
@@ -72,6 +74,8 @@ export default async function ChartsPage({ searchParams }: { searchParams: Promi
           </Panel>
 
           <AgentMetrics stats={stats} hours={hours} />
+
+          {flow && <FlowView data={flow} />}
         </>
       ) : (
         <Panel><EmptyState icon={ChartLine} title="Métricas indisponíveis" text="A API não respondeu. Confira se o servidor está no ar." /></Panel>

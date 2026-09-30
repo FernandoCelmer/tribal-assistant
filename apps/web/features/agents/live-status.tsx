@@ -1,21 +1,24 @@
 "use client";
 
+import { toolLabel } from "@/features/flow/labels";
 import { Radio } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useReadOnly } from "@/components/layout/read-only";
 import { Badge } from "@/components/ui/badge";
 import type { Schemas } from "@/lib/api";
 import { relative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { STREAM_LABEL, useEvents } from "./events";
-import { KIND_LABELS, agentLabel } from "./labels";
+import { KIND_LABELS, agentLabel, stepLabel } from "./labels";
 
 type Live = Schemas["LiveOut"];
 
 export function LiveStatus({ initial, brain }: { initial: Live | null; brain: string }) {
   const router = useRouter();
   const [live, setLive] = useState<Live | null>(initial);
+  const locked = useReadOnly();
 
   const load = useCallback(async () => {
     try {
@@ -39,7 +42,7 @@ export function LiveStatus({ initial, brain }: { initial: Live | null; brain: st
       router.refresh();
     }
     if (e.kind === "step") {
-      setLive((s) => (s?.running ? { ...s, village: e.data.village ?? s.village, agent: e.data.agent, step: `${KIND_LABELS[e.data.kind] ?? e.data.kind}${e.data.tool ? ` ${e.data.tool}` : ""}` } : s));
+      setLive((s) => (s?.running ? { ...s, village: e.data.village ?? s.village, agent: e.data.agent, step: `${KIND_LABELS[e.data.kind] ?? e.data.kind}${e.data.tool ? ` ${toolLabel(e.data.tool)}` : ""}` } : s));
     }
     if (e.kind === "run_finished") {
       load();
@@ -52,10 +55,12 @@ export function LiveStatus({ initial, brain }: { initial: Live | null; brain: st
   const detail = !live
     ? "a API não respondeu"
     : running
-      ? [live.village, live.agent ? agentLabel(live.agent) : null, live.step].filter(Boolean).join(" · ") + (live.started_at ? ` · começou ${relative(live.started_at)}` : "")
+      ? [live.village, live.agent ? agentLabel(live.agent) : null, stepLabel(live.step)].filter(Boolean).join(" · ") + (live.started_at ? ` · começou ${relative(live.started_at)}` : "")
       : live.enabled && live.next_run_at
         ? `próxima rodada ${relative(live.next_run_at)}`
-        : "rode manualmente ou ligue o agendamento nas configurações";
+        : locked
+          ? "este painel só mostra os dados; as rodadas acontecem no servidor que joga"
+          : "rode manualmente ou ligue o agendamento nas configurações";
 
   return (
     <div role="status" aria-live="polite" className={cn("flex flex-col gap-3 rounded-lg border bg-surface p-4 sm:flex-row sm:items-center sm:p-5", running ? "border-foreground/40" : "border-border")}>

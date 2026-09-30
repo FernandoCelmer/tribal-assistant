@@ -1,9 +1,11 @@
+import { readable, toolLabel } from "@/features/flow/labels";
 import { Ban, Lock, Shield } from "lucide-react";
 import { UnitIcon } from "@/components/game/icons";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { num, short } from "@/lib/format";
 import { CostLine } from "./cost-line";
+import { purposeLabel } from "./types";
 import type { Budget, Constraint } from "./types";
 
 const KINDS: Record<string, string> = { defense: "defesa", strategic: "estratégica", operation: "operação", base: "base" };
@@ -36,7 +38,7 @@ export function BudgetPanel({ budget, constraints }: { budget?: Budget; constrai
             <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
             <div className="min-w-0 flex-1 text-sm">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{r.purpose}</span>
+                <span className="font-medium">{purposeLabel(r.purpose)}</span>
                 <Badge>{KINDS[r.kind] ?? r.kind}</Badge>
               </div>
               <CostLine cost={r.cost} className="mt-1" />
@@ -57,10 +59,10 @@ export function BudgetPanel({ budget, constraints }: { budget?: Budget; constrai
             <div className="min-w-0 flex-1 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="danger">veto</Badge>
-                <span>{c.reason}</span>
+                <span>{readable(c.reason)}</span>
               </div>
               <div className="mt-1 text-[12px] text-muted-foreground">
-                {c.blocks?.length ? `bloqueia ${c.blocks.join(", ")}` : null}
+                {c.blocks?.length ? `bloqueia ${c.blocks.map(toolLabel).join(", ")}` : null}
                 {c.until ? `${c.blocks?.length ? " · " : ""}até ${short(c.until)}` : null}
               </div>
             </div>

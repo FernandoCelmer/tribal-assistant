@@ -1,4 +1,4 @@
-import { AGENTS } from "@/lib/game";
+import { AGENTS, BUILDINGS, ROLES, UNITS } from "@/lib/game";
 
 export const TOOLS: Record<string, string> = {
   get_village_state: "ler estado da aldeia",
@@ -15,6 +15,44 @@ export const TOOLS: Record<string, string> = {
   set_village_goal: "definir objetivo",
   set_village_plan: "definir plano",
   open_daily_bonus: "abrir baú diário",
+  accept_friend: "aceitar amizade",
+  accept_market_offer: "aceitar oferta no mercado",
+  accept_mentor: "aceitar mentor",
+  accept_tribe_invite: "aceitar convite de tribo",
+  add_friend: "pedir amizade",
+  apply_to_tribe: "candidatar-se a tribo",
+  assign_flag: "colocar bandeira",
+  cancel_market_offer: "cancelar oferta no mercado",
+  choose_relic: "escolher relíquia",
+  craft_event_item: "forjar item do evento",
+  create_market_offer: "criar oferta no mercado",
+  equip_relic: "equipar relíquia",
+  get_forecast: "prever recursos",
+  get_incoming: "ler ataques chegando",
+  get_own_offers: "ler ofertas próprias",
+  get_target_intel: "ler informações do alvo",
+  learn_knight_skill: "aprender habilidade do paladino",
+  park_market_offer: "estacionar ferro no mercado",
+  plan_scavenge: "planejar coleta",
+  read_doc: "ler documentação",
+  read_inbox: "ler caixa de entrada",
+  read_thread: "ler conversa",
+  read_tribe: "ler tribo",
+  recruit_knight: "recrutar paladino",
+  rename_village: "renomear aldeia",
+  reply_forum: "responder no fórum",
+  reply_mail: "responder mensagem",
+  research_unit: "pesquisar unidade",
+  search_docs: "buscar na documentação",
+  send_mail: "enviar mensagem",
+  send_noble: "enviar nobre",
+  send_resources: "enviar recursos",
+  send_spy: "enviar exploradores",
+  set_profile_text: "escrever texto do perfil",
+  simulate_battle: "simular batalha",
+  train_knight: "treinar paladino",
+  use_item: "usar item",
+  summary: "resumo",
   build: "construir",
   recruit: "recrutar",
   attack: "saquear",
@@ -31,6 +69,22 @@ export const OUTCOMES: Record<string, { label: string; tone: string; fill: strin
 
 export function toolLabel(id: string): string {
   return TOOLS[id] ?? id.replace(/_/g, " ");
+}
+
+const WORDS: Record<string, string> = { wood: "madeira", clay: "argila", stone: "argila", iron: "ferro", pop: "população" };
+
+export function toolsInText(text: string): string {
+  return text.replace(/\b[a-z]+(?:_[a-z]+)+\b/g, (t) => TOOLS[t] ?? t);
+}
+
+export function readable(text: string | null | undefined): string {
+  if (!text) return "";
+  return toolsInText(text)
+    .replace(/\b(modo|papel) (growth|defense|offensive|support|expansion|emergency)\b/g, (_, w: string, r: string) => `${w} ${(ROLES[r] ?? r).toLowerCase()}`)
+    .replace(/\b(construir|subir|construção de) ([a-z]+)\b/g, (m, v: string, b: string) => (BUILDINGS[b] ? `${v} ${BUILDINGS[b]}` : m))
+    .replace(/\b([a-z]+)( →)? nível\b/g, (m, b: string, arrow: string | undefined) => (BUILDINGS[b] ? `${BUILDINGS[b]}${arrow ?? ""} nível` : m))
+    .replace(/\b(unidade|recrutar) ([a-z]+)\b/g, (m, v: string, u: string) => (UNITS[u] ? `${v} ${UNITS[u].toLowerCase()}` : m))
+    .replace(/\b(wood|clay|stone|iron)\b/g, (w) => WORDS[w] ?? w);
 }
 
 export function agentLabel(id: string): string {

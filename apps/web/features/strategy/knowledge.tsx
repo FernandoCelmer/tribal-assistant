@@ -1,3 +1,4 @@
+import { readable } from "@/features/flow/labels";
 import { BookOpen, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -38,7 +39,7 @@ export function InsightsTable({ insights }: { insights: Insight[] }) {
             <PageSlice>{sorted.map((i, n) => (
               <tr key={i.key ?? n}>
                 <Td><Certainty value={i.certainty} /></Td>
-                <Td className="min-w-[180px] text-[13px]">{i.text}</Td>
+                <Td className="min-w-[180px] text-[13px]">{readable(i.text)}</Td>
                 <Td className="whitespace-nowrap text-right font-mono text-[12px] tabular-nums text-secondary">{duration(i.age_hours * 3600)}</Td>
                 <Td className="text-right">
                   <span className="inline-flex items-center gap-2">

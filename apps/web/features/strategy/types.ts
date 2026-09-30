@@ -1,3 +1,5 @@
+import { BUILDINGS } from "@/lib/game";
+
 export type Cost = Partial<Record<"wood" | "clay" | "stone" | "iron" | "pop", number>>;
 
 export type Entry = {
@@ -50,4 +52,13 @@ export const CERTAINTY: Record<string, { label: string; tone: "success" | "neutr
   hypothesis: { label: "hipótese", tone: "warning" },
 };
 
-export const APPROVAL = "aguardando aprovação do jogador";
+export function purposeLabel(purpose: string): string {
+  if (purpose === "base") return "reserva mínima";
+  if (purpose === "expansion") return "expansão (nobre)";
+  if (purpose === "defense") return "defesa";
+  if (purpose.startsWith("plan:")) {
+    const items = purpose.slice(5).split(",").map((b) => BUILDINGS[b.trim()] ?? b.trim()).filter(Boolean);
+    return `plano: ${items.join(", ")}`;
+  }
+  return purpose.replace(/_/g, " ");
+}

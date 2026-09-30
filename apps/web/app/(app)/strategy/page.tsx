@@ -1,6 +1,7 @@
 import { Bot, CalendarClock, Compass, Crosshair, Hand } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page";
+import { Writable } from "@/components/layout/read-only";
 import { AutoRefresh } from "@/components/ui/auto-refresh";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -73,6 +74,7 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
         <Stat label="Próxima reavaliação" value={<span suppressHydrationWarning>{relative(round.next_review_at)}</span>} icon={CalendarClock} hint={round.next_review_at ? short(round.next_review_at) : "sem data"} />
       </div>
 
+      <Writable>
       <Panel className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -83,6 +85,7 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
         </div>
         <RoleSelect key={`${round.village_id}-${role}-${round.manual_role}`} villageId={round.village_id} role={role} manual={round.manual_role ?? false} />
       </Panel>
+      </Writable>
 
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
         <NextAction entry={data.next_action} who={who} />
@@ -91,7 +94,7 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
 
       <ExecutedTable entries={data.executed ?? []} who={who} />
 
-      <DeferredTable entries={data.deferred ?? []} who={who} villageId={round.village_id} />
+      <DeferredTable entries={data.deferred ?? []} who={who} />
 
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
         <InsightsTable insights={data.insights ?? []} />

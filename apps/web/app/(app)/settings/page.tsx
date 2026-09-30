@@ -4,10 +4,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { AiInfo, SettingsForm, SystemInfo } from "@/features/settings";
 import { maybe, server } from "@/lib/api";
+import { writableOnly } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  await writableOnly();
   const [settings, info] = await Promise.all([
     maybe(server.GET("/api/v1/agents/settings")),
     maybe(server.GET("/api/v1/system/info")),

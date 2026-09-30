@@ -1,6 +1,8 @@
 export { AgentCards } from "./agent-cards";
 export { AgentMark, agentIcon } from "./agent-mark";
+export { DecisionTimeline } from "./decision-timeline";
 export { Decisions } from "./decisions";
+export { RoundExplain } from "./round-explain";
 export { LiveFeed, levelTone } from "./live-feed";
 export { LiveStatus } from "./live-status";
 export { RunButtons } from "./run-buttons";

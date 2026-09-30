@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { MOBILE, active } from "./nav";
+import { mobileItems, active } from "./nav";
+import { useReadOnly } from "./read-only";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const items = mobileItems(useReadOnly());
   return (
     <nav aria-label="Principal" className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
       <ul className="grid h-[76px] grid-cols-5">
-        {MOBILE.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon;
           const isOn = active(pathname, item);
           return (

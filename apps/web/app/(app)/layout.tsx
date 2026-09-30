@@ -2,16 +2,18 @@ import type { ReactNode } from "react";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { LiveRefresh } from "@/components/layout/live-refresh";
 import { PageTransition } from "@/components/layout/page-transition";
+import { ReadOnlyProvider } from "@/components/layout/read-only";
 import { Sidebar } from "@/components/layout/sidebar";
 import { DialogHost } from "@/components/ui/dialog-host";
 import { Toaster } from "@/components/ui/toast";
-import { accounts, apiVersion } from "@/lib/session";
+import { accounts, apiVersion, readOnly } from "@/lib/session";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const [{ list, current }, api] = await Promise.all([accounts(), apiVersion()]);
+  const [{ list, current }, api, locked] = await Promise.all([accounts(), apiVersion(), readOnly()]);
   const versions = { web: process.env.WEB_VERSION ?? "—", api };
 
   return (
+    <ReadOnlyProvider value={locked}>
     <div className="min-h-screen bg-background">
       <Sidebar versions={versions} accounts={list} current={current} />
       <main className="min-h-screen pb-[calc(88px+env(safe-area-inset-bottom))] md:ml-[280px] md:pb-0 xl:ml-[304px]">
@@ -24,5 +26,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <DialogHost />
       <LiveRefresh />
     </div>
+    </ReadOnlyProvider>
   );
 }

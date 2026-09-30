@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { useReadOnly } from "@/components/layout/read-only";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { ApiError, errorText } from "@/lib/errors";
 import { type ConfirmOptions, confirmDialog } from "@/components/ui/dialog-host";
@@ -21,6 +22,7 @@ type Props = Omit<ButtonProps, "onClick"> & {
 export function ActionButton({ path, method = "POST", body, confirm, done, success, successField, children, ...props }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const locked = useReadOnly();
 
   const run = async () => {
     if (confirm && !(await confirmDialog(confirm))) return;
@@ -43,6 +45,8 @@ export function ActionButton({ path, method = "POST", body, confirm, done, succe
       setBusy(false);
     }
   };
+
+  if (locked) return null;
 
   return <Button {...props} loading={busy} onClick={run}>{children}</Button>;
 }

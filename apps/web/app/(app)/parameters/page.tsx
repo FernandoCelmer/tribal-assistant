@@ -23,7 +23,7 @@ export default async function KnobsPage() {
         <Stat label="Parâmetros" value={num(items.length)} icon={SlidersHorizontal} hint={`${num(tuning)} se ajustam sozinhos`} />
         <Stat label="Fora do padrão" value={num(moved)} icon={Gauge} tone={moved ? "warn" : undefined} hint={moved ? "valor atual diferente do padrão" : "todos no padrão"} />
         <Stat label="Manuais" value={num(manual)} icon={Hand} hint="último ajuste feito por você" />
-        <Stat label="Último ajuste" value={latest?.updated_at ? relative(latest.updated_at) : "—"} icon={Clock} hint={latest ? knobLabel(latest.name) : "nenhum ainda"} />
+        <Stat label="Último ajuste" value={latest?.updated_at ? relative(latest.updated_at) : "—"} icon={Clock} hint={latest ? knobLabel(latest) : "nenhum ainda"} />
       </div>
 
       <KnobsTable items={items} />

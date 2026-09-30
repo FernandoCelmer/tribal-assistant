@@ -1,3 +1,4 @@
+import { toolLabel } from "@/features/flow/labels";
 import { AGENTS } from "@/lib/game";
 
 export const KIND_LABELS: Record<string, string> = {
@@ -5,6 +6,7 @@ export const KIND_LABELS: Record<string, string> = {
   thought: "raciocínio",
   tool_call: "chamou",
   tool_result: "resposta",
+  plan: "plano",
   summary: "resumo",
   info: "info",
   error: "erro",
@@ -22,6 +24,9 @@ export const AREAS: Record<string, string> = {
   defense: "ataques chegando, vetos e reservas",
   attack: "saques e coleta",
   expansion: "caminho do nobre",
+  conquest: "conquista de aldeias com nobre",
+  logistics: "envio de recursos entre aldeias",
+  free_finish: "termina obras curtas de graça",
   intelligence: "relatórios, vizinhos e desafios",
   diplomacy: "tribo e mentor",
   social: "mensagens, amigos, fórum da tribo e contatos",
@@ -33,6 +38,13 @@ export const AREAS: Record<string, string> = {
 };
 
 export const ORDER = Object.keys(AREAS);
+
+export function stepLabel(step: string | null | undefined): string {
+  if (!step) return "";
+  const [kind, ...rest] = step.split(" ");
+  if (!KIND_LABELS[kind]) return step;
+  return [KIND_LABELS[kind], ...rest.map((t) => (/^[a-z]+(_[a-z]+)+$/.test(t) ? toolLabel(t) : t))].join(" ");
+}
 
 export function agentLabel(key: string | null | undefined): string {
   if (!key) return "—";

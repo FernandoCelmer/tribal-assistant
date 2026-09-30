@@ -6,6 +6,7 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import type { Schemas } from "@/lib/api";
 import { num, short } from "@/lib/format";
 import { AgentMark } from "./agent-mark";
+import { toolLabel } from "@/features/flow/labels";
 import { agentLabel } from "./labels";
 
 type Decision = Schemas["DecisionOut"];
@@ -34,7 +35,7 @@ export function Decisions({ decisions, villages }: { decisions: Decision[]; vill
                 <AgentMark agent={d.agent} size="sm" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                    <span className="font-medium">{d.action.replaceAll("_", " ")}</span>
+                    <span className="font-medium">{toolLabel(d.action)}</span>
                     <span className="text-[12px] text-secondary">{agentLabel(d.agent)}{d.village_id != null && ` · ${villages[String(d.village_id)] ?? d.village_id}`}</span>
                     {d.dry_run && <Badge>simulação</Badge>}
                   </div>

@@ -1,20 +1,22 @@
 import { Bot, CircleCheck, CircleX, Coins, Hammer, Settings, ShieldBan, Swords } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page";
+import { Writable } from "@/components/layout/read-only";
 import { AutoRefresh } from "@/components/ui/auto-refresh";
 import { buttonVariants } from "@/components/ui/button";
 import { Stat } from "@/components/ui/stat";
-import { AgentCards, LiveFeed, LiveStatus, RunButtons, RunsTable, VillagePlans } from "@/features/agents";
+import { AgentCards, DecisionTimeline, LiveFeed, LiveStatus, RunButtons, RunsTable, VillagePlans } from "@/features/agents";
 import { maybe, server } from "@/lib/api";
 import { num } from "@/lib/format";
 
 export default async function AgentsPage() {
-  const [live, stats, plans, runs, config] = await Promise.all([
+  const [live, stats, plans, runs, config, history] = await Promise.all([
     maybe(server.GET("/api/v1/agents/live")),
     maybe(server.GET("/api/v1/agents/stats", { params: { query: { hours: 24 } } })),
     maybe(server.GET("/api/v1/agents/plans")),
     maybe(server.GET("/api/v1/agents/runs", { params: { query: { limit: 200 } } })),
     maybe(server.GET("/api/v1/agents/config")),
+    maybe(server.GET("/api/v1/agents/coordination/history", { params: { query: { limit: 48 } } })),
   ]);
 
   const brain = config ? (config.brain === "llm" ? `IA · ${config.model ?? config.provider}` : "regras fixas") : "cérebro —";
@@ -28,10 +30,12 @@ export default async function AgentsPage() {
         shortDescription="Especialistas, rodadas e raciocínio ao vivo."
         actions={
           <>
-            <Link href="/settings" className={buttonVariants({ variant: "ghost", className: "hidden md:inline-flex" })}>
-              <Settings className="size-4" strokeWidth={1.75} />
-              Configurar
-            </Link>
+            <Writable>
+              <Link href="/settings" className={buttonVariants({ variant: "ghost", className: "hidden md:inline-flex" })}>
+                <Settings className="size-4" strokeWidth={1.75} />
+                Configurar
+              </Link>
+            </Writable>
             <RunButtons />
           </>
         }
@@ -54,6 +58,8 @@ export default async function AgentsPage() {
         <h2 className="text-sm font-semibold">Especialistas <span className="font-normal text-secondary">· últimas 24h</span></h2>
         <AgentCards stats={stats?.agents ?? []} known={known} />
       </section>
+
+      <DecisionTimeline history={history ?? []} />
 
       <VillagePlans plans={plans ?? []} />
 

@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelBody, PanelHeader } from "@/components/ui/panel";
 import { Stat } from "@/components/ui/stat";
+import { readable } from "@/features/flow";
 import { AccountVillages, VillageSummary } from "@/features/overview";
 import { maybe, server } from "@/lib/api";
 import { num, relative, when } from "@/lib/format";
@@ -77,16 +78,16 @@ export default async function OverviewPage() {
             <PanelBody className="text-sm">
               {next?.title ? (
                 <>
-                  <div className="font-medium">{next.title}</div>
-                  <p className="mt-1 text-secondary">{next.reason}</p>
-                  {next.why && <p className="mt-1 text-[13px] text-muted-foreground">adiada: {next.why}</p>}
+                  <div className="font-medium">{readable(next.title)}</div>
+                  <p className="mt-1 text-secondary">{readable(next.reason)}</p>
+                  {next.why && <p className="mt-1 text-[13px] text-muted-foreground">adiada: {readable(next.why)}</p>}
                 </>
               ) : <p className="text-secondary">Sem rodada do coordenador ainda.</p>}
             </PanelBody>
           </Panel>
 
           <Panel>
-            <PanelHeader title="Missões" aside={<Badge>{num(quests?.rewards.length ?? 0)} recompensas</Badge>} />
+            <PanelHeader title="Missões" aside={<Badge>{num(quests?.rewards.length ?? 0)} {(quests?.rewards.length ?? 0) === 1 ? "recompensa" : "recompensas"}</Badge>} />
             <PanelBody>
               <ul className="space-y-2 text-sm">
                 {(quests?.quests ?? []).filter((q) => q.state !== "finished").slice(0, 6).map((q) => (

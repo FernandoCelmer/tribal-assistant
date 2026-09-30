@@ -8,7 +8,8 @@ import { Logo } from "@/components/logo";
 import type { Schemas } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AccountSwitcher } from "./account-switcher";
-import { NAV, active } from "./nav";
+import { navGroups, active } from "./nav";
+import { ReadOnlyBadge, useReadOnly } from "./read-only";
 
 const link = "mx-3 my-0.5 flex h-10 min-h-10 items-center gap-3 rounded-[7px] border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground";
 const on = "border-border bg-surface-selected text-foreground";
@@ -19,6 +20,7 @@ type Props = { versions: { web: string; api: string }; accounts: Schemas["Accoun
 export function Sidebar({ versions, accounts, current }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const groups = navGroups(useReadOnly());
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -33,14 +35,17 @@ export function Sidebar({ versions, accounts, current }: Props) {
     <div className="flex h-full flex-col">
       <div className="flex h-[66px] items-center gap-2.5 border-b border-border px-5">
         <Logo className="size-5 text-gold" />
-        <span className="text-[15px] font-semibold">Tribal Assistant</span>
+        <span className="flex min-w-0 flex-col items-start gap-0.5">
+          <span className="text-[15px] font-semibold leading-5">Tribal Assistant</span>
+          <ReadOnlyBadge className="h-5 px-1.5 text-[10px]" />
+        </span>
         <button type="button" aria-label="Fechar menu" onClick={() => setOpen(false)} className="ml-auto flex size-11 items-center justify-center rounded-md text-secondary hover:bg-surface-hover hover:text-foreground md:hidden"><X className="size-4" /></button>
       </div>
       <div className="border-b border-border px-3 py-3">
         <AccountSwitcher accounts={accounts} current={current} />
       </div>
       <nav aria-label="Principal" className="flex-1 overflow-y-auto py-2">
-        {NAV.map((group) => (
+        {groups.map((group) => (
           <div key={group.label} className="mb-2">
             <div className="mx-5 mb-1 mt-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{group.label}</div>
             {group.items.map((item) => {
@@ -71,6 +76,7 @@ export function Sidebar({ versions, accounts, current }: Props) {
       <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-border bg-sidebar pl-4 pr-1.5 md:hidden">
         <Logo className="size-5 text-gold" />
         <span className="truncate text-[15px] font-semibold">Tribal Assistant</span>
+        <ReadOnlyBadge className="ml-1" />
         <button type="button" aria-label="Abrir menu" aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen(true)} className="ml-auto flex size-11 items-center justify-center rounded-md text-secondary hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground">
           <Menu className="size-5" />
         </button>

@@ -3,6 +3,7 @@
 import { Play, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useReadOnly } from "@/components/layout/read-only";
 import { Button } from "@/components/ui/button";
 import { confirmDialog } from "@/components/ui/dialog-host";
 import { toast } from "@/components/ui/toast";
@@ -14,6 +15,7 @@ type Report = Schemas["AgentRunOut"];
 export function RunButtons() {
   const router = useRouter();
   const [busy, setBusy] = useState<"sim" | "live" | null>(null);
+  const locked = useReadOnly();
 
   const run = async (dry: boolean) => {
     if (!dry && !(await confirmDialog({ title: "Rodar os agentes no jogo agora?", description: "Eles podem construir, recrutar, coletar e saquear bárbaras de verdade, sem simulação.", confirmLabel: "Rodar agora" }))) return;
@@ -38,6 +40,8 @@ export function RunButtons() {
       setBusy(null);
     }
   };
+
+  if (locked) return null;
 
   return (
     <>

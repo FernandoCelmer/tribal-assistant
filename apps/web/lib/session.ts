@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
 import { ACCOUNT_COOKIE, API_BASE, maybe, server, type Schemas } from "./api";
 
 export async function accounts(): Promise<{ list: Schemas["AccountOut"][]; current: Schemas["AccountOut"] | null }> {
@@ -16,4 +18,13 @@ export async function apiVersion(): Promise<string> {
   } catch {
     return "offline";
   }
+}
+
+export const readOnly = cache(async (): Promise<boolean> => {
+  const status = await maybe(server.GET("/api/v1/assistant/status"));
+  return status?.playing === false;
+});
+
+export async function writableOnly(): Promise<void> {
+  if (await readOnly()) redirect("/");
 }

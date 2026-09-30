@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Schemas } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useReadOnly } from "./read-only";
 
 type Account = Schemas["AccountOut"];
 
 export function AccountSwitcher({ accounts, current }: { accounts: Account[]; current: Account | null }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const locked = useReadOnly();
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export function AccountSwitcher({ accounts, current }: { accounts: Account[]; cu
   };
 
   if (!current) {
+    if (locked) return <div className="flex h-12 items-center rounded-[7px] border border-dashed border-border px-3 text-sm text-secondary">Nenhuma conta cadastrada</div>;
     return <a href="/accounts" className="flex h-12 items-center rounded-[7px] border border-dashed border-border px-3 text-sm text-secondary hover:text-foreground">Cadastrar uma conta</a>;
   }
 
@@ -53,9 +56,9 @@ export function AccountSwitcher({ accounts, current }: { accounts: Account[]; cu
               </button>
             </li>
           ))}
-          <li className="border-t border-border-subtle">
+          {!locked && <li className="border-t border-border-subtle">
             <a href="/accounts" className="block px-3 py-2 text-[13px] text-secondary hover:bg-surface-hover hover:text-foreground">Gerenciar contas</a>
-          </li>
+          </li>}
         </ul>
       )}
     </div>

@@ -265,9 +265,8 @@ Each topic is its own page, reached from the sidebar (a drawer on phones):
 | `/reports` | battle reports with loot |
 | `/challenges` | the game achievements: progress, which agent chases each one, and which stay out (combat against players, social, premium) |
 | `/strategy` | per village: role and mode, next best action with reason, cost and confidence, the executed sequence, deferred proposals and why, reservations, vetoes, insights, the specialists |
-| `/agents` | live status of the agents, village plan, rounds, the full reasoning of each round, live feed |
-| `/charts` | agent metrics (actions per hour, refusals, tokens) and village evolution |
-| `/graph` | decision graph: agents → tools → results |
+| `/agents` | live status of the agents, decisions per round (done vs deferred by reason, what blocks the most), village plan, rounds, live feed; `/agents/<run>` explains one round: specialist → decision → result, why each proposal was deferred, the round budget, and the full reasoning |
+| `/charts` | agent metrics (actions per hour, refusals, tokens), tool graph (agents → tools → results; `/graph` redirects here) and village evolution |
 | `/logs` | application logs with live tail |
 | `/settings` | runtime settings, AI status (provider, model, key present, never the key) and system info |
 

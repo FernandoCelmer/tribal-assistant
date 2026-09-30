@@ -62,7 +62,7 @@ function FlowTable({ data }: { data: Flow }) {
 export function FlowView({ data }: { data: Flow }) {
   return (
     <ChartCard
-      title={<><Workflow className="size-4 text-secondary" strokeWidth={1.75} />Grafo de decisões</>}
+      title={<><Workflow className="size-4 text-secondary" strokeWidth={1.75} />Ferramentas por agente</>}
       description={`${num(data.calls)} chamadas de ferramenta em ${num(data.runs)} ${data.runs === 1 ? "rodada" : "rodadas"}`}
       legend={
         <div className="space-y-2">

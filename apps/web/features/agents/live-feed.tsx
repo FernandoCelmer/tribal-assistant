@@ -1,5 +1,6 @@
 "use client";
 
+import { toolLabel } from "@/features/flow/labels";
 import { Activity, Eraser } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -58,7 +59,7 @@ function Line({ event }: { event: FeedEvent }) {
     <div className="min-w-0 flex-1 text-sm">
       <div className="flex flex-wrap items-center gap-x-2">
         <span className="font-medium">{agentLabel(d.agent)}</span>
-        <span className="text-[12px] text-secondary">{KIND_LABELS[d.kind] ?? d.kind}{d.tool && <span className="font-mono"> {d.tool}</span>}</span>
+        <span className="text-[12px] text-secondary">{KIND_LABELS[d.kind] ?? d.kind}{d.tool && <span title={d.tool}> {toolLabel(d.tool)}</span>}</span>
         {d.village && <span className="text-[12px] text-muted-foreground">· {d.village}</span>}
       </div>
       <p className={cn("mt-0.5 break-words text-[13px]", d.is_error ? "text-status-bad" : "text-secondary")}>{text}</p>

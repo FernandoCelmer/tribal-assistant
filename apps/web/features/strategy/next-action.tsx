@@ -1,3 +1,4 @@
+import { readable } from "@/features/flow/labels";
 import { Sparkles, Star } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -26,14 +27,14 @@ export function NextAction({ entry, who }: { entry: Entry | null | undefined; wh
         <PanelBody>
           <div className="flex flex-wrap items-start gap-3">
             <div className="min-w-0 flex-1">
-              <div className="text-lg font-semibold leading-6">{entry.title ?? entry.action}</div>
+              <div className="text-lg font-semibold leading-6">{readable(entry.title ?? entry.action)}</div>
               <div className="mt-1 text-[13px] text-secondary">proposta por {who(entry.source)}</div>
             </div>
             {entry.why ? <Badge tone="warning">adiada</Badge> : entry.ok === false ? <Badge tone="danger">falhou</Badge> : entry.ok ? <Badge tone="success">executada</Badge> : null}
           </div>
           <dl className="mt-4 divide-y divide-border-subtle border-t border-border-subtle">
-            <Row label="Por quê">{entry.reason || "—"}</Row>
-            {entry.expected_benefit && <Row label="Impacto">{entry.expected_benefit}</Row>}
+            <Row label="Por quê">{readable(entry.reason) || "—"}</Row>
+            {entry.expected_benefit && <Row label="Impacto">{readable(entry.expected_benefit)}</Row>}
             <Row label="Custo"><CostLine cost={entry.cost} /></Row>
             <Row label="Confiança">
               <span className="inline-flex items-center gap-3">
@@ -42,8 +43,8 @@ export function NextAction({ entry, who }: { entry: Entry | null | undefined; wh
                 <span className="text-[13px] text-secondary">prioridade <span className="font-mono tabular-nums text-foreground">{entry.priority ?? "—"}</span></span>
               </span>
             </Row>
-            {entry.why ? <Row label="Adiada"><span className="text-status-warn">{entry.why}</span></Row> : entry.result ? <Row label="Resultado">{entry.result}</Row> : null}
-            {!!entry.risks?.length && <Row label="Riscos"><span className="text-secondary">{entry.risks.join("; ")}</span></Row>}
+            {entry.why ? <Row label="Adiada"><span className="text-status-warn">{readable(entry.why)}</span></Row> : entry.result ? <Row label="Resultado">{readable(entry.result)}</Row> : null}
+            {!!entry.risks?.length && <Row label="Riscos"><span className="text-secondary">{readable(entry.risks.join("; "))}</span></Row>}
           </dl>
         </PanelBody>
       )}

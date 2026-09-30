@@ -1,5 +1,6 @@
 "use client";
 
+import { readable, toolLabel } from "@/features/flow/labels";
 import { Castle, ScrollText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -71,7 +72,7 @@ function Body({ step }: { step: Step }) {
       </details>
     );
   }
-  return <p className={cn("mt-1 whitespace-pre-wrap break-words text-[13px] leading-5", step.is_error && !refused(step) ? "text-status-bad" : "text-secondary", step.kind === "summary" && "text-foreground")}>{step.content}</p>;
+  return <p className={cn("mt-1 whitespace-pre-wrap break-words text-[13px] leading-5", step.is_error && !refused(step) ? "text-status-bad" : "text-secondary", step.kind === "summary" && "text-foreground")}>{readable(step.content)}</p>;
 }
 
 function StepItem({ step }: { step: Step }) {
@@ -87,7 +88,7 @@ function StepItem({ step }: { step: Step }) {
       />
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">{KIND_LABELS[step.kind] ?? step.kind}</span>
-        {step.tool && <span className="rounded border border-border-subtle bg-background px-1.5 font-mono text-[12px]">{step.tool}</span>}
+        {step.tool && <span title={step.tool} className="rounded border border-border-subtle bg-background px-1.5 text-[12px]">{toolLabel(step.tool)}</span>}
         {isRefused ? <Badge tone="warning">recusado pela trava</Badge> : step.is_error ? <Badge tone="danger">erro</Badge> : null}
         <span className="ml-auto font-mono text-[11px] text-muted-foreground" suppressHydrationWarning>{short(step.created_at)}</span>
       </div>

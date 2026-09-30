@@ -3,7 +3,7 @@
 import { Activity, Ban, ListChecks } from "lucide-react";
 import { PageFooter, PageScope, PageSlice } from "@/components/ui/pagination";
 import { Table, Td, Th } from "@/components/ui/table";
-import { agentLabel, toolLabel } from "@/features/flow/labels";
+import { agentLabel, toolLabel, toolsInText } from "@/features/flow/labels";
 import type { Schemas } from "@/lib/api";
 import { AGENTS } from "@/lib/game";
 import { num, utc } from "@/lib/format";
@@ -104,8 +104,8 @@ export function AgentMetrics({ stats, hours }: { stats: Stats; hours: number }) 
         <ChartCard
           title={<><Ban className="size-4 text-secondary" strokeWidth={1.75} />Motivos de recusa das travas</>}
           description="Por que a segurança barrou uma ação"
-          chart={<BarList rows={stats.refusals} empty="Nenhuma recusa no período." tone="bg-status-warn/70" />}
-          table={<CountTable head="Motivo" rows={stats.refusals} labelOf={(l) => l} />}
+          chart={<BarList rows={stats.refusals} labelOf={toolsInText} empty="Nenhuma recusa no período." tone="bg-status-warn/70" />}
+          table={<CountTable head="Motivo" rows={stats.refusals} labelOf={toolsInText} />}
         />
         <ChartCard
           title={<><ListChecks className="size-4 text-secondary" strokeWidth={1.75} />Ações por tipo</>}
