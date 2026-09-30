@@ -72,6 +72,7 @@ from tribal_assistant.core.agents.tools.social import (
 from tribal_assistant.core.ai.types import ToolCall, ToolResult, ToolSpec
 from tribal_assistant.core.events import event_bus
 from tribal_assistant.core.game.actions import GameActions
+from tribal_assistant.core.game.narrator import Narrator
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
@@ -184,6 +185,7 @@ class Toolbox:
             return outcome
 
         await self._trace("tool_call", AgentTool.dump(arguments), name)
+        Narrator.tool(self.agent.key, name, arguments, self.ctx.id)
 
         blocked = await self.lessons.blocked(name, arguments, tuning(self.ctx)) if tool.acts and not self.dry_run else None
 
@@ -196,6 +198,7 @@ class Toolbox:
             outcome = ToolOutcome(False, f"falha: {exc}")
 
         await self._trace("tool_result", outcome.text, name, is_error=not outcome.ok)
+        Narrator.result(self.agent.key, name, outcome.ok, outcome.text, self.ctx.id)
 
         if tool.acts:
             await self._record(tool, arguments, outcome)

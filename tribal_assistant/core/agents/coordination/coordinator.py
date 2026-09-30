@@ -9,6 +9,7 @@ from typing import Any
 from tribal_assistant.core.agents.coordination.budget import Budget, Reservation
 from tribal_assistant.core.agents.coordination.constraints import Constraint
 from tribal_assistant.core.agents.coordination.insight import now
+from tribal_assistant.core.agents.coordination.live import FlowFeed
 from tribal_assistant.core.agents.coordination.proposal import Proposal
 from tribal_assistant.core.agents.coordination.strategy import GOALS, LABELS, Role, Weights
 from tribal_assistant.core.agents.coordination.view import CoordinationView
@@ -111,6 +112,8 @@ class Coordinator:
 
         ordered = self.score(self._unique(proposals), view.role)
         decision.exploration = await self._explore(ordered, constraints)
+        feed = FlowFeed(view.ctx)
+        feed.plan(ordered)
         decision.learned = {
             "bonus": {source: round(self.bonus(source), 2) for source in sorted({p.source for p in ordered})},
             "explore_rate": round(knob(view, "coordinator.explore_rate"), 3),
@@ -121,9 +124,12 @@ class Coordinator:
 
             if why:
                 decision.deferred.append(self._entry(proposal, why=why))
+                feed.deferred(proposal, why)
                 continue
 
+            feed.running(proposal)
             ok, text = await execute(proposal)
+            feed.result(proposal, ok, text)
             decision.executed.append(self._entry(proposal, ok=ok, result=text))
 
             if ok:

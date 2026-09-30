@@ -7,6 +7,7 @@ from datetime import datetime
 from playwright.async_api import Locator, Page
 
 from tribal_assistant.core.config import settings
+from tribal_assistant.core.game.narrator import Narrator
 
 
 async def human_delay(min_ms: int | None = None, max_ms: int | None = None) -> None:
@@ -41,6 +42,7 @@ async def reading_pause(page: Page) -> None:
 
 
 async def human_click(page: Page, target: Locator) -> None:
+    await Narrator.click(target)
     await target.scroll_into_view_if_needed()
     box = await target.bounding_box()
     if box is None:

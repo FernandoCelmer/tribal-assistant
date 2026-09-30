@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.coordinator import Coordinator, Decision
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
+from tribal_assistant.core.agents.coordination.live import FlowFeed
 from tribal_assistant.core.agents.coordination.outcomes import Outcomes
 from tribal_assistant.core.agents.coordination.policy import Policy
 from tribal_assistant.core.agents.coordination.proposal import Proposal
@@ -116,6 +117,8 @@ class VillageRound:
         proposals: list[Proposal] = []
         constraints, reservations = [], []
         titles = {p.key: p.title for p in self.proposers}
+        feed = FlowFeed(ctx)
+        feed.start(mode.value, base.value, [{"key": p.key, "title": p.title} for p in self.proposers])
 
         for proposer in self.proposers:
             try:
@@ -154,6 +157,8 @@ class VillageRound:
             data,
         )
         await self._trace("summary", decision.summary())
+        failed = sum(1 for e in decision.executed if not e.get("ok"))
+        feed.done(decision.summary(), len(decision.executed) - failed, failed, len(decision.deferred), decision.next_review_at)
         return decision, insights
 
     async def _streak(self, ctx: VillageContext, data: dict[str, Any], knobs: Knobs) -> None:
