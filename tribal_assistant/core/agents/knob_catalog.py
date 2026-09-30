@@ -41,6 +41,8 @@ IRON_SHORT_DOWN = less_when("iron_short", 0.3, "obras esperando ferro")
 STORAGE_UP_OR_CALM = either(STORAGE_FULL_UP, STORAGE_CALM)
 STORAGE_DOWN_OR_CALM = either(STORAGE_FULL_DOWN, STORAGE_CALM)
 NOBLES_FAILED_UP = either(more_when("nobles_failed", 0.3, "nobres falhando"), settle("nobles_failed", 0.05, "nobres falhando"))
+MAIL_CAPPED_UP = either(more_when("mail_capped", 0.5, "respostas barradas pelo limite por hora"), settle("mail_capped", 0.05, "respostas barradas pelo limite por hora"))
+CONTACTS_IGNORED_DOWN = either(less_when("contacts_unanswered", 0.8, "apresentações sem resposta"), settle("contacts_unanswered", 0.5, "apresentações sem resposta"))
 SHIPMENTS_FAILED_UP = either(more_when("shipments_failed", 0.3, "envios entre aldeias falhando"), settle("shipments_failed", 0.05, "envios entre aldeias falhando"))
 
 
@@ -122,6 +124,25 @@ CATALOG: dict[str, KnobSpec] = {
     "cooldown.smith": KnobSpec(1, "horas entre visitas ao ferreiro", cooldown("research_unit")),
     "cooldown.daily_bonus": KnobSpec(4, "horas entre aberturas do bônus diário", cooldown("open_daily_bonus")),
     "diplomacy.apply_retry_hours": KnobSpec(48, "horas antes de pedir de novo à mesma tribo"),
+    "diplomacy.apply_wait_hours": KnobSpec(48, "horas sem resposta de uma candidatura antes de tentar a próxima tribo", cooldown("apply_to_tribe")),
+    "diplomacy.parallel_applications": KnobSpec(2, "candidaturas abertas ao mesmo tempo", integer=True),
+    "diplomacy.min_members": KnobSpec(5, "membros mínimos de uma tribo candidata", integer=True),
+    "diplomacy.search_radius": KnobSpec(20, "raio em campos da busca de tribos nos dados do mundo", integer=True),
+    "diplomacy.forums_read": KnobSpec(2, "subfóruns da tribo lidos por visita", integer=True),
+    "cooldown.mail": KnobSpec(0.5, "horas entre leituras da caixa de entrada", cooldown("reply_mail")),
+    "cooldown.buddies": KnobSpec(6, "horas entre visitas à lista de amigos", cooldowns("accept_friend", "add_friend")),
+    "cooldown.friend_request": KnobSpec(12, "horas entre pedidos de amizade enviados", cooldown("add_friend")),
+    "cooldown.outreach": KnobSpec(6, "horas entre apresentações a jogadores novos", cooldown("send_mail")),
+    "cooldown.tribe_read": KnobSpec(12, "horas entre leituras do fórum, anúncios e membros da tribo", cooldown("reply_forum")),
+    "social.messages_per_hour": KnobSpec(3, "mensagens enviadas por hora (respostas, apresentações e fórum)", MAIL_CAPPED_UP, integer=True),
+    "social.first_contacts_per_day": KnobSpec(2, "primeiros contatos com jogadores novos por dia", CONTACTS_IGNORED_DOWN, integer=True),
+    "social.replies_per_round": KnobSpec(2, "conversas respondidas por rodada", MAIL_CAPPED_UP, integer=True),
+    "social.threads_per_round": KnobSpec(5, "conversas abertas e lidas por rodada", integer=True),
+    "social.history_messages": KnobSpec(12, "mensagens da conversa que a IA lê antes de responder", integer=True),
+    "social.friend_target": KnobSpec(5, "amizades buscadas (a conquista Amigo fiel pede 5)", integer=True),
+    "social.neighbour_radius": KnobSpec(10, "raio em campos de um vizinho para amizade e apresentação", integer=True),
+    "social.active_growth": KnobSpec(50, "pontos ganhos entre duas fotos para um jogador ou tribo contar como ativo", integer=True),
+    "social.snapshot_hours": KnobSpec(24, "horas entre fotos de pontos para medir quem está ativo"),
     "pacing.main_early_cap": KnobSpec(10, "edifício principal antes do portão do estábulo", integer=True),
     "pacing.iron_gap": KnobSpec(3, "níveis que a mina de ferro fica abaixo até o estábulo", either(IRON_SHORT_DOWN, IRON_CALM), integer=True),
     "raid.min_confidence": KnobSpec(0.35, "confiança mínima para saquear", either(RAIDS_LOST_UP, less_when("raids_vetoed", 0.5, "saques vetados demais")), share=True),

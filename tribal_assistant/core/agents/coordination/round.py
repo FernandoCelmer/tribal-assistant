@@ -26,6 +26,7 @@ from tribal_assistant.core.agents.proposers.infrastructure import Infrastructure
 from tribal_assistant.core.agents.proposers.intelligence import IntelligenceProposer
 from tribal_assistant.core.agents.proposers.logistics import LogisticsProposer
 from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
+from tribal_assistant.core.agents.proposers.social import SocialProposer
 from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
 from tribal_assistant.core.agents.roles.base import VillageAgent
 from tribal_assistant.core.agents.toolbox import Toolbox
@@ -65,6 +66,7 @@ class VillageRound:
         IntelligenceProposer,
         UpkeepProposer,
         DiplomacyProposer,
+        SocialProposer,
     )
 
     def __init__(

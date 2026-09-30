@@ -17,6 +17,8 @@ class PlayerOut(BaseModel):
     daily_bonus: bool
     protection_until: datetime | None
     synced_at: datetime | None
+    game_id: str | None = None
+    ally_id: str | None = None
 
 
 class BuildingOut(BaseModel):

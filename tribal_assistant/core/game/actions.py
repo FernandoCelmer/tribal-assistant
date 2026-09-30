@@ -37,6 +37,8 @@ from tribal_assistant.core.game.scraper.quests import (
 )
 from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
+from tribal_assistant.core.game.social import Social
+from tribal_assistant.core.game.tribe import TribeHall
 
 UNIT_SCREEN = {
     "spear": "barracks",
@@ -183,6 +185,14 @@ class GameActions:
     @property
     def profile(self) -> Profile:
         return Profile(self)
+
+    @property
+    def social(self) -> Social:
+        return Social(self)
+
+    @property
+    def tribe(self) -> TribeHall:
+        return TribeHall(self)
 
     def _capture(self, page_html: str, name: str) -> None:
         """Keep the HTML of screens we act on, so scrapers can be written against real markup."""

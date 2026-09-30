@@ -54,6 +54,16 @@ from tribal_assistant.core.agents.tools.read import (
     ReadDoc,
     SearchDocs,
 )
+from tribal_assistant.core.agents.tools.social import (
+    AcceptFriend,
+    AddFriend,
+    ReadInbox,
+    ReadThread,
+    ReadTribe,
+    ReplyForum,
+    ReplyMail,
+    SendMail,
+)
 from tribal_assistant.core.ai.types import ToolCall, ToolResult, ToolSpec
 from tribal_assistant.core.events import event_bus
 from tribal_assistant.core.game.actions import GameActions
@@ -102,6 +112,14 @@ class Toolbox:
         ApplyToTribe,
         AcceptTribeInvite,
         AcceptMentor,
+        ReadInbox,
+        ReadThread,
+        ReadTribe,
+        ReplyMail,
+        SendMail,
+        AcceptFriend,
+        AddFriend,
+        ReplyForum,
         AcceptMarketOffer,
         CreateMarketOffer,
         ParkMarketOffer,

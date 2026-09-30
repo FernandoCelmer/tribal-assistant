@@ -37,7 +37,7 @@ class StrategistAgent(VillageAgent):
         "\"torre de vigia\"; fora disso use lookup_knowledge ou search_docs só com dúvida de requisito. "
         "Uma chamada set_village_plan basta; set_village_goal só se o objetivo mudar."
     )
-    tools = ("lookup_knowledge", "search_docs", "read_doc", "get_forecast", "get_incoming", "simulate_battle", "get_target_intel", "set_village_plan", "set_village_goal")
+    tools = ("lookup_knowledge", "search_docs", "read_doc", "get_forecast", "get_incoming", "simulate_battle", "get_target_intel", "set_village_plan", "set_village_goal", "read_thread", "read_tribe")
 
     def system_prompt(self) -> str:
         return super().system_prompt() + "\n" + GameKnowledge.strategy

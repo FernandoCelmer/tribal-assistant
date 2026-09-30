@@ -176,10 +176,10 @@ class LessonBook:
         if items:
             await self.repo.observe(CHALLENGES, "challenges", "Desafios", f"{len(items)} desafios", {"items": items}, commit=False)
 
-    async def texts(self, items: list[tuple[str, str, str, str]]) -> None:
-        for key, topic, title, text in items:
+    async def texts(self, items: list[tuple[Any, ...]]) -> None:
+        for key, topic, title, text, *extra in items:
             if text:
-                await self.repo.observe(key, topic, title or key, text, commit=False)
+                await self.repo.observe(key, topic, title or key, text, extra[0] if extra else None, commit=False)
 
         await self.repo.session.commit()
 

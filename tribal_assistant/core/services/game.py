@@ -45,6 +45,8 @@ def _player(player: Player) -> PlayerOut:
         daily_bonus=player.daily_bonus,
         protection_until=_aware(player.protection_until),
         synced_at=_aware(player.synced_at),
+        game_id=player.game_id,
+        ally_id=player.ally_id,
     )
 
 

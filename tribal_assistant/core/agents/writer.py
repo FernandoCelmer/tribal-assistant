@@ -17,10 +17,32 @@ SYSTEM = (
 )
 
 
-class ProfileWriter:
+class ModelWriter:
+    """Asks the configured model for one text; None whenever the model is off or fails."""
+
     def __init__(self, factory: LLMFactory | None = None) -> None:
         self.factory = factory or LLMFactory()
 
+    async def ask(self, system: str, prompt: str, purpose: str) -> str | None:
+        try:
+            llm = self.factory.build()
+        except LLMError as exc:
+            logger.warning("Sem IA para escrever {}: {}", purpose, exc)
+            return None
+
+        if llm is None:
+            return None
+
+        try:
+            reply = await llm.conversation(system, prompt, []).send()
+        except LLMError as exc:
+            logger.warning("IA não escreveu {}: {}", purpose, exc)
+            return None
+
+        return reply.text
+
+
+class ProfileWriter(ModelWriter):
     @staticmethod
     def facts(player: dict[str, Any] | None, villages: int, role: str, tribe: str | None) -> str:
         player = player or {}
@@ -45,19 +67,5 @@ class ProfileWriter:
         return text[:MAX_CHARS]
 
     async def write(self, facts: str) -> str | None:
-        try:
-            llm = self.factory.build()
-        except LLMError as exc:
-            logger.warning("Sem IA para escrever o perfil: {}", exc)
-            return None
-
-        if llm is None:
-            return None
-
-        try:
-            reply = await llm.conversation(SYSTEM, f"Dados do jogador: {facts}\nEscreva o texto do perfil.", []).send()
-        except LLMError as exc:
-            logger.warning("IA não escreveu o perfil: {}", exc)
-            return None
-
-        return self.clean(reply.text)
+        reply = await self.ask(SYSTEM, f"Dados do jogador: {facts}\nEscreva o texto do perfil.", "o perfil")
+        return self.clean(reply) if reply is not None else None

@@ -67,7 +67,7 @@ class ChallengePlan:
         "Filantropo": Pursuit(BLOCKED, "", "exige gastar premium; nunca"),
         "Irmãos de guerra": Pursuit(AUTO, "diplomacy", "aceita convite ou se candidata à tribo mais forte da região e fica 30 dias"),
         "Graduado": Pursuit(AUTO, "diplomacy", "aceita o mentor recomendado pelo jogo e segue até graduar"),
-        "Amigo fiel": Pursuit(PASSIVE, "diplomacy", "amizades com colegas de tribo depois de entrar numa; tela de amigos em mapeamento"),
+        "Amigo fiel": Pursuit(AUTO, "social", "aceita pedidos de amizade e pede amizade a colegas de tribo e vizinhos ativos, no ritmo do knob"),
         "O mentor": Pursuit(BLOCKED, "", "ser mentor exige conta veterana"),
         "Recrutamento bem sucedido": Pursuit(BLOCKED, "", "exige convidar pessoas reais por e-mail"),
     }

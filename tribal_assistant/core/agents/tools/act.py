@@ -9,6 +9,8 @@ from tribal_assistant.core.agents.logistics import CARRY, Merchants
 from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.quests import QuestRules
+from tribal_assistant.core.agents.social.ledger import MENTOR, SocialLedger
+from tribal_assistant.core.agents.social.rules import SocialRules
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 from tribal_assistant.core.repositories.plans import PlanRepository
 from tribal_assistant.core.schemas.plan import PlanStep
@@ -780,11 +782,19 @@ class CraftEventItem(AgentTool):
 
 class ApplyToTribe(AgentTool):
     name = "apply_to_tribe"
-    description = "Envia candidatura a uma tribo da região (id da lista \"Tribos em sua área\"). Nunca funda tribo."
+    description = (
+        "Envia candidatura a uma tribo (id da tribo) com o texto escrito pela IA a partir dos dados reais da conta; "
+        "sem texto não envia. Nunca funda tribo."
+    )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
-        "properties": {"ally_id": {"type": "string", "pattern": "^[0-9]+$"}, "reason": REASON},
-        "required": ["ally_id", "reason"],
+        "properties": {
+            "ally_id": {"type": "string", "pattern": "^[0-9]+$"},
+            "tag": {"type": "string"},
+            "text": {"type": "string", "minLength": 10, "maxLength": 800},
+            "reason": REASON,
+        },
+        "required": ["ally_id", "text", "reason"],
         "additionalProperties": False,
     }
     acts = True
@@ -793,11 +803,22 @@ class ApplyToTribe(AgentTool):
         if (box.ctx.player or {}).get("ally_id"):
             return ToolOutcome(False, "RECUSADO: já está numa tribo")
 
-        if box.dry_run:
-            return ToolOutcome(True, f"(simulação) candidatar à tribo {args['ally_id']}")
+        ally_id, tag = str(args["ally_id"]), str(args.get("tag") or "")
+        text = str(args.get("text") or "").strip()
+        if len(text) < 10:
+            return ToolOutcome(False, "RECUSADO: candidatura sem texto escrito pela IA a partir dos dados da conta")
 
-        result = await box.actions.diplomacy.apply(box.ctx.game_id, str(args["ally_id"]))
-        return ToolOutcome(result.ok, result.detail, result.data)
+        refusal = SocialRules.refusal(text)
+        if refusal:
+            return ToolOutcome(False, f"RECUSADO: {refusal}")
+
+        if box.dry_run:
+            return ToolOutcome(True, f"(simulação) candidatar à tribo {ally_id}")
+
+        result = await box.actions.diplomacy.apply(box.ctx.game_id, ally_id, text)
+        if result.ok:
+            await SocialLedger(box.session).set_application(ally_id, tag, "pendente")
+        return ToolOutcome(result.ok, result.detail, result.data | {"text": text})
 
 
 class AcceptTribeInvite(AgentTool):
@@ -827,7 +848,7 @@ class AcceptMentor(AgentTool):
     description = "Aceita a oferta de um mentor sugerido pelo jogo (vira aprendiz; conta para a conquista Graduado)."
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
-        "properties": {"mentor_id": {"type": "string", "pattern": "^[0-9]+$"}, "reason": REASON},
+        "properties": {"mentor_id": {"type": "string", "pattern": "^[0-9]+$"}, "name": {"type": "string"}, "reason": REASON},
         "required": ["mentor_id", "reason"],
         "additionalProperties": False,
     }
@@ -838,6 +859,8 @@ class AcceptMentor(AgentTool):
             return ToolOutcome(True, f"(simulação) aceitar mentor {args['mentor_id']}")
 
         result = await box.actions.diplomacy.accept_mentor(box.ctx.game_id, str(args["mentor_id"]))
+        if result.ok and args.get("name"):
+            await SocialLedger(box.session).note(MENTOR, "mentor", str(args["name"]), {"name": str(args["name"])})
         return ToolOutcome(result.ok, result.detail, result.data)
 
 

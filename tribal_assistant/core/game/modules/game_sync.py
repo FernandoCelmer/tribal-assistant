@@ -28,6 +28,7 @@ from tribal_assistant.core.game.scraper.game import (
     parse_reports,
     parse_village,
 )
+from tribal_assistant.core.game.scraper.social import InboxParser
 from tribal_assistant.core.game.scraper.spy_report import SpyReportParser
 from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
@@ -162,9 +163,6 @@ CONTENT_TEXT_JS = """() => {
   return clone.innerText.replace(/\\s+/g, ' ').trim().slice(0, 4000);
 }"""
 
-MAIL_LIST_JS = """() => [...document.querySelectorAll('#content_value a[href*="screen=mail"][href*="view="]')]
-  .map(a => ({id: new URL(a.href).searchParams.get('view'), title: a.innerText.trim()}))
-  .filter((m, i, all) => m.id && m.title && all.findIndex(o => o.id === m.id) === i)"""
 
 
 async def _game_data(page: Page) -> dict[str, Any]:
@@ -250,14 +248,14 @@ class Findings:
     """Screens captured and texts read during a sync, kept apart per account until they become lessons."""
 
     captured: ClassVar[dict[int | None, list[str]]] = {}
-    learned: ClassVar[dict[int | None, list[tuple[str, str, str, str]]]] = {}
+    learned: ClassVar[dict[int | None, list[tuple[Any, ...]]]] = {}
 
     @classmethod
     def screens(cls) -> list[str]:
         return cls.captured.setdefault(current_account_id(), [])
 
     @classmethod
-    def texts(cls) -> list[tuple[str, str, str, str]]:
+    def texts(cls) -> list[tuple[Any, ...]]:
         return cls.learned.setdefault(current_account_id(), [])
 
     @classmethod
@@ -369,7 +367,7 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
 
     try:
         await open_screen(page, "mail", village_id)
-        mails = await evaluate_page(page, MAIL_LIST_JS) or []
+        mails = InboxParser.inbox(await page.content())
     except PlaywrightError:
         mails = []
 
@@ -383,7 +381,9 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
 
         try:
             await open_screen(page, "mail", village_id, mode="view", view=mail["id"])
-            Findings.texts().append((key, "mail", mail["title"][:255], await evaluate_page(page, CONTENT_TEXT_JS)))
+            thread = InboxParser.thread(await page.content())
+            transcript = "\n".join(f"{m['author'] or '?'} ({m['date'] or '-'}): {m['text']}" for m in thread["messages"])
+            Findings.texts().append((key, "mail", mail["subject"][:255], transcript, {**mail, "messages": thread["messages"]}))
             budget -= 1
         except PlaywrightError as exc:
             logger.debug("Não foi possível ler a mensagem {}: {}", mail["id"], exc)

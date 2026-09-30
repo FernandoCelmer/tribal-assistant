@@ -18,6 +18,7 @@ from tribal_assistant.core.agents.knob_rules import (
     more_when,
     settle,
 )
+from tribal_assistant.core.agents.social.ledger import SENDS, SocialLedger
 from tribal_assistant.core.models.agent import AgentDecision
 from tribal_assistant.core.models.coordination import CoordinationRound
 from tribal_assistant.core.models.knob import TuningKnob
@@ -129,7 +130,9 @@ class KnobStore:
                 select(AgentDecision.action, AgentDecision.ok, AgentDecision.result).where(AgentDecision.created_at >= since, AgentDecision.dry_run.is_(False))
             )
         ).all()
-        return Tuner.measure([json.loads(r) if isinstance(r, str) else (r or {}) for r in rounds], [tuple(d) for d in decisions])
+        metrics = Tuner.measure([json.loads(r) if isinstance(r, str) else (r or {}) for r in rounds], [tuple(d) for d in decisions])
+        metrics.contacts_unanswered = await SocialLedger(self.session).unanswered_share() or 0.0
+        return metrics
 
 
 class Tuner:
@@ -183,6 +186,9 @@ class Tuner:
         probes = [str(result or "") for action, _, result in decisions or [] if action in ("send_farm_attack", "send_spy")]
         if probes:
             metrics.raids_capped = sum(1 for text in probes if "ataques por hora" in text) / len(probes)
+        sends = [str(result or "") for action, _, result in decisions or [] if action in SENDS]
+        if sends:
+            metrics.mail_capped = sum(1 for text in sends if "mensagens por hora" in text) / len(sends)
         for action, name in (("send_noble", "nobles_failed"), ("send_resources", "shipments_failed")):
             sent = [ok for kind, ok, _ in decisions or [] if kind == action]
             if sent:

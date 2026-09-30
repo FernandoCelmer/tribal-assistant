@@ -8,29 +8,11 @@ from loguru import logger
 
 from tribal_assistant.core.game.human import human_click, human_delay
 from tribal_assistant.core.game.result import ActionResult
+from tribal_assistant.core.game.scraper.social import TribeParser
 from tribal_assistant.core.game.session import game_session
 
 if TYPE_CHECKING:
     from tribal_assistant.core.game.actions import GameActions
-
-TRIBES_JS = """() => {
-  const num = (t) => Number((t || '').replace(/\\D/g, '')) || 0;
-  const tables = [...document.querySelectorAll('table.vis')];
-  const byHead = (text) => tables.find(t => (t.querySelector('th')?.textContent || '').includes(text));
-  const nearby = [...(byHead('Tribos em sua área')?.querySelectorAll('tr') || [])].map(tr => {
-    const cells = tr.querySelectorAll('td');
-    const apply = tr.querySelector('a[href*="mode=apply"]');
-    if (!apply || cells.length < 3) return null;
-    return { id: new URL(apply.href).searchParams.get('id'), tag: cells[0].textContent.trim(), members: num(cells[1].textContent), points: num(cells[2].textContent) };
-  }).filter(Boolean);
-  const invites = [...(byHead('Convites')?.querySelectorAll('tr') || [])].map(tr => {
-    const accept = tr.querySelector('a[href*="accept"]');
-    if (!accept) return null;
-    const url = new URL(accept.href);
-    return { id: url.searchParams.get('id') || url.searchParams.get('invite_id') || accept.href, tag: (tr.querySelector('a[href*="info_ally"]')?.textContent || tr.textContent).trim().slice(0, 40) };
-  }).filter(Boolean);
-  return { in_tribe: !byHead('Tribos em sua área') && !byHead('Convites'), nearby, invites };
-}"""
 
 MENTORS_JS = """() => [...document.querySelectorAll('a[href*="action=accept_mentor"]')].map(a => {
   const card = a.closest('table');
@@ -46,17 +28,15 @@ MENTORS_JS = """() => [...document.querySelectorAll('a[href*="action=accept_ment
   };
 })"""
 
-APPLY_TEXT = "Olá! Jogador ativo todos os dias, crescendo rápido e pronto para ajudar a tribo com apoio e comércio."
-
 
 class Diplomacy:
     def __init__(self, actions: GameActions) -> None:
         self.actions = actions
 
     @staticmethod
-    def best_tribe(nearby: list[dict[str, Any]], skip: set[str]) -> dict[str, Any] | None:
-        candidates = [t for t in nearby if t["id"] not in skip and t.get("members", 0) >= 5]
-        return max(candidates, key=lambda t: (t.get("points", 0), t.get("members", 0)), default=None)
+    def best_tribe(nearby: list[dict[str, Any]], skip: set[str], min_members: int) -> dict[str, Any] | None:
+        candidates = [t for t in nearby if t["id"] not in skip and t.get("members", 0) >= min_members]
+        return max(candidates, key=lambda t: (t.get("score", 0), t.get("points", 0), t.get("members", 0)), default=None)
 
     @staticmethod
     def best_mentor(mentors: list[dict[str, Any]], skip: set[str]) -> dict[str, Any] | None:
@@ -66,22 +46,28 @@ class Diplomacy:
     async def tribes(self, village_id: str) -> dict[str, Any]:
         async with game_session.lock:
             page = await self.actions._in_game(village_id, "ally")
-            return await page.evaluate(TRIBES_JS)
+            html = await page.content()
+        state = TribeParser.state(html)
+        if state["applications"]:
+            self.actions._capture(html, "tribe_applications")
+        return state
 
     async def mentors(self, village_id: str) -> list[dict[str, Any]]:
         async with game_session.lock:
             page = await self.actions._in_game(village_id, "mentor")
             return await page.evaluate(MENTORS_JS)
 
-    async def apply(self, village_id: str, ally_id: str) -> ActionResult:
+    async def apply(self, village_id: str, ally_id: str, text: str) -> ActionResult:
         async with game_session.lock:
             page = await self.actions._in_game(village_id, "info_ally", mode="apply", id=ally_id)
             self.actions._capture(await page.content(), "tribe_apply")
 
-            text = page.locator("form textarea:visible").first
-            if await text.count():
-                await text.fill(APPLY_TEXT)
-                await human_delay(500, 1200)
+            field = page.locator("form textarea:visible").first
+            if not await field.count():
+                return ActionResult(False, "apply_to_tribe", "campo da candidatura não encontrado")
+
+            await field.fill(text)
+            await human_delay(500, 1200)
 
             submit = page.locator('form input[type="submit"]:visible, form button[type="submit"]:visible, form .btn:visible').first
             if not await submit.count():
@@ -112,7 +98,7 @@ class Diplomacy:
                 await page.wait_for_timeout(1_200)
 
             messages = await self.actions.screen_messages(page)
-            state = await page.evaluate(TRIBES_JS) if "screen=ally" in page.url else {"in_tribe": True}
+            state = TribeParser.state(await page.content()) if "screen=ally" in page.url else {"in_tribe": True}
 
         if messages["errors"] or not state.get("in_tribe"):
             return ActionResult(False, "accept_tribe_invite", " | ".join(messages["errors"]) or "o convite não foi aceito")

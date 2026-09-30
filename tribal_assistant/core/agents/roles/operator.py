@@ -55,6 +55,17 @@ class OperatorAgent(VillageAgent):
         "accept_market_offer",
         "create_market_offer",
         "research_unit",
+        "apply_to_tribe",
+        "accept_tribe_invite",
+        "accept_mentor",
+        "read_inbox",
+        "read_thread",
+        "read_tribe",
+        "reply_mail",
+        "send_mail",
+        "accept_friend",
+        "add_friend",
+        "reply_forum",
     )
 
     async def rules(self, box: "Toolbox") -> str:

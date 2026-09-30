@@ -16,9 +16,9 @@ def test_forge_waits_for_three_materials() -> None:
 
 def test_diplomacy_picks_the_strongest_tribe_and_the_recommended_mentor() -> None:
     nearby = [{"id": "239", "tag": "LARGA3", "members": 31, "points": 44304}, {"id": "1289", "tag": "UKR", "members": 1, "points": 183}, {"id": "1165", "tag": "MINA3", "members": 59, "points": 144071}]
-    assert Diplomacy.best_tribe(nearby, set())["tag"] == "MINA3"
-    assert Diplomacy.best_tribe(nearby, {"1165"})["tag"] == "LARGA3"
-    assert Diplomacy.best_tribe(nearby, {"1165", "239"}) is None
+    assert Diplomacy.best_tribe(nearby, set(), 5)["tag"] == "MINA3"
+    assert Diplomacy.best_tribe(nearby, {"1165"}, 5)["tag"] == "LARGA3"
+    assert Diplomacy.best_tribe(nearby, {"1165", "239"}, 5) is None
 
     mentors = [{"id": "1", "name": "Noia Armado", "rank": 234, "recommended": True}, {"id": "2", "name": "Chonguera", "rank": 81, "recommended": False}]
     assert Diplomacy.best_mentor(mentors, set())["name"] == "Noia Armado"

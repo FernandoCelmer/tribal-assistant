@@ -11,6 +11,8 @@ from tribal_assistant.core.agents.proposers.infrastructure import Infrastructure
 from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
 from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
 from tribal_assistant.core.agents.roles.quartermaster import QuartermasterAgent
+from tribal_assistant.core.agents.writer import ProfileWriter
+from tribal_assistant.core.ai.types import Reply
 
 
 def test_best_flag_prefers_production_then_population():
@@ -202,7 +204,6 @@ def test_base_reserve_never_swallows_the_whole_stock():
 
 
 def test_profile_quest_is_detected_until_finished():
-    from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
 
     quest = {"id": "1500", "title": "A aparência importa", "goals": [{"title": "Altere o texto do seu perfil"}]}
     assert UpkeepProposer.profile_quest([quest])
@@ -211,8 +212,6 @@ def test_profile_quest_is_detected_until_finished():
 
 
 async def test_profile_text_comes_from_the_model_and_is_skipped_without_it():
-    from tribal_assistant.core.agents.writer import ProfileWriter
-    from tribal_assistant.core.ai.types import Reply
 
     class Chat:
         async def send(self, results=None):
