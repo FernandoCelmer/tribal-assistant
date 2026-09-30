@@ -43,6 +43,8 @@ class Proposal:
     purpose: str = ""
     key: str = ""
     priority: float = 0.0
+    bonus: float = 1.0
+    explored: bool = False
 
     def __post_init__(self) -> None:
         self.factors.uncertainty = max(self.factors.uncertainty, 1.0 - self.confidence)
@@ -66,6 +68,8 @@ class Proposal:
             "reason": self.reason,
             "expected_benefit": self.expected_benefit,
             "priority": round(self.priority, 1),
+            "bonus": round(self.bonus, 2),
+            "exploration": self.explored,
             "cost": self.cost,
             "troops": self.troops,
             "factors": self.factors.to_dict(),

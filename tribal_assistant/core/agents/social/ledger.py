@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from tribal_assistant.core.agents.knobs import Knobs
 
 SENDS = ("reply_mail", "send_mail", "reply_forum")
+SOCIAL = (*SENDS, "accept_friend", "add_friend", "apply_to_tribe", "accept_tribe_invite", "accept_mentor")
+PENDING = "pendente"
 MENTOR = "social:mentor"
 TRIBE_MEMBERS = "tribe:members"
 FRIENDS = "social:friends"
@@ -129,16 +131,34 @@ class SocialLedger:
     async def get(self, key: str) -> dict[str, Any]:
         return load(await self.repo.get(key))
 
-    async def growth(self, kind: str, current: dict[str, int], refresh_hours: float) -> dict[str, int]:
-        """Points gained since the last snapshot; the snapshot moves forward once it is old enough."""
+    async def last_social_action(self) -> datetime | None:
+        stmt = select(func.max(AgentDecision.created_at)).where(AgentDecision.action.in_(SOCIAL), AgentDecision.ok.is_(True), AgentDecision.dry_run.is_(False))
+        return (await self.session.execute(stmt)).scalar_one_or_none()
+
+    @staticmethod
+    def photos(stored: dict[str, Any]) -> list[dict[str, Any]]:
+        if stored.get("history"):
+            return list(stored["history"])
+        return [{"at": stored["at"], "points": stored.get("points") or {}}] if stored.get("at") else []
+
+    async def rates(self, kind: str, current: dict[str, int], min_hours: float, window_hours: float) -> dict[str, float]:
+        """Points per hour against the oldest photo at least `min_hours` old; a new photo once the last one is that old."""
         key = f"snapshot:{kind}"
-        row = await self.repo.get(key)
-        stored = load(row)
-        before = {str(k): int(v) for k, v in (stored.get("points") or {}).items()}
-        taken = datetime.fromisoformat(stored["at"]) if stored.get("at") else None
-        if taken is None or now() - taken >= timedelta(hours=refresh_hours):
-            await self.repo.observe(key, "social", f"pontos de {kind}", "", {"points": current, "at": now().isoformat()})
-        return {k: v - before[k] for k, v in current.items() if k in before}
+        moment = now()
+        photos = [p for p in self.photos(load(await self.repo.get(key))) if moment - datetime.fromisoformat(p["at"]) <= timedelta(hours=window_hours)]
+
+        rates: dict[str, float] = {}
+        for photo in photos:
+            hours = (moment - datetime.fromisoformat(photo["at"])).total_seconds() / 3600
+            if hours >= min_hours:
+                before = {str(k): int(v) for k, v in (photo.get("points") or {}).items()}
+                rates = {k: round((v - before[k]) / hours, 2) for k, v in current.items() if k in before}
+                break
+
+        if not photos or moment - datetime.fromisoformat(photos[-1]["at"]) >= timedelta(hours=min_hours):
+            photos.append({"at": moment.isoformat(), "points": current})
+            await self.repo.observe(key, "social", f"pontos de {kind}", f"{len(photos)} foto(s)", {"history": photos, "points": None, "at": None})
+        return rates
 
     async def applications(self) -> list[dict[str, Any]]:
         rows = (await self.session.execute(select(Lesson).where(Lesson.topic == "application"))).scalars().all()
@@ -147,6 +167,55 @@ class SocialLedger:
     async def set_application(self, ally_id: str, tag: str, status: str) -> None:
         data = {"ally_id": ally_id, "tag": tag, "status": status, "at": now().isoformat(timespec="minutes")}
         await self.repo.observe(f"application:{ally_id}", "application", f"candidatura {tag or ally_id}", status, data)
+
+    async def rebuild(self) -> list[str]:
+        """Bring back applications and the mentor taken before this ledger existed, from the decisions and lessons kept."""
+        found: dict[str, tuple[str, str, datetime]] = {}
+        mentor: str | None = None
+        rows = await self.session.execute(
+            select(AgentDecision.action, AgentDecision.arguments, AgentDecision.created_at)
+            .where(AgentDecision.action.in_(("apply_to_tribe", "accept_mentor")), AgentDecision.ok.is_(True), AgentDecision.dry_run.is_(False))
+            .order_by(AgentDecision.created_at)
+        )
+        for action, arguments, at in rows.all():
+            args = json.loads(arguments or "{}") if isinstance(arguments, str) else (arguments or {})
+            if action == "apply_to_tribe" and str(args.get("ally_id") or "").isdigit():
+                found[str(args["ally_id"])] = (str(args.get("tag") or ""), action, at)
+            elif action == "accept_mentor" and args.get("name"):
+                mentor = str(args["name"])
+
+        for key, action in (("action:apply_to_tribe:ok", "apply_to_tribe"), ("action:accept_mentor:ok", "accept_mentor")):
+            lesson = await self.repo.get(key)
+            args = load(lesson).get("last_args") or {}
+            if lesson is None:
+                continue
+            if action == "apply_to_tribe" and str(args.get("ally_id") or "").isdigit():
+                found.setdefault(str(args["ally_id"]), (str(args.get("tag") or ""), action, lesson.last_seen))
+            elif action == "accept_mentor" and args.get("name"):
+                mentor = mentor or str(args["name"])
+
+        restored = []
+        for ally_id, (tag, _, at) in found.items():
+            if await self.repo.get(f"application:{ally_id}") is not None:
+                continue
+            tag = tag or await self.tribe_tag(ally_id) or ""
+            row = await self.repo.observe(
+                f"application:{ally_id}",
+                "application",
+                f"candidatura {tag or ally_id}",
+                PENDING,
+                {"ally_id": ally_id, "tag": tag, "status": PENDING, "at": at.isoformat(timespec="minutes"), "rebuilt": True},
+                commit=False,
+            )
+            row.first_seen = at
+            restored.append(f"candidatura {tag or ally_id}")
+
+        if mentor and not (await self.get(MENTOR)).get("name"):
+            await self.repo.observe(MENTOR, "social", "mentor", mentor, {"name": mentor, "rebuilt": True}, commit=False)
+            restored.append(f"mentor {mentor}")
+
+        await self.session.commit()
+        return restored
 
     async def tribe_tag(self, ally_id: str | None) -> str | None:
         if not ally_id or not str(ally_id).isdigit():
@@ -207,15 +276,27 @@ class SocialLedger:
                 closest[player.id] = (player, round(distance, 1))
         return sorted(closest.values(), key=lambda item: item[1])
 
-    async def active_neighbours(self, knobs: "Knobs", skip: set[str]) -> list[dict[str, Any]]:
+    @staticmethod
+    def activity(player: WorldPlayer, rate: float | None, knobs: "Knobs", points: int) -> str | None:
+        """Why a player counts as active: the measured pace, or while there is none, the world data."""
+        if rate is not None:
+            return f"{rate:g} pts/h" if rate >= knobs.get("social.active_growth") else None
+        if player.villages > 1:
+            return f"{player.villages} aldeias"
+        if points and player.points >= knobs.get("social.active_share") * points:
+            return f"{player.points} pts, no ritmo da conta"
+        return None
+
+    async def active_neighbours(self, knobs: "Knobs", skip: set[str], points: int = 0) -> list[dict[str, Any]]:
         around = await self.around(knobs.int("social.neighbour_radius"))
-        growth = await self.growth("players", {str(p.id): p.points for p, _ in around}, knobs.get("social.snapshot_hours"))
-        active = [
-            {"name": p.name, "player_id": str(p.id), "points": p.points, "distance": d, "growth": growth[str(p.id)]}
-            for p, d in around
-            if growth.get(str(p.id), 0) >= knobs.int("social.active_growth") and not any(same(p.name, s) for s in skip)
-        ]
-        return sorted(active, key=lambda n: (n["distance"], -n["growth"]))
+        rates = await self.rates("players", {str(p.id): p.points for p, _ in around}, knobs.get("social.snapshot_hours"), knobs.get("social.activity_window_hours"))
+        active = []
+        for p, d in around:
+            rate = rates.get(str(p.id))
+            why = self.activity(p, rate, knobs, points)
+            if why and not any(same(p.name, s) for s in skip):
+                active.append({"name": p.name, "player_id": str(p.id), "points": p.points, "distance": d, "rate": rate, "why": why})
+        return sorted(active, key=lambda n: (n["distance"], -(n["rate"] or 0)))
 
     async def nearby_tribes(self, knobs: "Knobs") -> list[dict[str, Any]]:
         around = await self.around(knobs.int("diplomacy.search_radius"))
@@ -223,7 +304,7 @@ class SocialLedger:
         if not ally_ids:
             return []
         allies = (await self.session.execute(select(WorldAlly).where(WorldAlly.id.in_(ally_ids)))).scalars().all()
-        growth = await self.growth("allies", {str(a.id): a.points for a in allies}, knobs.get("social.snapshot_hours"))
+        growth = await self.rates("allies", {str(a.id): a.points for a in allies}, knobs.get("social.snapshot_hours"), knobs.get("social.activity_window_hours"))
         return [
             {
                 "id": str(a.id),
@@ -232,7 +313,7 @@ class SocialLedger:
                 "points": a.points,
                 "rank": a.rank,
                 "growth": growth.get(str(a.id)),
-                "score": int(growth.get(str(a.id), 0) >= knobs.int("social.active_growth")),
+                "score": int(growth.get(str(a.id), 0) >= knobs.get("social.active_growth")),
             }
             for a in allies
         ]

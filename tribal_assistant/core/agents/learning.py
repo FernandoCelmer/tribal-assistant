@@ -153,6 +153,33 @@ class LessonBook:
 
         await self.repo.session.commit()
 
+    async def farm_list(self, rows: list[dict[str, Any]]) -> int:
+        """Feed the target lessons from the farm assistant rows; a report already read adds only the farm facts."""
+        learned = 0
+        for row in rows:
+            coords = row.get("coords")
+            report = row.get("report_id")
+            if not coords or not report:
+                continue
+
+            key = f"target:{coords}"
+            lesson = await self.repo.get(key)
+            past = json.loads(lesson.data or "{}") if lesson else {}
+            if past.get("farm_report_id") == report:
+                continue
+
+            fresh = await self.repo.get(f"report:{report}") is None
+            data = TargetIntel.farm_row(past, row, fresh)
+            if lesson is not None and not fresh:
+                lesson.data = json.dumps(data, ensure_ascii=False, default=str)
+                lesson.text = TargetIntel.describe(data)[:300]
+            else:
+                await self.repo.observe(key, "target", f"alvo {coords}", TargetIntel.describe(data), data, commit=False)
+            learned += 1
+
+        await self.repo.session.commit()
+        return learned
+
     async def screens(self, catalog: Any, names: list[str]) -> None:
         for name in names:
             text = catalog.text(name)

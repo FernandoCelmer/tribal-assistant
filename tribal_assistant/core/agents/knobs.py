@@ -1,12 +1,14 @@
 """Every number that gates a decision lives in the database and adjusts itself from how the last hours went."""
 
 import json
+import re
 from datetime import UTC, datetime, timedelta
 from typing import Any, ClassVar
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.agents.coordination.outcomes import OutcomeReader, Outcomes, RoundRecord
 from tribal_assistant.core.agents.knob_catalog import CATALOG
 from tribal_assistant.core.agents.knob_rules import (
     KnobSpec,
@@ -33,6 +35,8 @@ STEP = 0.15
 HISTORY = 30
 MIN_INTERVAL_HOURS = 0.9
 LAST_RUN = "tuning:last_run"
+FARM_HAULS = re.compile(r"(\d+)/(\d+) relatórios com carga cheia")
+RAIDS = ("send_farm_attack", "send_farm_template")
 
 
 class Knobs:
@@ -127,17 +131,36 @@ class KnobStore:
         row.value, row.reason, row.updated_at, row.history = value, reason, now, json.dumps(history[-HISTORY:], ensure_ascii=False)
 
     async def metrics(self) -> Metrics:
-        since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=WINDOW_HOURS)
-        rounds = (await self.session.execute(select(CoordinationRound.data).where(CoordinationRound.created_at >= since))).scalars().all()
+        moment = datetime.now(UTC).replace(tzinfo=None)
+        since = moment - timedelta(hours=WINDOW_HOURS)
+        rows = (
+            await self.session.execute(
+                select(CoordinationRound.village_id, CoordinationRound.created_at, CoordinationRound.data).where(CoordinationRound.created_at >= since)
+            )
+        ).all()
+        records = [RoundRecord(village, at, json.loads(data) if isinstance(data, str) else (data or {})) for village, at, data in rows]
         decisions = (
             await self.session.execute(
                 select(AgentDecision.action, AgentDecision.ok, AgentDecision.result).where(AgentDecision.created_at >= since, AgentDecision.dry_run.is_(False))
             )
         ).all()
-        metrics = Tuner.measure([json.loads(r) if isinstance(r, str) else (r or {}) for r in rounds], [tuple(d) for d in decisions])
-        metrics.contacts_unanswered = await SocialLedger(self.session).unanswered_share() or 0.0
+        metrics = Tuner.measure([r.data for r in records], [tuple(d) for d in decisions])
+        ledger = SocialLedger(self.session)
+        metrics.contacts_unanswered = await ledger.unanswered_share() or 0.0
         metrics.builds_done = float(await FrameRepository(self.session).most_levels_gained(since))
+        last = await ledger.last_social_action()
+        metrics.social_idle = 1.0 if last is None else round(min(1.0, (moment - last).total_seconds() / 3600 / WINDOW_HOURS), 3)
+        await self.learn(metrics, records, since)
         return metrics
+
+    async def learn(self, metrics: Metrics, records: list[RoundRecord], since: datetime) -> None:
+        """What the executed proposals yielded afterwards, per specialist, per factor and for explorations."""
+        knobs = await self.load()
+        outcomes = Outcomes(await OutcomeReader(self.session).evidence(since, WINDOW_HOURS))
+        metrics.yields = outcomes.yields(records)
+        metrics.factor_gaps = outcomes.factor_gaps(records)
+        metrics.explored, metrics.explore_gap = outcomes.explore(records)
+        metrics.repetition = Outcomes.repetition(records, knobs.int("coordinator.repeat_rounds"))
 
 
 class Tuner:
@@ -168,7 +191,7 @@ class Tuner:
                     "storage_full": "enche o armazém em 0." in texts or "armazém enche em 0." in texts or bool(storage),
                     "pop_locked": "população quase no limite" in texts or any("falta população" in w for _, w in whys),
                     "scavenge_idle": "coleta parada" in texts,
-                    "raids_vetoed": any(a == "send_farm_attack" and w.startswith("vetado") for a, w in whys),
+                    "raids_vetoed": any(a in RAIDS and w.startswith("vetado") for a, w in whys),
                     "no_targets": "nenhuma bárbara" in texts.replace("nenhuma bárbara no raio longe o bastante", ""),
                     "threatened": "ATAQUES CHEGANDO" in texts or "ataque chegando" in texts,
                     "iron_short": any(w.startswith("faltam") and " iron" in w for a, w in whys if a == "upgrade_building"),
@@ -179,17 +202,18 @@ class Tuner:
                     counts[name] = counts.get(name, 0) + int(hit)
             for name, hits in counts.items():
                 setattr(metrics, name, hits / len(rounds))
+            metrics.farm_full, metrics.farm_partial = cls.farm_hauls(rounds)
 
         attempts: dict[str, list[bool]] = {}
         for action, ok, result in decisions or []:
             text = str(result or "").lower()
-            if action == "send_farm_attack" and ok is False:
+            if action in RAIDS and ok is False:
                 attempts.setdefault("_raids", []).append(True)
             attempts.setdefault(action, []).append(any(word in text for word in cls.NOTHING) and not ok)
-        raids = [ok for action, ok, _ in decisions or [] if action == "send_farm_attack"]
+        raids = [ok for action, ok, _ in decisions or [] if action in RAIDS]
         if raids:
             metrics.raids_lost = sum(1 for ok in raids if not ok) / len(raids)
-        probes = [str(result or "") for action, _, result in decisions or [] if action in ("send_farm_attack", "send_spy")]
+        probes = [str(result or "") for action, _, result in decisions or [] if action in (*RAIDS, "send_spy")]
         if probes:
             metrics.raids_capped = sum(1 for text in probes if "ataques por hora" in text) / len(probes)
         sends = [str(result or "") for action, _, result in decisions or [] if action in SENDS]
@@ -201,6 +225,20 @@ class Tuner:
                 setattr(metrics, name, sum(1 for ok in sent if not ok) / len(sent))
         metrics.nothing_to_do = {a: sum(v) / len(v) for a, v in attempts.items() if not a.startswith("_") and len(v) >= 3}
         return metrics
+
+    @staticmethod
+    def farm_hauls(rounds: list[dict[str, Any]]) -> tuple[float, float]:
+        """Average share of farm assistant rows that came back full, and of those that did not."""
+        shares = []
+        for data in rounds:
+            for insight in data.get("insights") or []:
+                found = FARM_HAULS.search(str(insight.get("text", ""))) if insight.get("key") == "farm_hauls" else None
+                if found and int(found.group(2)):
+                    shares.append(int(found.group(1)) / int(found.group(2)))
+        if not shares:
+            return 0.0, 0.0
+        full = sum(shares) / len(shares)
+        return full, 1 - full
 
     @staticmethod
     def plan(knobs: Knobs, metrics: Metrics) -> list[tuple[str, float, str]]:

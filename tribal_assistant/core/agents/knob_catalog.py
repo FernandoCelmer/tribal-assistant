@@ -2,17 +2,25 @@
 
 from dataclasses import fields
 
-from tribal_assistant.core.agents.coordination.strategy import WEIGHTS, Weights
+from tribal_assistant.core.agents.coordination.strategy import (
+    PENALTIES,
+    SPECIALISTS,
+    WEIGHTS,
+    Weights,
+)
 from tribal_assistant.core.agents.knob_rules import (
     KnobSpec,
     cooldown,
     cooldowns,
     either,
+    exploration,
+    factor_yield,
     less_when,
     less_when_many,
     more_when,
     settle,
     settle_when_few,
+    specialist_yield,
 )
 
 ROLE_LIMITS = {
@@ -46,6 +54,9 @@ NOBLES_FAILED_UP = either(more_when("nobles_failed", 0.3, "nobres falhando"), se
 MAIL_CAPPED_UP = either(more_when("mail_capped", 0.5, "respostas barradas pelo limite por hora"), settle("mail_capped", 0.05, "respostas barradas pelo limite por hora"))
 CONTACTS_IGNORED_DOWN = either(less_when("contacts_unanswered", 0.8, "apresentações sem resposta"), settle("contacts_unanswered", 0.5, "apresentações sem resposta"))
 BUILDS_DONE = either(less_when_many("builds_done", 3, "níveis de edifício concluídos na janela"), settle_when_few("builds_done", 1, "níveis de edifício concluídos na janela"))
+SOCIAL_IDLE_DOWN = either(less_when("social_idle", 0.8, "tempo sem nenhuma ação social"), settle("social_idle", 0.3, "tempo sem nenhuma ação social"))
+SOCIAL_IDLE_UP = either(more_when("social_idle", 0.8, "tempo sem nenhuma ação social"), settle("social_idle", 0.3, "tempo sem nenhuma ação social"))
+LEARNING_MARGIN = 0.15
 SHIPMENTS_FAILED_UP = either(more_when("shipments_failed", 0.3, "envios entre aldeias falhando"), settle("shipments_failed", 0.05, "envios entre aldeias falhando"))
 
 
@@ -70,8 +81,16 @@ def _weights() -> dict[str, KnobSpec]:
     specs = {}
     for role, weights in WEIGHTS.items():
         for item in fields(Weights):
-            specs[f"weight.{role.value}.{item.name}"] = KnobSpec(getattr(weights, item.name), f"peso de {item.name} na prioridade do papel {role.value}", share=True)
+            rule = factor_yield(role.value, item.name, item.name in PENALTIES, LEARNING_MARGIN)
+            specs[f"weight.{role.value}.{item.name}"] = KnobSpec(getattr(weights, item.name), f"peso de {item.name} na prioridade do papel {role.value}", rule, share=True)
     return specs
+
+
+def _bonuses() -> dict[str, KnobSpec]:
+    return {
+        f"bonus.{source}": KnobSpec(1.0, f"multiplicador aprendido da prioridade das propostas de {source}, pelo que elas renderam", specialist_yield(source, LEARNING_MARGIN))
+        for source in SPECIALISTS
+    }
 
 
 CATALOG: dict[str, KnobSpec] = {
@@ -133,19 +152,22 @@ CATALOG: dict[str, KnobSpec] = {
     "diplomacy.search_radius": KnobSpec(20, "raio em campos da busca de tribos nos dados do mundo", integer=True),
     "diplomacy.forums_read": KnobSpec(2, "subfóruns da tribo lidos por visita", integer=True),
     "cooldown.mail": KnobSpec(0.5, "horas entre leituras da caixa de entrada", cooldown("reply_mail")),
-    "cooldown.buddies": KnobSpec(6, "horas entre visitas à lista de amigos", cooldowns("accept_friend", "add_friend")),
-    "cooldown.friend_request": KnobSpec(12, "horas entre pedidos de amizade enviados", cooldown("add_friend")),
-    "cooldown.outreach": KnobSpec(6, "horas entre apresentações a jogadores novos", cooldown("send_mail")),
+    "cooldown.buddies": KnobSpec(6, "horas entre visitas à lista de amigos", either(cooldowns("accept_friend", "add_friend"), SOCIAL_IDLE_DOWN)),
+    "cooldown.friend_request": KnobSpec(12, "horas entre pedidos de amizade enviados", either(cooldown("add_friend"), SOCIAL_IDLE_DOWN)),
+    "cooldown.outreach": KnobSpec(6, "horas entre apresentações a jogadores novos", either(cooldown("send_mail"), SOCIAL_IDLE_DOWN)),
     "cooldown.tribe_read": KnobSpec(12, "horas entre leituras do fórum, anúncios e membros da tribo", cooldown("reply_forum")),
     "social.messages_per_hour": KnobSpec(3, "mensagens enviadas por hora (respostas, apresentações e fórum)", MAIL_CAPPED_UP, integer=True),
-    "social.first_contacts_per_day": KnobSpec(2, "primeiros contatos com jogadores novos por dia", CONTACTS_IGNORED_DOWN, integer=True),
+    "social.first_contacts_per_day": KnobSpec(2, "primeiros contatos com jogadores novos por dia", either(less_when("contacts_unanswered", 0.8, "apresentações sem resposta"), more_when("social_idle", 0.8, "tempo sem nenhuma ação social"), CONTACTS_IGNORED_DOWN), integer=True),
     "social.replies_per_round": KnobSpec(2, "conversas respondidas por rodada", MAIL_CAPPED_UP, integer=True),
     "social.threads_per_round": KnobSpec(5, "conversas abertas e lidas por rodada", integer=True),
     "social.history_messages": KnobSpec(12, "mensagens da conversa que a IA lê antes de responder", integer=True),
     "social.friend_target": KnobSpec(5, "amizades buscadas (a conquista Amigo fiel pede 5)", integer=True),
-    "social.neighbour_radius": KnobSpec(10, "raio em campos de um vizinho para amizade e apresentação", integer=True),
-    "social.active_growth": KnobSpec(50, "pontos ganhos entre duas fotos para um jogador ou tribo contar como ativo", integer=True),
-    "social.snapshot_hours": KnobSpec(24, "horas entre fotos de pontos para medir quem está ativo"),
+    "social.neighbour_radius": KnobSpec(10, "raio em campos de um vizinho para amizade e apresentação", SOCIAL_IDLE_UP, integer=True),
+    "social.active_growth": KnobSpec(5, "pontos por hora entre duas fotos para um jogador ou tribo contar como ativo", SOCIAL_IDLE_DOWN),
+    "social.snapshot_hours": KnobSpec(1, "horas mínimas entre duas fotos de pontos para medir o ritmo de quem está ativo", SOCIAL_IDLE_DOWN),
+    "social.activity_window_hours": KnobSpec(24, "idade máxima em horas da foto de pontos mais antiga usada para medir o ritmo"),
+    "social.active_share": KnobSpec(0.5, "fração dos nossos pontos que torna provável um vizinho ainda sem histórico estar ativo", SOCIAL_IDLE_DOWN, share=True),
+    "social.follow_up_hours": KnobSpec(1, "horas depois da candidatura para escrever ao líder da tribo", SOCIAL_IDLE_DOWN),
     "pacing.main_early_cap": KnobSpec(10, "edifício principal antes do portão do estábulo", integer=True),
     "pacing.iron_gap": KnobSpec(3, "níveis que a mina de ferro fica abaixo até o estábulo", either(IRON_SHORT_DOWN, IRON_CALM), integer=True),
     "raid.min_confidence": KnobSpec(0.35, "confiança mínima para saquear", either(RAIDS_LOST_UP, less_when("raids_vetoed", 0.5, "saques vetados demais")), share=True),
@@ -163,6 +185,11 @@ CATALOG: dict[str, KnobSpec] = {
     "raid.history_margin": KnobSpec(1.15, "folga de carga sobre o saque médio"),
     "raid.wall_light_factor": KnobSpec(1.0, "multiplicador da cavalaria leve pela muralha", either(RAIDS_LOST_UP, RAIDS_CALM)),
     "raid.ram_wall": KnobSpec(3, "muralha a partir da qual só com aríetes", integer=True),
+    "farm.template_a_carry": KnobSpec(400, "carga do modelo A do assistente de saque (grupo pequeno, muralha 0)", either(more_when("farm_full", 0.6, "saques do assistente voltando cheios"), less_when("farm_partial", 0.8, "saques do assistente voltando com sobra")), integer=True),
+    "farm.template_b_carry": KnobSpec(1200, "carga do modelo B do assistente de saque (grupo maior, cheio recorrente ou muralha 1-2)", either(more_when("farm_full", 0.4, "saques do assistente voltando cheios"), less_when("farm_partial", 0.8, "saques do assistente voltando com sobra")), integer=True),
+    "farm.full_streak_b": KnobSpec(2, "saques cheios seguidos que mandam o alvo para o modelo B", either(less_when("farm_full", 0.6, "saques do assistente voltando cheios"), settle("farm_full", 0.2, "saques do assistente voltando cheios")), integer=True),
+    "farm.template_tolerance": KnobSpec(0.25, "diferença entre o modelo salvo e o ideal que pede salvar de novo", share=True),
+    "farm.recheck_hours": KnobSpec(6, "horas até olhar de novo um assistente de saque indisponível"),
     "defense.prepare_hours": KnobSpec(72, "horas antes do fim da proteção para preparar a defesa", THREAT_UP),
     "defense.wall_target": KnobSpec(8, "muralha da preparação", THREAT_UP, integer=True),
     "defense.spear_target": KnobSpec(80, "lanceiros da preparação", THREAT_UP, integer=True),
@@ -193,7 +220,10 @@ CATALOG: dict[str, KnobSpec] = {
     "learning.repeat_limit": KnobSpec(2, "falhas iguais antes de bloquear a ação", integer=True),
     "coordinator.max_actions": KnobSpec(10, "ações por rodada", either(more_when("actions_capped", 0.3, "rodadas no limite de ações"), settle("actions_capped", 0.05, "rodadas no limite de ações")), integer=True),
     "coordinator.recent_minutes": KnobSpec(10, "minutos em que uma ação feita espera o jogo confirmar", integer=True),
+    "coordinator.explore_rate": KnobSpec(0.1, "chance de a rodada explorar uma proposta viável que não seria a primeira", exploration(0.5, -LEARNING_MARGIN, 4), share=True),
+    "coordinator.repeat_rounds": KnobSpec(3, "rodadas seguidas com as mesmas ações que contam como repetição", integer=True),
     **_weights(),
+    **_bonuses(),
     "intel.stale_hours": KnobSpec(24, "horas para um relatório virar velho"),
     "knight.train_stock_multiple": KnobSpec(4, "vezes o custo do treino que o menor recurso precisa ter", STORAGE_DOWN_OR_CALM),
     "knight.train_full_share": KnobSpec(0.8, "armazém cheio a partir desta fração libera o treino", STORAGE_DOWN_OR_CALM, share=True),

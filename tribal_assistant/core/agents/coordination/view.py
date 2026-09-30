@@ -77,12 +77,18 @@ class CoordinationView:
 
     async def cooldown(self, name: str, hours: float | None = None) -> bool:
         """Once per tuned interval (knob cooldown.<name>) for this village."""
-        key = f"{name}:{self.ctx.game_id}"
-        if not await self.lessons.due(key, hours if hours is not None else self.knobs.get(f"cooldown.{name}")):
+        if not await self.due(name, hours):
             return False
 
-        await self.lessons.mark(key)
+        await self.mark(name)
         return True
+
+    async def due(self, name: str, hours: float | None = None) -> bool:
+        """Whether the tuned interval passed, without starting a new one."""
+        return await self.lessons.due(f"{name}:{self.ctx.game_id}", hours if hours is not None else self.knobs.get(f"cooldown.{name}"))
+
+    async def mark(self, name: str) -> None:
+        await self.lessons.mark(f"{name}:{self.ctx.game_id}")
 
     def note(self, insight: Insight) -> None:
         self.insights.append(insight)

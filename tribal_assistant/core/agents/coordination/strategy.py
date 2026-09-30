@@ -63,3 +63,19 @@ WEIGHTS = {
     Role.EXPANSION: Weights(0.2, 0.45, 0.15, 0.15, 0.1, 0.1),
     Role.EMERGENCY: Weights(0.45, 0.05, 0.45, 0.05, 0.05, 0.1),
 }
+
+SPECIALISTS = (
+    "defense",
+    "economy",
+    "infrastructure",
+    "recruitment",
+    "attack",
+    "expansion",
+    "conquest",
+    "logistics",
+    "intelligence",
+    "steward",
+    "diplomacy",
+    "social",
+)
+PENALTIES = ("opportunity_cost", "uncertainty")

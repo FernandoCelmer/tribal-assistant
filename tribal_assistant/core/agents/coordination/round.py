@@ -10,11 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.coordinator import Coordinator, Decision
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
+from tribal_assistant.core.agents.coordination.outcomes import Outcomes
 from tribal_assistant.core.agents.coordination.policy import Policy
 from tribal_assistant.core.agents.coordination.proposal import Proposal
 from tribal_assistant.core.agents.coordination.roles import RoleSelector
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import KnobStore
+from tribal_assistant.core.agents.knobs import Knobs, KnobStore
 from tribal_assistant.core.agents.proposers.attack import AttackProposer
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.conquest import ConquestProposer
@@ -139,6 +140,9 @@ class VillageRound:
         before = view.estimator.insights()
         decision = await Coordinator(view).run(proposals, constraints, reservations, execute)
         insights = before + view.insights
+        data = decision.to_dict(insights)
+        await self._streak(ctx, data, knobs)
+        decision.learned = data["learned"]
 
         await CoordinationRepository(self.session).save_round(
             self.run_id,
@@ -147,10 +151,18 @@ class VillageRound:
             decision.mode.value,
             decision.goal,
             decision.next_review_at,
-            decision.to_dict(insights),
+            data,
         )
         await self._trace("summary", decision.summary())
         return decision, insights
+
+    async def _streak(self, ctx: VillageContext, data: dict[str, Any], knobs: Knobs) -> None:
+        """How many rounds in a row this village executed the same actions, for the panel and the tuner."""
+        limit = knobs.int("coordinator.repeat_rounds")
+        rows = await CoordinationRepository(self.session).history(ctx.id, limit=limit * 4)
+        history = [data, *(json.loads(row.data) if isinstance(row.data, str) else (row.data or {}) for row in rows)]
+        streak = Outcomes.streak(history)
+        data["learned"] = {**data.get("learned", {}), "streak": streak, "repeated": streak >= limit}
 
     async def _recent(self, ctx: VillageContext, minutes: int = 10) -> set[str]:
         keys = set()

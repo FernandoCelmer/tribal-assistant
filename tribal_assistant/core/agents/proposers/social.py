@@ -3,16 +3,18 @@
 Never with the other accounts run here, never in bulk, every text written by the model from real data.
 """
 
+from datetime import timedelta
 from typing import Any
 
 from loguru import logger
 
+from tribal_assistant.core.agents.coordination.insight import Certainty, Insight
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import knob_int
+from tribal_assistant.core.agents.knobs import knob, knob_int
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.diplomacy import PENDING, lead
-from tribal_assistant.core.agents.social.ledger import FRIENDS, TRIBE_MEMBERS, SocialLedger
+from tribal_assistant.core.agents.social.ledger import FRIENDS, TRIBE_MEMBERS, SocialLedger, now
 from tribal_assistant.core.agents.social.rules import SocialRules, same
 from tribal_assistant.core.agents.social.writer import SocialWriter
 
@@ -27,10 +29,19 @@ class SocialProposer(Proposer):
 
     def __init__(self, writer: SocialWriter | None = None) -> None:
         self.writer = writer or SocialWriter()
+        self.notes: list[str] = []
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
-        if view.dry_run or not lead(view):
+        if not lead(view):
             return []
+        if view.dry_run:
+            self.explain(view, [], ["modo leitura: nada é enviado a outros jogadores"])
+            return []
+
+        self.notes = []
+        restored = await SocialLedger(view.session).rebuild()
+        if restored:
+            self.notes.append(f"recuperado do histórico: {', '.join(restored)}")
 
         items: list[Proposal] = []
         for step in (self._inbox, self._friends, self._tribe, self._outreach):
@@ -38,8 +49,16 @@ class SocialProposer(Proposer):
                 items += await step(view)
             except Exception as exc:
                 view.note_error = str(exc)
+                self.notes.append(f"{step.__name__.strip('_')} falhou: {exc}")
                 logger.warning("Passo social {} falhou: {}", step.__name__, exc)
+        self.explain(view, items, self.notes)
         return items
+
+    def explain(self, view: CoordinationView, items: list[Proposal], notes: list[str]) -> None:
+        """Say in the round why the social specialist proposed what it did, or nothing at all."""
+        head = f"social: {len(items)} proposta(s)" if items else "social sem proposta"
+        text = f"{head}: {'; '.join(notes)}" if notes else head
+        view.note(Insight("social", text, Certainty.FACT, now(), 1.0, len(items), self.key, {"notes": notes}))
 
     def _proposal(self, action: str, arguments: dict[str, Any], reason: str, benefit: str, urgency: float, impact: float) -> Proposal:
         return Proposal(
@@ -67,13 +86,15 @@ class SocialProposer(Proposer):
 
     async def _inbox(self, view: CoordinationView) -> list[Proposal]:
         if not await view.cooldown("mail"):
+            self.notes.append("caixa lida há pouco")
             return []
 
         ledger = SocialLedger(view.session)
         me, managed = self.me(view), await ledger.managed()
         facts: dict[str, Any] | None = None
         opened, items = 0, []
-        for mail in await view.actions.social.inbox(view.ctx.game_id):
+        mails = await view.actions.social.inbox(view.ctx.game_id)
+        for mail in mails:
             if len(items) >= knob_int(view, "social.replies_per_round") or opened >= knob_int(view, "social.threads_per_round"):
                 break
 
@@ -94,6 +115,8 @@ class SocialProposer(Proposer):
             proposal = await self.answer(view, ledger, mail, thread, stored, me, managed, facts)
             if proposal is not None:
                 items.append(proposal)
+        if not items:
+            self.notes.append(f"caixa lida: {len(mails)} conversa(s), {opened} aberta(s), nenhuma resposta pendente")
         return items
 
     async def answer(
@@ -146,6 +169,7 @@ class SocialProposer(Proposer):
 
     async def _friends(self, view: CoordinationView) -> list[Proposal]:
         if not await view.cooldown("buddies"):
+            self.notes.append("lista de amigos lida há pouco")
             return []
 
         ledger = SocialLedger(view.session)
@@ -163,23 +187,36 @@ class SocialProposer(Proposer):
             if not own(r["name"])
         ]
 
-        if len(friends) + len(outgoing) + len(items) >= knob_int(view, "social.friend_target") or not await view.cooldown("friend_request"):
+        target = knob_int(view, "social.friend_target")
+        if len(friends) + len(outgoing) + len(items) >= target:
+            self.notes.append(f"{len(friends)} amigo(s) e {len(outgoing)} pedido(s): alvo de {target} alcançado")
+            return items
+        if not await view.due("friend_request"):
+            self.notes.append("pedido de amizade feito há pouco")
             return items
 
         known = {n["name"] for n in friends + outgoing + found["incoming"]}
         members = sorted((await ledger.get(TRIBE_MEMBERS)).get("members") or [], key=lambda m: -int(m.get("points") or 0))
         candidates = [(m["name"], "colega de tribo") for m in members]
-        candidates += [(n["name"], f"vizinho ativo a {n['distance']} campos") for n in await ledger.active_neighbours(view.knobs, managed | {me})]
+        candidates += [(n["name"], f"vizinho ativo a {n['distance']} campos ({n['why']})") for n in await self.neighbours(view, ledger, managed | {me})]
         pick = next(((name, why) for name, why in candidates if not own(name) and not any(same(name, k) for k in known)), None)
         if pick is None:
+            self.notes.append("sem colega de tribo nem vizinho ativo conhecido ainda para pedir amizade")
             return items
 
+        await view.mark("friend_request")
         name, why = pick
-        return [*items, self._proposal("add_friend", {"name": name}, f"amizade: {why}", "amizade para a conquista Amigo fiel", 0.2, 0.3)]
+        return [*items, self._proposal("add_friend", {"name": name}, f"amizade: {why}", "amizade para a conquista Amigo fiel", 0.3, 0.3)]
+
+    async def neighbours(self, view: CoordinationView, ledger: SocialLedger, skip: set[str]) -> list[dict[str, Any]]:
+        return await ledger.active_neighbours(view.knobs, skip, int((view.ctx.player or {}).get("points") or 0))
 
     async def _tribe(self, view: CoordinationView) -> list[Proposal]:
         ally_id = (view.ctx.player or {}).get("ally_id")
-        if not ally_id or not await view.cooldown("tribe_read"):
+        if not ally_id:
+            return []
+        if not await view.cooldown("tribe_read"):
+            self.notes.append("fórum da tribo lido há pouco")
             return []
 
         ledger = SocialLedger(view.session)
@@ -209,33 +246,53 @@ class SocialProposer(Proposer):
             )
         ]
 
-    async def _outreach(self, view: CoordinationView) -> list[Proposal]:
-        if not await view.cooldown("outreach"):
-            return []
-
-        ledger = SocialLedger(view.session)
-        if await ledger.first_contacts_since(24) >= knob_int(view, "social.first_contacts_per_day"):
-            return []
-
-        me, managed = self.me(view), await ledger.managed()
-        targets: list[tuple[str, str, str]] = []
+    async def followups(self, view: CoordinationView, ledger: SocialLedger) -> list[tuple[str, str, str, float]]:
+        """Leaders of the tribes with a pending application, once the application is old enough to follow up."""
+        targets = []
+        wait = timedelta(hours=knob(view, "social.follow_up_hours"))
         for application in await ledger.applications():
             if application.get("status") != PENDING:
                 continue
+            tag = application.get("tag") or application.get("ally_id")
+            if now() - application["first_seen"] < wait:
+                self.notes.append(f"candidatura à tribo {tag}: contato com o líder depois de {wait.total_seconds() / 3600:g}h")
+                continue
             leader = await ledger.top_member(str(application.get("ally_id")))
-            if leader is not None:
-                targets.append((leader.name, "intro_leader", f"candidatura enviada à tribo {application.get('tag')}"))
-        targets += [(n["name"], "intro_neighbour", f"vizinho ativo a {n['distance']} campos") for n in await ledger.active_neighbours(view.knobs, managed | {me})]
+            if leader is None:
+                self.notes.append(f"candidatura à tribo {tag}: líder desconhecido nos dados do mundo")
+                continue
+            reason = f"candidatura enviada à tribo {tag}; aviso curto ao líder {leader.name} e apresentação"
+            targets.append((leader.name, "intro_leader", reason, 0.4))
+        return targets
 
-        for name, kind, reason in targets:
+    async def _outreach(self, view: CoordinationView) -> list[Proposal]:
+        if not await view.due("outreach"):
+            self.notes.append("apresentação feita há pouco")
+            return []
+
+        ledger = SocialLedger(view.session)
+        daily = knob_int(view, "social.first_contacts_per_day")
+        if await ledger.first_contacts_since(24) >= daily:
+            self.notes.append(f"limite de {daily} primeiros contatos no dia")
+            return []
+
+        me, managed = self.me(view), await ledger.managed()
+        targets = await self.followups(view, ledger)
+        targets += [(n["name"], "intro_neighbour", f"vizinho ativo a {n['distance']} campos ({n['why']})", 0.2) for n in await self.neighbours(view, ledger, managed | {me})]
+
+        for name, kind, reason, urgency in targets:
             if same(name, me) or any(same(name, other) for other in managed) or await ledger.contact(name):
                 continue
 
+            await view.mark("outreach")
             card = await ledger.card(name, view.ctx.player, view.knobs)
             written = await self.writer.intro(await self.facts(view, ledger), card, reason)
             if written.text is None or written.subject is None:
+                self.notes.append(f"apresentação a {name} não escrita: {written.skipped}")
                 logger.info("Apresentação a {} não escrita: {}", name, written.skipped)
                 return []
 
-            return [self._proposal("send_mail", {"to": name, "subject": written.subject, "text": written.text, "kind": kind}, reason, "contato novo com quem importa por perto", 0.2, 0.3)]
+            return [self._proposal("send_mail", {"to": name, "subject": written.subject, "text": written.text, "kind": kind}, reason, "contato novo com quem importa por perto", urgency, 0.3)]
+
+        self.notes.append("sem candidatura pendente para acompanhar nem vizinho ativo novo para apresentar")
         return []

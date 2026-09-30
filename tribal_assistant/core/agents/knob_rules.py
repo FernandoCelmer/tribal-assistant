@@ -28,6 +28,14 @@ class Metrics:
     mail_capped: float = 0.0
     contacts_unanswered: float = 0.0
     builds_done: float = 0.0
+    farm_full: float = 0.0
+    farm_partial: float = 0.0
+    social_idle: float = 0.0
+    repetition: float = 0.0
+    explored: int = 0
+    explore_gap: float = 0.0
+    yields: dict[str, float] = field(default_factory=dict)
+    factor_gaps: dict[str, float] = field(default_factory=dict)
     nothing_to_do: dict[str, float] = field(default_factory=dict)
 
 
@@ -95,3 +103,52 @@ def less_when_many(metric: str, above: float, why: str) -> Rule:
 def settle_when_few(metric: str, below: float, why: str) -> Rule:
     """Like settle for a count instead of a share."""
     return lambda m: (0, f"{why}: só {getattr(m, metric):g}, volta ao padrão") if getattr(m, metric) < below else None
+
+
+def specialist_yield(source: str, margin: float) -> Rule:
+    """Bonus of a specialist: up when its actions yield more than the average specialist, down when less."""
+
+    def rule(m: Metrics) -> tuple[int, str] | None:
+        value = m.yields.get(source)
+        if value is None or len(m.yields) < 2:
+            return 0, f"{source} sem resultado medido: volta ao padrão"
+        mean = sum(m.yields.values()) / len(m.yields)
+        if value - mean > margin:
+            return +1, f"{source} rende {value:+.2f} contra média {mean:+.2f}"
+        if mean - value > margin:
+            return -1, f"{source} rende {value:+.2f} contra média {mean:+.2f}"
+        return 0, f"{source} rende na média ({value:+.2f}): volta ao padrão"
+
+    return rule
+
+
+def factor_yield(role: str, factor: str, penalty: bool, margin: float) -> Rule:
+    """Weight of a factor in a role: up when proposals strong in it yielded more, down when they yielded less."""
+
+    def rule(m: Metrics) -> tuple[int, str] | None:
+        gap = m.factor_gaps.get(f"{role}.{factor}")
+        if gap is None:
+            return 0, f"{factor} no papel {role} sem medição: volta ao padrão"
+        signed = -gap if penalty else gap
+        if signed > margin:
+            return +1, f"propostas com {factor} alto rendem {gap:+.2f} no papel {role}"
+        if signed < -margin:
+            return -1, f"propostas com {factor} alto rendem {gap:+.2f} no papel {role}"
+        return 0, f"{factor} no papel {role} sem diferença ({gap:+.2f}): volta ao padrão"
+
+    return rule
+
+
+def exploration(repeat_above: float, worse_below: float, samples: int) -> Rule:
+    """More exploration when rounds repeat themselves, less when explored actions yield worse than the usual ones."""
+
+    def rule(m: Metrics) -> tuple[int, str] | None:
+        if m.explored >= samples and m.explore_gap < worse_below:
+            return -1, f"explorações rendem {m.explore_gap:+.2f} abaixo das escolhas normais"
+        if m.repetition > repeat_above:
+            return +1, f"rodadas repetindo as mesmas ações ({m.repetition:.0%})"
+        if m.explored >= samples and m.explore_gap > -worse_below:
+            return +1, f"explorações rendem {m.explore_gap:+.2f} acima das escolhas normais"
+        return 0, f"rodadas variadas ({m.repetition:.0%} repetidas): volta ao padrão"
+
+    return rule

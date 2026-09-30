@@ -1,5 +1,6 @@
 """Turns proposals into an executed plan: role and mode, reservations, vetoes, scores, deferrals."""
 
+import random
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field, fields
 from datetime import datetime, timedelta
@@ -11,7 +12,7 @@ from tribal_assistant.core.agents.coordination.insight import now
 from tribal_assistant.core.agents.coordination.proposal import Proposal
 from tribal_assistant.core.agents.coordination.strategy import GOALS, LABELS, Role, Weights
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import knob_int, tuning
+from tribal_assistant.core.agents.knobs import knob, knob_int, tuning
 
 Execute = Callable[[Proposal], Awaitable[tuple[bool, str]]]
 BUILD_ACTIONS = ("upgrade_building",)
@@ -27,6 +28,8 @@ class Decision:
     constraints: list[Constraint] = field(default_factory=list)
     budget: Budget | None = None
     next_review_at: datetime | None = None
+    exploration: dict[str, Any] | None = None
+    learned: dict[str, Any] = field(default_factory=dict)
 
     def next_action(self) -> dict[str, Any] | None:
         done = [e for e in self.executed if e["ok"]]
@@ -39,6 +42,8 @@ class Decision:
         ok = [e["title"] for e in self.executed if e["ok"]]
         parts = [f"modo {LABELS[self.mode]}"]
         parts.append(f"feito: {', '.join(ok)}" if ok else "nada executado")
+        if self.exploration:
+            parts.append(self.exploration["reason"])
         if self.deferred:
             parts.append(f"{len(self.deferred)} adiada(s), 1ª: {self.deferred[0]['title']} ({self.deferred[0]['why']})")
 
@@ -58,22 +63,31 @@ class Decision:
             "budget": self.budget.to_dict() if self.budget else {},
             "insights": [i.to_dict() for i in insights],
             "next_review_at": self.next_review_at.isoformat() if self.next_review_at else None,
+            "exploration": self.exploration,
+            "learned": self.learned,
         }
 
 
 class Coordinator:
-    def __init__(self, view: CoordinationView) -> None:
+    def __init__(self, view: CoordinationView, rng: random.Random | None = None) -> None:
         self.view = view
         self.budget = Budget(view.ctx)
+        self.rng = rng or random.Random()
 
     def weights(self, mode: Role) -> Weights:
         knobs = tuning(self.view)
         return Weights(**{item.name: knobs.get(f"weight.{mode.value}.{item.name}") for item in fields(Weights)})
 
+    def bonus(self, source: str) -> float:
+        name = f"bonus.{source}"
+        knobs = tuning(self.view)
+        return knobs.get(name) if name in knobs.SPECS else 1.0
+
     def score(self, proposals: list[Proposal], mode: Role) -> list[Proposal]:
         weights = self.weights(mode)
         for proposal in proposals:
-            proposal.priority = weights.score(proposal.factors)
+            proposal.bonus = self.bonus(proposal.source)
+            proposal.priority = round(weights.score(proposal.factors) * proposal.bonus, 1)
 
         return sorted(proposals, key=lambda p: (-p.priority, p.deadline or datetime.max))
 
@@ -95,11 +109,15 @@ class Coordinator:
         slots = view.free_slots
         done = 0
 
-        for proposal in self.score(self._unique(proposals), view.role):
-            why = self._blocked(proposal, constraints, chosen, failed, slots, done)
-            if not why and not self.view.dry_run:
-                learned = await self.view.lessons.blocked(proposal.action, proposal.arguments, tuning(self.view))
-                why = learned.replace("RECUSADO: ", "") if learned else None
+        ordered = self.score(self._unique(proposals), view.role)
+        decision.exploration = await self._explore(ordered, constraints)
+        decision.learned = {
+            "bonus": {source: round(self.bonus(source), 2) for source in sorted({p.source for p in ordered})},
+            "explore_rate": round(knob(view, "coordinator.explore_rate"), 3),
+        }
+
+        for proposal in ordered:
+            why = self._blocked(proposal, constraints, chosen, failed, slots, done) or await self._learned(proposal)
 
             if why:
                 decision.deferred.append(self._entry(proposal, why=why))
@@ -120,6 +138,43 @@ class Coordinator:
 
         decision.next_review_at = self._next_review(decision)
         return decision
+
+    async def _learned(self, proposal: Proposal) -> str | None:
+        if self.view.dry_run:
+            return None
+        learned = await self.view.lessons.blocked(proposal.action, proposal.arguments, tuning(self.view))
+        return learned.replace("RECUSADO: ", "") if learned else None
+
+    async def _explore(self, ordered: list[Proposal], constraints: list[Constraint]) -> dict[str, Any] | None:
+        """Now and then promote a viable proposal that would not come first; vetoes, reserves and limits still apply."""
+        view = self.view
+        rate = knob(view, "coordinator.explore_rate")
+        if view.dry_run or view.role == Role.EMERGENCY or self.rng.random() >= rate:
+            return None
+
+        viable = []
+        for proposal in ordered:
+            if proposal.priority > 0 and not self._blocked(proposal, constraints, set(), set(), view.free_slots, 0) and not await self._learned(proposal):
+                viable.append(proposal)
+        if len(viable) < 2:
+            return None
+
+        first, pick = viable[0], self.rng.choice(viable[1:])
+        ordered.remove(pick)
+        ordered.insert(0, pick)
+        pick.explored = True
+        if "reason" in pick.arguments:
+            pick.arguments["reason"] = f"exploração: {pick.arguments['reason']}"[:60]
+        return {
+            "key": pick.key,
+            "title": pick.title(),
+            "source": pick.source,
+            "priority": pick.priority,
+            "instead_of": first.title(),
+            "instead_of_priority": first.priority,
+            "rate": round(rate, 3),
+            "reason": f"exploração: {pick.title()} antes de {first.title()}",
+        }
 
     @staticmethod
     def _unique(proposals: list[Proposal]) -> list[Proposal]:

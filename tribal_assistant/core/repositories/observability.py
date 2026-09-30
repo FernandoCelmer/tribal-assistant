@@ -15,6 +15,7 @@ from tribal_assistant.core.models.village import Village
 LEVELS = ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"]
 ACTION_GROUPS = {
     "send_farm_attack": "attacks",
+    "send_farm_template": "attacks",
     "upgrade_building": "builds",
     "recruit_units": "recruits",
     "complete_quest": "quests",
