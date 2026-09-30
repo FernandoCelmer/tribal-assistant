@@ -35,9 +35,12 @@ export function FlowGraph({ specialists, items, thinking }: { specialists: { key
 
     const draw = () => {
       const base = root.getBoundingClientRect();
+      const k = root.offsetWidth ? base.width / root.offsetWidth : 1;
       const at = (el: Element) => {
         const r = el.getBoundingClientRect();
-        return { left: r.left - base.left, right: r.right - base.left, top: r.top - base.top, bottom: r.bottom - base.top, mid: r.top - base.top + r.height / 2 };
+        const left = (r.left - base.left) / k;
+        const top = (r.top - base.top) / k;
+        return { left, right: left + r.width / k, top, bottom: top + r.height / k, mid: top + r.height / k / 2 };
       };
       const hub = root.querySelector("[data-hub]");
       if (!hub) return;

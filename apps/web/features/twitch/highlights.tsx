@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { agentLabel, readable, toolLabel } from "@/features/flow/labels";
 import type { Item, Step } from "@/features/live/state";
 import { clip } from "@/features/live/use-live";
 import { BUILDINGS, RESOURCES } from "@/lib/game";
 import { countdown, duration, instant, number, useKnobs, useNearby, useQuests, useRounds, useSession, useSocial, type Command, type Overview, type Village } from "./data";
 
-const ROTATE = 12_000;
 const MAP_MIN_FIELDS = 3;
-
-type Slide = { id: string; title: string; body: ReactNode };
 
 function Session({ since, village, now }: { since: number; village: Village; now: number }) {
   const { stats, snapshots, reports } = useSession(since);
@@ -258,45 +255,20 @@ function Protection({ until, now }: { until: number; now: number }) {
   );
 }
 
-export function Highlights({ overview, village, items, steps, since, now, moves }: { overview: Overview; village: Village; items: Item[]; steps: Step[]; since: number; now: number; moves: ReactNode }) {
+export type CardView = { title: string; aside?: ReactNode; body: ReactNode; className?: string };
+
+export function slideCards({ overview, village, items, steps, since, now }: { overview: Overview; village: Village; items: Item[]; steps: Step[]; since: number; now: number }): Record<string, CardView> {
   const until = instant(overview.player?.protection_until);
-  const slides: Slide[] = useMemo(
-    () => [
-      ...(moves ? [{ id: "moves", title: "Movimentos", body: moves }] : []),
-      { id: "session", title: "Resumo da sessão", body: <Session since={since} village={village} now={now} /> },
-      { id: "thinking", title: "Pensamento da IA", body: <Thinking items={items} /> },
-      { id: "learning", title: "Aprendizado", body: <Learning steps={steps} items={items} /> },
-      { id: "builds", title: "Obras", body: <Builds village={village} now={now} /> },
-      { id: "map", title: "Mapa ao redor", body: <MiniMap village={village} commands={overview.commands} now={now} /> },
-      { id: "raid", title: "Último saque", body: <Raid since={since} /> },
-      { id: "quests", title: "Missões", body: <Quests /> },
-      { id: "production", title: "Estoque nas últimas horas", body: <Production since={since} village={village} /> },
-      { id: "social", title: "Social", body: <Social /> },
-      ...(until ? [{ id: "protection", title: "Proteção de iniciante", body: <Protection until={until} now={now} /> }] : []),
-    ],
-    [since, village, now, items, steps, overview, until, moves],
-  );
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setIndex((i) => i + 1), ROTATE);
-    return () => clearInterval(timer);
-  }, []);
-
-  const slide = slides[index % slides.length];
-  return (
-    <section className="tw-panel tw-highlights">
-      <header className="tw-head">
-        <h2>{slide.title}</h2>
-        <span className="tw-pager">
-          {slides.map((s, i) => (
-            <i key={s.id} data-on={i === index % slides.length || undefined} />
-          ))}
-        </span>
-      </header>
-      <div className="tw-body tw-slide" key={slide.id}>
-        {slide.body}
-      </div>
-    </section>
-  );
+  return {
+    session: { title: "Resumo da sessão", body: <Session since={since} village={village} now={now} /> },
+    thinking: { title: "Pensamento da IA", body: <Thinking items={items} /> },
+    learning: { title: "Aprendizado", body: <Learning steps={steps} items={items} /> },
+    builds: { title: "Obras", body: <Builds village={village} now={now} /> },
+    map: { title: "Mapa ao redor", body: <MiniMap village={village} commands={overview.commands} now={now} /> },
+    raid: { title: "Último saque", body: <Raid since={since} /> },
+    quests: { title: "Missões", body: <Quests /> },
+    production: { title: "Estoque nas últimas horas", body: <Production since={since} village={village} /> },
+    social: { title: "Social", body: <Social /> },
+    protection: { title: "Proteção de iniciante", body: until ? <Protection until={until} now={now} /> : <p className="tw-muted">sem proteção</p> },
+  };
 }

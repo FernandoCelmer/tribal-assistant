@@ -10,26 +10,23 @@ export const TWITCH_CSS = `
   --green: #22C55E;
   --yellow: #FACC15;
   --red: #EF4444;
-  --pad: clamp(8px, 0.6vw, 12px);
-  --gap: clamp(8px, 0.6vw, 12px);
-  --head: clamp(38px, 4.2vh, 46px);
-  --node: clamp(24px, 3.1vh, 34px);
-  --node-gap: clamp(6px, 1.2vh, 14px);
-  --row: clamp(28px, 3.3vh, 36px);
+  --head: 46px;
+  --node: 34px;
+  --node-gap: 14px;
+  --row: 36px;
   position: fixed; inset: 0; overflow: hidden; background: var(--bg); color: var(--text);
-  font-family: var(--font-sans, Inter, system-ui, sans-serif); font-size: clamp(12px, 0.78vw, 15px);
-  padding: var(--pad); display: grid; gap: var(--gap);
-  grid-template-rows: clamp(44px, 5.2vh, 56px) minmax(0, 60fr) minmax(0, 36fr);
+  font-family: var(--font-sans, Inter, system-ui, sans-serif); font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
 }
 .tw-root[data-transparent] { background: transparent; }
 .tw-root * { box-sizing: border-box; }
-.tw-root h2 { margin: 0; font-size: clamp(14px, 0.9vw, 18px); font-weight: 600; }
+.tw-root h2 { margin: 0; font-size: 18px; font-weight: 600; }
 .tw-secondary { color: var(--text-2); font-weight: 400; }
 .tw-muted { color: var(--text-3); margin: 0; }
 .tw-count { color: var(--yellow); font-weight: 600; font-variant-numeric: tabular-nums; }
 .tw-truncate { min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.tw-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; white-space: nowrap; }
+.tw-header { height: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; white-space: nowrap; }
 .tw-header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .tw-header-center { font-weight: 600; text-align: center; }
 .tw-header-right { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; font-size: 1.1em; }
@@ -39,19 +36,17 @@ export const TWITCH_CSS = `
 .tw-chip { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); font-size: 0.9em; }
 .tw-alert { color: #fff; background: var(--red); padding: 4px 14px; border-radius: 999px; font-weight: 700; }
 
-.tw-top { display: grid; grid-template-columns: minmax(0, 69fr) minmax(0, 31fr); gap: var(--gap); min-height: 0; }
-.tw-game { border: 1px solid var(--line); border-radius: 12px; background: transparent; min-height: 0; }
-.tw-side { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); gap: var(--gap); min-height: 0; }
-.tw-moves .tw-list { max-height: calc(var(--row) * 2 + 8px); }
+.tw-game { border: 1px solid var(--line); border-radius: 12px; background: transparent; min-height: 0; height: 100%; }
 .tw-decision { padding-top: 8px; padding-bottom: 8px; }
-.tw-bottom { display: grid; grid-template-columns: minmax(0, 77fr) minmax(0, 23fr); gap: var(--gap); min-height: 0; }
 
 .tw-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .tw-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--head); padding: 0 16px; border-bottom: 1px solid var(--line); }
 .tw-body { padding: 12px 16px; min-height: 0; flex: 1; overflow: hidden; }
+.tw-moves .tw-body, .tw-activity .tw-body { overflow-y: auto; }
+.tw-flow .tw-body { padding: 0; display: flex; }
 
 .tw-score { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
-.tw-score strong { font-size: clamp(22px, 1.5vw, 30px); font-weight: 700; font-variant-numeric: tabular-nums; }
+.tw-score strong { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tw-protect { color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 45%, transparent); background: color-mix(in srgb, var(--green) 10%, transparent); padding: 4px 12px; border-radius: 999px; font-weight: 600; }
 .tw-resources { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .tw-rank { margin-left: 10px; }
@@ -122,7 +117,7 @@ export const TWITCH_CSS = `
 .tw-protection[data-close] strong { color: var(--red); }
 
 .tw-flow { min-height: 0; }
-.tw-graph { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: auto minmax(40px, 1fr) auto minmax(40px, 1fr) minmax(220px, 26%); align-items: center; padding: 10px 16px; }
+.tw-graph { position: relative; flex: 1; width: 100%; min-height: 0; display: grid; grid-template-columns: auto minmax(40px, 1fr) auto minmax(40px, 1fr) minmax(220px, 26%); align-items: center; padding: 10px 16px; }
 .tw-edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .tw-edge { fill: none; stroke-width: 1.6; transition: stroke .3s; }
 .tw-edge-idle { stroke: #30363b; }
@@ -131,16 +126,16 @@ export const TWITCH_CSS = `
 .tw-arrow-idle { fill: #30363b; }
 .tw-arrow-active { fill: var(--green); }
 .tw-arrow-chosen { fill: var(--yellow); }
-.tw-agents { grid-column: 1; display: flex; gap: clamp(28px, 3vw, 56px); position: relative; z-index: 1; }
+.tw-agents { grid-column: 1; display: flex; gap: 56px; position: relative; z-index: 1; }
 .tw-agent-column { display: flex; flex-direction: column; gap: var(--node-gap); }
 .tw-agent-column[data-offset] { padding-top: calc((var(--node) + var(--node-gap)) / 2); }
 .tw-node { display: flex; align-items: center; gap: 10px; height: var(--node); padding: 0 10px; background: var(--inner); border: 1px solid var(--line); border-radius: 8px; color: var(--text-2); white-space: nowrap; transition: border-color .3s, color .3s; position: relative; z-index: 1; }
-.tw-agents .tw-node { width: clamp(150px, 9.5vw, 180px); }
+.tw-agents .tw-node { width: 180px; }
 .tw-node-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .tw-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-3); flex: none; }
 .tw-node[data-on] { border-color: color-mix(in srgb, var(--green) 60%, transparent); color: var(--text); }
 .tw-node[data-on] .tw-dot { background: var(--green); }
-.tw-hub { grid-column: 3; width: clamp(96px, 7vw, 136px); aspect-ratio: 1; border-radius: 50%; background: var(--inner); border: 2px solid #3a4046; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; position: relative; z-index: 1; }
+.tw-hub { grid-column: 3; width: 136px; aspect-ratio: 1; border-radius: 50%; background: var(--inner); border: 2px solid #3a4046; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; position: relative; z-index: 1; }
 .tw-hub svg { color: var(--yellow); }
 .tw-hub span { color: var(--text-2); font-size: 0.85em; }
 .tw-proposals { grid-column: 5; display: flex; flex-direction: column; gap: calc(var(--node-gap) * 0.55); position: relative; z-index: 1; min-width: 0; }
@@ -162,24 +157,4 @@ export const TWITCH_CSS = `
 @keyframes tw-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .tw-root *, .tw-root { animation: none !important; transition: none !important; } }
 
-@media (max-height: 900px) {
-  .tw-body { padding: 8px 12px; }
-  .tw-score { margin-bottom: 6px; }
-  .tw-score strong { font-size: 22px; }
-  .tw-resources { gap: 6px; }
-  .tw-resource { padding: 4px 8px; gap: 6px; }
-  .tw-resource b { font-size: 1em; }
-  .tw-decision strong { font-size: 1em; }
-  .tw-moves .tw-list { max-height: calc(var(--row) * 2); }
-}
-
-@media (max-width: 900px) {
-  .tw-root { position: static; height: auto; grid-template-rows: none; overflow: visible; }
-  .tw-header { grid-template-columns: 1fr; white-space: normal; padding: 10px 16px; }
-  .tw-header-center, .tw-header-right { justify-content: flex-start; text-align: left; }
-  .tw-top, .tw-bottom { grid-template-columns: 1fr; }
-  .tw-game { aspect-ratio: 16 / 9; }
-  .tw-side { grid-template-rows: none; }
-  .tw-graph { overflow-x: auto; grid-template-columns: auto 40px auto 40px 240px; min-height: 320px; }
-}
 `;
