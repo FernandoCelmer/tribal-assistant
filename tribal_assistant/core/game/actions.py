@@ -23,6 +23,7 @@ from tribal_assistant.core.game.browser import (
 )
 from tribal_assistant.core.game.conquest import Conquest
 from tribal_assistant.core.game.diplomacy import Diplomacy
+from tribal_assistant.core.game.farm_assistant import FarmAssistant
 from tribal_assistant.core.game.forge import Forge
 from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
 from tribal_assistant.core.game.market import Market
@@ -169,6 +170,10 @@ class GameActions:
     @property
     def diplomacy(self) -> Diplomacy:
         return Diplomacy(self)
+
+    @property
+    def farm(self) -> FarmAssistant:
+        return FarmAssistant(self)
 
     @property
     def forge(self) -> Forge:

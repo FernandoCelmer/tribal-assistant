@@ -66,6 +66,29 @@ class TargetIntel:
 
         return data
 
+    @classmethod
+    def farm_row(cls, past: dict[str, Any], row: dict[str, Any], fresh: bool) -> dict[str, Any]:
+        """What the farm assistant list adds: counters stay with the reports, only farm-only facts and gaps are filled."""
+        data = dict(past)
+        data["farm_village_id"] = row.get("village_id")
+        data["farm_report_id"] = row.get("report_id")
+        data["farm_seen_at"] = cls.now()
+
+        if row.get("full") is not None:
+            data["last_full"] = bool(row["full"])
+            data["full_streak"] = int(past.get("full_streak", 0)) + 1 if row["full"] else 0
+
+        if row.get("wall") is not None and (fresh or "wall" not in past):
+            data["wall"] = int(row["wall"])
+
+        if row.get("resources"):
+            data["farm_resources"] = dict(row["resources"])
+
+        if fresh and row.get("result"):
+            data["last_result"] = row["result"]
+
+        return data
+
     @staticmethod
     def describe(data: dict[str, Any]) -> str:
         parts = [
@@ -78,6 +101,9 @@ class TargetIntel:
 
         if data.get("scouted"):
             parts.append(f"espionado {sum(data['scouted'].values())} recursos")
+
+        if data.get("full_streak"):
+            parts.append(f"{data['full_streak']} saque(s) cheio(s) seguidos")
 
         return ", ".join(parts)
 
@@ -124,4 +150,6 @@ class TargetIntel:
             "attacks": data.get("attacks", 0),
             "yellow_streak": data.get("yellow_streak", 0),
             "losses": data.get("losses"),
+            "full_streak": data.get("full_streak", 0),
+            "farm_resources": data.get("farm_resources"),
         }

@@ -9,10 +9,12 @@ from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon,
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.guardrails import SCAVENGE_MIN_POP
-from tribal_assistant.core.agents.knobs import knob, tuning
+from tribal_assistant.core.agents.knobs import Knobs, knob, tuning
 from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
+from tribal_assistant.core.agents.proposers.farm import FarmChoice, FarmPlanner
 from tribal_assistant.core.agents.proposers.raid import RaidPlan, RaidPlanner
+from tribal_assistant.core.game.scraper.farm_assistant import TEMPLATES, FarmAssistantParser
 
 SCAVENGERS = ("spear", "sword", "axe", "archer", "light", "marcher", "heavy")
 
@@ -30,7 +32,7 @@ class AttackProposer(Proposer):
                 "min_confidence",
                 f"não atacar com confiança abaixo de {least:.0%} (informação velha ou alvo que já custou tropas)",
                 self.key,
-                blocks=("send_farm_attack",),
+                blocks=("send_farm_attack", "send_farm_template"),
                 min_confidence=least,
             )
         ]
@@ -56,6 +58,7 @@ class AttackProposer(Proposer):
         has_ram = bool(ram and ram.total)
         budget = RaidPlanner.max_raids(light.total if light else 0, ctx.policy.max_attacks_per_hour, await view.guard.attacks_last_hour(ctx), knobs)
         median = statistics.median([int(t.get("points") or 0) for t in targets]) if targets else 0
+        farm, setup = await self._farm_assistant(view, targets)
         intel = {t["coords"]: await view.lessons.target(t["coords"]) for t in targets}
 
         ranked = [RaidPlanner.plan(t, intel[t["coords"]], home, median, has_ram, knobs) for t in targets]
@@ -80,14 +83,70 @@ class AttackProposer(Proposer):
                 probes += 1
                 items.append(self._probe(plan, target))
             elif plan.kind == "raid":
-                items.append(await self._raid(view, plan, target, weight))
+                choice = self._farm_choice(farm, plan, target, intel[first.coords], home, knobs)
+                items.append(await self._raid(view, plan, target, weight, choice))
+                if choice is not None:
+                    plan.squad = choice.squad
             else:
                 continue
 
             for unit, count in plan.squad.items():
                 home[unit] = home.get(unit, 0) - count
 
-        return items
+        return [setup, *items] if setup else items
+
+    async def _farm_assistant(self, view: CoordinationView, targets: list[dict]) -> tuple[dict | None, Proposal | None]:
+        """The assistant state when its templates are ready; otherwise a proposal to save them and the rally point this round."""
+        outcome = await view.read("read_farm_assistant")
+        state = outcome.data if outcome.ok else {}
+        if not state.get("available"):
+            return None, None
+
+        knobs = tuning(view)
+        full, seen = FarmPlanner.hauls(state.get("targets") or [])
+        if seen:
+            view.note(Insight("farm_hauls", f"assistente de saque: {full}/{seen} relatórios com carga cheia", Certainty.FACT, now(), 1.0, full / seen, self.key))
+
+        barbarians = {t["coords"] for t in targets}
+        walls = []
+        for row in state.get("targets") or []:
+            if row.get("coords") in barbarians:
+                wall = (await view.lessons.target(row["coords"])).get("wall")
+                walls.append(int(wall if wall is not None else row.get("wall") or 0))
+
+        totals = {u.name: u.total for u in view.ctx.village.units}
+        wanted = FarmPlanner.templates(totals, walls, knobs)
+        if not wanted["a"]:
+            return None, None
+
+        current = {k: FarmAssistantParser.squad(state, k) for k in TEMPLATES}
+        if FarmPlanner.drifted(current, wanted, knobs):
+            return None, Proposal(
+                self.key,
+                "set_farm_templates",
+                {**wanted, "reason": "modelos A e B no tamanho ideal"},
+                f"modelos salvos {current}, ideal {wanted}",
+                "saques pelo assistente com o grupo certo",
+                factors=Factors(urgency=0.3, impact=0.4, opportunity=0.6),
+                horizon=Horizon.IMMEDIATE,
+                confidence=0.95,
+            )
+
+        return {"state": state, "templates": current}, None
+
+    @staticmethod
+    def _farm_choice(farm: dict | None, plan: RaidPlan, target: dict, data: dict, home: dict[str, int], knobs: Knobs) -> FarmChoice | None:
+        if farm is None:
+            return None
+
+        row = FarmAssistantParser.target(farm["state"], plan.coords)
+        if row is None or not row.get("village_id"):
+            return None
+
+        choice = FarmPlanner.choose({**row, "distance": target.get("distance") or row.get("distance")}, data, farm["templates"], home, knobs)
+        if choice is not None:
+            choice.target_id = int(row["village_id"])
+        return choice
 
     def _probe(self, plan: RaidPlan, target: dict) -> Proposal:
         return Proposal(
@@ -104,8 +163,24 @@ class AttackProposer(Proposer):
             key=f"send_spy:{plan.coords}",
         )
 
-    async def _raid(self, view: CoordinationView, plan: RaidPlan, target: dict, weight: float) -> Proposal:
+    async def _raid(self, view: CoordinationView, plan: RaidPlan, target: dict, weight: float, choice: FarmChoice | None = None) -> Proposal:
         confidence, why = await self._confidence(view, target)
+        if choice is not None:
+            carry = self.carry(choice.squad)
+            haul = min(plan.haul, float(carry))
+            return Proposal(
+                self.key,
+                "send_farm_template",
+                {"target": plan.coords, "target_id": choice.target_id, "template": choice.template, "units": choice.squad, "reason": "saque pelo assistente"},
+                f"bárbara a {target.get('distance')} campos; {choice.why}; {why}",
+                f"~{int(haul)} recursos",
+                troops=choice.squad,
+                factors=Factors(urgency=0.3, impact=weight, opportunity=clamp(haul / max(carry, 1))),
+                horizon=Horizon.IMMEDIATE,
+                confidence=confidence,
+                risks=["perdas se a bárbara tiver muralha ou tropas"],
+            )
+
         carry = self.carry(plan.squad)
         return Proposal(
             self.key,

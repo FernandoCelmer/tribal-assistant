@@ -44,6 +44,11 @@ from tribal_assistant.core.agents.tools.act import (
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 from tribal_assistant.core.agents.tools.conquest import SendNoble
 from tribal_assistant.core.agents.tools.defense import GetIncoming, SimulateBattle
+from tribal_assistant.core.agents.tools.farm import (
+    ReadFarmAssistant,
+    SendFarmTemplate,
+    SetFarmTemplates,
+)
 from tribal_assistant.core.agents.tools.insight import GetForecast, GetOwnOffers, PlanScavenge
 from tribal_assistant.core.agents.tools.intel import GetTargetIntel
 from tribal_assistant.core.agents.tools.read import (
@@ -86,6 +91,7 @@ class Toolbox:
         ReadDoc,
         ListBarbarians,
         GetTargetIntel,
+        ReadFarmAssistant,
         GetIncoming,
         SimulateBattle,
         GetForecast,
@@ -94,6 +100,8 @@ class Toolbox:
         UpgradeBuilding,
         RecruitUnits,
         SendFarmAttack,
+        SendFarmTemplate,
+        SetFarmTemplates,
         SendSpy,
         SendScavenge,
         ClaimQuestRewards,

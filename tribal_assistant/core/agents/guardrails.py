@@ -21,7 +21,7 @@ from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
 SCAVENGE_MIN_POP = 10
 SPY_PROBE = (1, 2)
-RAID_ACTIONS = ("send_farm_attack", "send_spy")
+RAID_ACTIONS = ("send_farm_attack", "send_farm_template", "send_spy")
 
 
 @dataclass(frozen=True)
@@ -180,6 +180,24 @@ class Guardrails:
 
         if await self.repo.attacked_recently(target, ctx.policy.retarget_minutes):
             return f"{target} já foi atacado nos últimos {ctx.policy.retarget_minutes} min"
+
+        return None
+
+    async def check_farm_template(self, ctx: VillageContext, target: str, target_id: int, units: dict[str, int]) -> str | None:
+        """The same limits as a raid from the rally point, plus the assistant row must be the barbarian of world_villages."""
+        if not units:
+            return "modelo vazio no assistente de saque"
+
+        refusal = await self.check_attack(ctx, target, units)
+        if refusal:
+            return refusal
+
+        row = (await self.session.execute(select(WorldVillage).where(WorldVillage.id == int(target_id)))).scalar_one_or_none()
+        if row is None or row.player_id != 0:
+            return f"aldeia {target_id} da lista do assistente não é bárbara em world_villages; agentes só saqueiam bárbaras"
+
+        if f"{row.x}|{row.y}" != target:
+            return f"aldeia {target_id} fica em {row.x}|{row.y}, não em {target}"
 
         return None
 
