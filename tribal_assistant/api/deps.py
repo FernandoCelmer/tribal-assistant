@@ -20,6 +20,7 @@ from tribal_assistant.core.services.knobs import KnobService
 from tribal_assistant.core.services.live import LiveGameService
 from tribal_assistant.core.services.observability import ObservabilityService
 from tribal_assistant.core.services.reports import ReportService
+from tribal_assistant.core.services.timelapse import TimelapseService
 from tribal_assistant.core.services.world import WorldService
 
 ACCOUNT_COOKIE = "tw_account"
@@ -74,3 +75,4 @@ ForecastServiceDep = Annotated[ForecastService, Depends(provide(ForecastService)
 LiveGameServiceDep = Annotated[LiveGameService, Depends(provide(LiveGameService))]
 ReportServiceDep = Annotated[ReportService, Depends(provide(ReportService))]
 KnobServiceDep = Annotated[KnobService, Depends(provide(KnobService))]
+TimelapseServiceDep = Annotated[TimelapseService, Depends(provide(TimelapseService))]

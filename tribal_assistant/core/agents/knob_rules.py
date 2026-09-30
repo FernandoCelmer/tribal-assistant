@@ -27,6 +27,7 @@ class Metrics:
     shipments_failed: float = 0.0
     mail_capped: float = 0.0
     contacts_unanswered: float = 0.0
+    builds_done: float = 0.0
     nothing_to_do: dict[str, float] = field(default_factory=dict)
 
 
@@ -84,3 +85,13 @@ def cooldowns(*actions: str) -> Rule:
 def settle(metric: str, below: float, why: str) -> Rule:
     """Once the problem is gone, walk back towards the default one step at a time."""
     return lambda m: (0, f"{why} resolvido ({getattr(m, metric):.0%}): volta ao padrão") if getattr(m, metric) < below else None
+
+
+def less_when_many(metric: str, above: float, why: str) -> Rule:
+    """Like less_when for a count instead of a share."""
+    return lambda m: (-1, f"{why} ({getattr(m, metric):g})") if getattr(m, metric) > above else None
+
+
+def settle_when_few(metric: str, below: float, why: str) -> Rule:
+    """Like settle for a count instead of a share."""
+    return lambda m: (0, f"{why}: só {getattr(m, metric):g}, volta ao padrão") if getattr(m, metric) < below else None

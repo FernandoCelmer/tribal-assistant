@@ -7,8 +7,10 @@ from typing import Any, ClassVar
 from loguru import logger
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
+from sqlalchemy.exc import SQLAlchemyError
 
 from tribal_assistant.core.accounts.context import current_account_id
+from tribal_assistant.core.agents.knobs import Knobs, KnobStore
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.session import SessionFactory
@@ -21,6 +23,7 @@ from tribal_assistant.core.game.browser import (
     evaluate_page,
     open_screen,
 )
+from tribal_assistant.core.game.camera import VillageCamera
 from tribal_assistant.core.game.scraper.game import (
     GameSnapshot,
     GameVillage,
@@ -36,6 +39,7 @@ from tribal_assistant.core.game.state import session_state
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.core.repositories.game import GameRepository
 from tribal_assistant.core.repositories.lessons import LessonRepository
+from tribal_assistant.core.services.timelapse import TimelapseService
 
 GAME_DATA_JS = "() => window.game_data || null"
 
@@ -181,10 +185,14 @@ async def _own_village_ids(page: Page, game_data: dict[str, Any], count: int) ->
     return ids or [current]
 
 
-async def _read_village(page: Page, village_id: str, finish_free: bool = False) -> tuple[GameVillage, str]:
+async def _read_village(
+    page: Page, village_id: str, finish_free: bool = False, camera: VillageCamera | None = None
+) -> tuple[GameVillage, str]:
     async def overview() -> dict[str, Any]:
         await open_screen(page, "overview", village_id)
         data = await evaluate_page(page, OVERVIEW_JS)
+        if camera is not None:
+            await camera.capture(page, village_id)
         await IncomingDetails.enrich(page, village_id, data.get("commands") or [])
         return {"overview": data}
 
@@ -390,7 +398,10 @@ async def _read_texts(page: Page, village_id: str, report_rows: list[dict[str, A
 
 
 async def _read_game(
-    known_reports: set[str], finish_free: bool = False, learned: set[str] | None = None
+    known_reports: set[str],
+    finish_free: bool = False,
+    learned: set[str] | None = None,
+    camera: VillageCamera | None = None,
 ) -> GameSnapshot:
     page = await game_session.page()
     await ensure_in_game(page)
@@ -402,7 +413,7 @@ async def _read_game(
     villages = []
     overview_text = ""
     for village_id in village_ids:
-        village, text = await _read_village(page, village_id, finish_free)
+        village, text = await _read_village(page, village_id, finish_free, camera)
         villages.append(village)
         overview_text = overview_text or text
 
@@ -423,6 +434,21 @@ async def _read_game(
     )
 
 
+async def _keep_frames(snapshot: GameSnapshot, camera: VillageCamera, knobs: Knobs) -> None:
+    if not camera.shots:
+        return
+
+    try:
+        async with SessionFactory() as session:
+            kept = await TimelapseService(session).record(snapshot.villages, camera.shots, knobs)
+    except SQLAlchemyError as exc:
+        logger.warning("Não foi possível guardar as fotos do timelapse: {}", exc)
+        return
+
+    if kept:
+        logger.info("{} foto(s) da aldeia guardadas no timelapse", kept)
+
+
 async def sync_game() -> GameSnapshot:
     async with game_session.lock:
         try:
@@ -431,7 +457,9 @@ async def sync_game() -> GameSnapshot:
                 config = await AgentSettingsRepository(session).get()
 
                 learned = await LessonRepository(session).keys(("report", "mail"))
-            snapshot = await _read_game(known, config.auto_finish_free, learned)
+                knobs = await KnobStore(session).load()
+            camera = TimelapseService.camera(knobs)
+            snapshot = await _read_game(known, config.auto_finish_free, learned, camera)
             async with SessionFactory() as session:
                 await GameRepository(session).persist(snapshot)
 
@@ -440,6 +468,7 @@ async def sync_game() -> GameSnapshot:
                 await book.screens(ScreenCatalog(), Findings.screens())
                 await book.texts(Findings.texts())
                 Findings.clear()
+            await _keep_frames(snapshot, camera, knobs)
         except Exception as exc:
             session_state.logged_in = False
             session_state.last_error = str(exc)

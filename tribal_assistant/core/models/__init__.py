@@ -15,6 +15,7 @@ from tribal_assistant.core.models.building import Building
 from tribal_assistant.core.models.command import Command
 from tribal_assistant.core.models.coordination import CoordinationRound, VillageStrategy
 from tribal_assistant.core.models.document import Document
+from tribal_assistant.core.models.frame import VillageFrame
 from tribal_assistant.core.models.knob import TuningKnob
 from tribal_assistant.core.models.lesson import Lesson
 from tribal_assistant.core.models.log import AppLog
@@ -49,6 +50,7 @@ __all__ = [
     "TuningKnob",
     "Unit",
     "Village",
+    "VillageFrame",
     "VillagePlan",
     "VillageSnapshot",
     "VillageStrategy",

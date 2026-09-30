@@ -22,6 +22,7 @@ from tribal_assistant.core.agents.social.ledger import SENDS, SocialLedger
 from tribal_assistant.core.models.agent import AgentDecision
 from tribal_assistant.core.models.coordination import CoordinationRound
 from tribal_assistant.core.models.knob import TuningKnob
+from tribal_assistant.core.repositories.frames import FrameRepository
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
 __all__ = ["KnobSpec", "KnobStore", "Knobs", "Metrics", "Rule", "Tuner", "cooldown", "either", "knob", "knob_int", "less_when", "more_when", "settle", "tuning"]
@@ -135,6 +136,7 @@ class KnobStore:
         ).all()
         metrics = Tuner.measure([json.loads(r) if isinstance(r, str) else (r or {}) for r in rounds], [tuple(d) for d in decisions])
         metrics.contacts_unanswered = await SocialLedger(self.session).unanswered_share() or 0.0
+        metrics.builds_done = float(await FrameRepository(self.session).most_levels_gained(since))
         return metrics
 
 

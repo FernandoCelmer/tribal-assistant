@@ -14,6 +14,7 @@ from tribal_assistant.api.v1.knobs import knobs_router
 from tribal_assistant.api.v1.knowledge import knowledge_router
 from tribal_assistant.api.v1.observability import observability_router
 from tribal_assistant.api.v1.system import system_router
+from tribal_assistant.api.v1.timelapse import timelapse_router
 from tribal_assistant.api.v1.world import world_router
 
 v1_router = APIRouter(dependencies=[Depends(refuse_writes_when_not_playing), Depends(get_session)])
@@ -22,6 +23,7 @@ v1_router.include_router(knowledge_router, prefix="/knowledge", tags=["Knowledge
 v1_router.include_router(assistant_router, prefix="/assistant", tags=["Assistant"])
 v1_router.include_router(game_router, prefix="/game", tags=["Game"])
 v1_router.include_router(world_router, prefix="/world", tags=["World"])
+v1_router.include_router(timelapse_router, tags=["Timelapse"])
 v1_router.include_router(observability_router, tags=["Observability"])
 v1_router.include_router(agents_router, prefix="/agents", tags=["Agents"])
 v1_router.include_router(knobs_router, prefix="/knobs", tags=["Agents"])

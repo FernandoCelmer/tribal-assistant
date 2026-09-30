@@ -9,8 +9,10 @@ from tribal_assistant.core.agents.knob_rules import (
     cooldowns,
     either,
     less_when,
+    less_when_many,
     more_when,
     settle,
+    settle_when_few,
 )
 
 ROLE_LIMITS = {
@@ -43,6 +45,7 @@ STORAGE_DOWN_OR_CALM = either(STORAGE_FULL_DOWN, STORAGE_CALM)
 NOBLES_FAILED_UP = either(more_when("nobles_failed", 0.3, "nobres falhando"), settle("nobles_failed", 0.05, "nobres falhando"))
 MAIL_CAPPED_UP = either(more_when("mail_capped", 0.5, "respostas barradas pelo limite por hora"), settle("mail_capped", 0.05, "respostas barradas pelo limite por hora"))
 CONTACTS_IGNORED_DOWN = either(less_when("contacts_unanswered", 0.8, "apresentações sem resposta"), settle("contacts_unanswered", 0.5, "apresentações sem resposta"))
+BUILDS_DONE = either(less_when_many("builds_done", 3, "níveis de edifício concluídos na janela"), settle_when_few("builds_done", 1, "níveis de edifício concluídos na janela"))
 SHIPMENTS_FAILED_UP = either(more_when("shipments_failed", 0.3, "envios entre aldeias falhando"), settle("shipments_failed", 0.05, "envios entre aldeias falhando"))
 
 
@@ -220,5 +223,9 @@ CATALOG: dict[str, KnobSpec] = {
     "conquest.noble_gap_minutes": KnobSpec(30, "minutos entre ataques com nobre no mesmo alvo", NOBLES_FAILED_UP, integer=True),
     "account.exposed_distance": KnobSpec(8.0, "jogador mais perto que isto torna a aldeia a exposta da conta", THREAT_UP),
     "account.offensive_stable": KnobSpec(1, "estábulo mínimo da aldeia ofensiva da conta", integer=True),
+    "timelapse.interval_hours": KnobSpec(3.0, "horas entre fotos da aldeia no timelapse (cai quando muitas obras terminam)", BUILDS_DONE),
+    "timelapse.min_interval_hours": KnobSpec(0.5, "menor intervalo em horas entre fotos do timelapse"),
+    "timelapse.quality": KnobSpec(70, "qualidade JPEG das fotos do timelapse", integer=True),
+    "timelapse.max_kb": KnobSpec(150, "tamanho máximo em KB de uma foto do timelapse antes de baixar a qualidade", integer=True),
     "account.expansion_snob": KnobSpec(1, "academia mínima da aldeia de expansão da conta", integer=True),
 }
