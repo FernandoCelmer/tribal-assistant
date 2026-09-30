@@ -73,7 +73,7 @@ export const TWITCH_CSS = `
 .tw-pager i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
 .tw-pager i[data-on] { background: var(--yellow); }
 .tw-slide { animation: tw-fade .5s ease-out; display: flex; flex-direction: column; gap: 8px; }
-.tw-grid-2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 16px; }
+.tw-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px 16px; }
 .tw-metric span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tw-metric { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding: 3px 0; }
 .tw-metric strong { order: 2; font-size: 1.1em; font-variant-numeric: tabular-nums; }
@@ -112,6 +112,13 @@ export const TWITCH_CSS = `
 .tw-map-own { fill: var(--yellow); }
 .tw-map-route { stroke: #3a4046; stroke-width: 0.6; stroke-dasharray: 2 2; }
 .tw-map-troop { fill: var(--green); }
+.tw-agenda { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tw-agenda li { display: flex; align-items: center; gap: 10px; min-height: 26px; border-bottom: 1px solid var(--line); }
+.tw-agenda li:last-child { border-bottom: 0; }
+.tw-agenda li[data-alert] { color: var(--red); }
+.tw-agenda-icon { width: 20px; text-align: center; flex: none; }
+.tw-line-points { stroke: var(--yellow); fill: none; stroke-width: 2; }
+.tw-metric[data-alert] strong { color: var(--red); }
 .tw-protection { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 100%; }
 .tw-protection strong { font-size: 2.2em; }
 .tw-protection[data-close] strong { color: var(--red); }

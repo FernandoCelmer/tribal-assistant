@@ -13,7 +13,7 @@ export const FIXED = new Set(["header", "game"]);
 
 export type Frame = { id: string; x: number; y: number; w: number; h: number; cards: string[] };
 
-export const SLIDES = ["session", "thinking", "learning", "builds", "map", "raid", "quests", "production", "social", "protection"];
+export const SLIDES = ["agenda", "session", "thinking", "blockers", "learning", "builds", "income", "points", "pace", "map", "raid", "quests", "achievements", "neighbours", "production", "social", "protection"];
 
 export const DEFAULT_BOARD: Frame[] = [
   { id: "header", x: 12, y: 12, w: 1896, h: 56, cards: ["header"] },
@@ -25,6 +25,15 @@ export const DEFAULT_BOARD: Frame[] = [
   { id: "flow", x: 12, y: 702, w: 1452, h: 366, cards: ["flow"] },
   { id: "activity", x: 1476, y: 702, w: 432, h: 366, cards: ["activity"] },
 ];
+
+function withNewCards(board: Frame[]): Frame[] {
+  const placed = new Set(board.flatMap((f) => f.cards));
+  const known = DEFAULT_BOARD.flatMap((f) => f.cards);
+  const missing = known.filter((card) => !placed.has(card));
+  if (!missing.length) return board;
+  const home = board.find((f) => f.cards.some((c) => SLIDES.includes(c))) ?? board[board.length - 1];
+  return board.map((f) => (f === home ? { ...f, cards: [...f.cards, ...missing] } : f));
+}
 
 function snap(value: number): number {
   return Math.round(value / GRID) * GRID;
@@ -75,7 +84,7 @@ export function useBoard(fromUrl: string | null) {
   const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => {
-    setBoard(decode(fromUrl) ?? stored() ?? DEFAULT_BOARD);
+    setBoard(withNewCards(decode(fromUrl) ?? stored() ?? DEFAULT_BOARD));
   }, [fromUrl]);
 
   const commit = useCallback((change: (current: Frame[]) => Frame[]) => {

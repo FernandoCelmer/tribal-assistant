@@ -10,6 +10,7 @@ import { BOARD_CSS, Tile, Toolbar, useBoard, useEditing, useRotation, useStage, 
 import { countdown, instant, number, useOverview, type Command, type Overview, type Village } from "./data";
 import { FlowGraph, chosen } from "./graph";
 import { slideCards, type CardView } from "./highlights";
+import { insightCards } from "./insights";
 import { TWITCH_CSS } from "./styles";
 
 const SITE = "tw.fernandocelmer.com/live";
@@ -229,6 +230,7 @@ export function TwitchScreen({ only, since: sinceParam, transparent, edit, saved
     flow: { title: "Fluxo de decisões dos agentes", body: <FlowGraph specialists={state.specialists} items={state.items} thinking={state.phase === "thinking"} />, className: "tw-flow" },
     activity: { title: "Atividade ao vivo", body: <ActivityBody steps={state.steps} />, className: "tw-activity" },
     ...(village && overview ? slideCards({ overview, village, items: state.items, steps: state.steps, since, now }) : {}),
+    ...(village && overview ? insightCards({ overview, village, nextReview: state.nextReview, since, now }) : {}),
   };
   const fixed: Record<string, ReactNode> = {
     header: <Header village={village} mode={state.mode} next={state.nextReview} now={now} incoming={incoming} />,
