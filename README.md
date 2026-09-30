@@ -234,7 +234,7 @@ The server reloads `docs/` every 6 hours. The strategist and the MCP clients use
 ## MCP server
 
 ```bash
-pip install "tribal-assistant[mcp]"
+pip install tribal-assistant
 tribal-assistant mcp            # stdio, for Claude Code / Claude Desktop / Codex (needs the server running)
 tribal-assistant mcp --http     # streamable HTTP on 127.0.0.1:8765
 ```
