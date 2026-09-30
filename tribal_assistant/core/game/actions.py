@@ -128,6 +128,8 @@ SMITH_JS = """() => {
 
 FREE_FINISH = "#buildqueue .btn-instant-free"
 FREE_WAIT_MAX = 75
+QUEUE_CHECKS = 4
+QUEUE_WAIT_MS = 800
 FREE_WAIT_JS = "(n) => { const at = Number(n.dataset.availableFrom || 0); return at ? Math.max(0, at - Date.now() / 1000) : null; }"
 
 DAILY_CHEST = "#daily_bonus_content .reward:has(.actions a.btn)"
@@ -456,11 +458,16 @@ class GameActions:
             if not await page.locator("#buildqueue").count():
                 await open_screen(page, "main", village_id)
 
-            after = await evaluate_page(page, BUILD_QUEUE_JS) or []
-            next_after = await page.evaluate(NEXT_LEVEL_JS, building)
-            finished = (
-                next_before is not None and next_after is not None and next_after > next_before
-            )
+            after, finished = before, False
+            for attempt in range(QUEUE_CHECKS):
+                if attempt == QUEUE_CHECKS - 1:
+                    await open_screen(page, "main", village_id)
+                after = await evaluate_page(page, BUILD_QUEUE_JS) or []
+                next_after = await page.evaluate(NEXT_LEVEL_JS, building)
+                finished = next_before is not None and next_after is not None and next_after > next_before
+                if len(after) > len(before) or finished:
+                    break
+                await page.wait_for_timeout(QUEUE_WAIT_MS)
 
             if len(after) <= len(before) and not finished:
                 self._capture(await page.content(), f"main-upgrade-{building}")
