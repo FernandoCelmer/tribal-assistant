@@ -152,6 +152,7 @@ CATALOG: dict[str, KnobSpec] = {
     "routine.scavenge_keep_share": KnobSpec(0.01, "fração das tropas em casa que a rotina deixa fora da coleta", share=True),
     "learning.bonus_cap": KnobSpec(1.4, "maior bônus aprendido que um especialista pode ter no ranking", more_when("repetition", 0.5, "rodadas repetindo as mesmas ações")),
     "build.unaffordable_kept": KnobSpec(1, "obras que ainda não cabem no estoque mantidas no ranking de uma rodada", integer=True),
+    "raid.probe_fresh_hours": KnobSpec(6, "horas em que uma sonda recente dispensa sondar o mesmo alvo de novo"),
     "spy.min_send": KnobSpec(5, "exploradores mínimos por envio de espionagem (o jogo recusa menos)", integer=True),
     "spy.per_light": KnobSpec(5, "cavalarias leves por explorador mantido", integer=True),
     "plan_reserve.idle_hours": KnobSpec(0.25, "horas até a próxima obra para reservar com a fila parada", either(IDLE_QUEUE_UP, STARVED)),

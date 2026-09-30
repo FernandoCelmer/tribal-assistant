@@ -202,12 +202,14 @@ class AttackProposer(Proposer):
             return 0.6, "sem relatório: alvo desconhecido"
 
         data = json.loads(row.data or "{}")
+        result = data.get("last_result")
+        clear = result in ("green", "blue") and not data.get("defenders_left")
         insight = Insight(
             f"target:{target['coords']}",
             row.text,
-            Certainty.HYPOTHESIS if data.get("last_result") != "green" else Certainty.ESTIMATE,
+            Certainty.ESTIMATE if clear else Certainty.HYPOTHESIS,
             row.last_seen,
-            0.9 if data.get("last_result") == "green" else 0.55 if data.get("last_result") == "yellow" else 0.2,
+            0.9 if result == "green" else 0.8 if clear else 0.55 if result == "yellow" else 0.2,
             data,
             "relatórios",
         )

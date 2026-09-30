@@ -148,7 +148,11 @@ class RaidPlanner:
         return {u: n for u, n in squad.items() if n > 0} or None
 
     @classmethod
-    def needs_probe(cls, data: dict[str, Any], points: int, median: float) -> bool:
+    def needs_probe(cls, data: dict[str, Any], points: int, median: float, knobs: Knobs | None = None) -> bool:
+        probed = TargetIntel.age_hours(data, "probed_at")
+        if probed is not None and probed < (knobs or Knobs()).get("raid.probe_fresh_hours"):
+            return False
+
         if "scouted" not in data and not data.get("attacks"):
             return True
 
@@ -171,7 +175,7 @@ class RaidPlanner:
         if data.get("defenders_left", 0) > 0:
             return RaidPlan(coords, "skip", f"{data['defenders_left']} defensor(es) na aldeia segundo o último relatório")
 
-        if cls.needs_probe(data, points, median):
+        if cls.needs_probe(data, points, median, knobs):
             spies = knobs.int("spy.min_send")
             if home.get("spy", 0) >= spies and cls.in_range("light", distance, knobs):
                 return RaidPlan(coords, "probe", "alvo grande sem espionagem" if big else "sondar antes de saquear", {"spy": spies})
