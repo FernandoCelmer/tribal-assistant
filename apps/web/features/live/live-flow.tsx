@@ -6,7 +6,7 @@ import { agentLabel, readable, toolLabel } from "@/features/flow/labels";
 import { ROLES } from "@/lib/game";
 import { Card, EditBar, LAYOUT_CSS, useEditing, useLayout } from "./layout";
 import { SIDE_CSS, VillagePanel } from "./village-panel";
-import { SHOWN, type Item, type Phase, type Status, type Step, type StepKind } from "./state";
+import { SHOWN, ordered, type Item, type Phase, type Status, type Step, type StepKind } from "./state";
 import { ago, clip, useClock, useLiveFeed } from "./use-live";
 
 const W = 1280;
@@ -75,7 +75,7 @@ export function LiveFlow({ only, transparent, edit, saved }: { only: number | nu
 
   const specs = state.specialists;
   const specY = useMemo(() => new Map(specs.map((s, i) => [s.key, spread(specs.length, i, SPEC_TOP, SPEC_BOTTOM)])), [specs]);
-  const items = state.items;
+  const items = ordered(state.items);
   const itemY = (i: number) => spread(Math.max(items.length, 1), i, items.length < 4 ? 200 : TOP, items.length < 4 ? 380 : BOTTOM);
   const sources = new Map<string, Status>();
   for (const item of items) {

@@ -3,7 +3,7 @@
 import { Crown } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { agentLabel, readable } from "@/features/flow/labels";
-import type { Item, Status } from "@/features/live/state";
+import { ordered, type Item, type Status } from "@/features/live/state";
 import { actionIcon, agentIcon } from "./icons";
 
 type Edge = { d: string; tone: "idle" | "active" | "chosen" };
@@ -23,7 +23,7 @@ function building(item: Item): string | undefined {
 export function FlowGraph({ specialists, items, thinking }: { specialists: { key: string; title: string }[]; items: Item[]; thinking: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const shown = items.slice(0, SHOWN);
+  const shown = ordered(items).slice(0, SHOWN);
   const pick = chosen(shown);
   const active = new Set(shown.map((i) => i.source));
   const half = Math.ceil(specialists.length / 2);

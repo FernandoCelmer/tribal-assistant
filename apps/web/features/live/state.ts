@@ -210,3 +210,9 @@ export function history(state: LiveState, logs: { at: string; level: string; mes
   }));
   return { ...state, steps: steps.slice(0, STEPS) };
 }
+
+const RANK: Record<Status, number> = { running: 0, ok: 1, failed: 2, pending: 3, deferred: 4 };
+
+export function ordered(items: Item[]): Item[] {
+  return items.map((item, index) => ({ item, index })).sort((a, b) => RANK[a.item.status] - RANK[b.item.status] || a.index - b.index).map(({ item }) => item);
+}
