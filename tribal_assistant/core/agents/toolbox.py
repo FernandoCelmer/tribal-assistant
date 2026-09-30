@@ -9,6 +9,7 @@ from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.guardrails import Guardrails
 from tribal_assistant.core.agents.knobs import tuning
 from tribal_assistant.core.agents.learning import LessonBook
+from tribal_assistant.core.agents.repair import ErrorRepair
 from tribal_assistant.core.agents.tools.act import (
     AcceptMarketOffer,
     AcceptMentor,
@@ -165,6 +166,7 @@ class Toolbox:
         self.guard = Guardrails(session, config)
         self.repo = AgentRepository(session)
         self.lessons = LessonBook(session)
+        self.repair = ErrorRepair()
         self.acted = False
         self.trace = trace
         self.brain_name = "rules"
@@ -186,6 +188,27 @@ class Toolbox:
             await self._trace("tool_result", outcome.text, name, is_error=True)
             return outcome
 
+        outcome = await self._attempt(tool, arguments)
+
+        if not outcome.ok and tool.acts and not self.dry_run:
+            corrected = await self.repair.fix(tool, arguments, outcome.text, self.facts())
+            if corrected is not None:
+                await self._record(tool, arguments, outcome)
+                await self._trace("thought", f"erro lido: {outcome.text[:160]} → nova tentativa com {AgentTool.dump(corrected)}", name)
+                logger.info("[{}] {} corrige {} depois do erro: {}", self.ctx.village.coords, self.agent.key, name, outcome.text[:120])
+                arguments = corrected
+                outcome = await self._attempt(tool, arguments)
+
+        if tool.acts:
+            await self._record(tool, arguments, outcome)
+
+            if self.trace is not None:
+                self.trace.count(outcome.ok, refused=outcome.text.startswith("RECUSADO"))
+
+        return outcome
+
+    async def _attempt(self, tool: AgentTool, arguments: dict[str, Any]) -> ToolOutcome:
+        name = tool.name
         await self._trace("tool_call", AgentTool.dump(arguments), name)
         Narrator.tool(self.agent.key, name, arguments, self.ctx.id)
 
@@ -201,14 +224,16 @@ class Toolbox:
 
         await self._trace("tool_result", outcome.text, name, is_error=not outcome.ok)
         Narrator.result(self.agent.key, name, outcome.ok, outcome.text, self.ctx.id)
-
-        if tool.acts:
-            await self._record(tool, arguments, outcome)
-
-            if self.trace is not None:
-                self.trace.count(outcome.ok, refused=outcome.text.startswith("RECUSADO"))
-
         return outcome
+
+    def facts(self) -> dict[str, Any]:
+        ctx = self.ctx
+        return {
+            "tropas_em_casa": {u.name: u.home for u in ctx.village.units if u.home},
+            "recursos": ctx.stock,
+            "população_livre": ctx.pop_free,
+            "edifícios": ctx.levels,
+        }
 
     async def _trace(self, kind: str, content: str, tool: str | None = None, *, is_error: bool = False) -> None:
         if self.trace is not None:
