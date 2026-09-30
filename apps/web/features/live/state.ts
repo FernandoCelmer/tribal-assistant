@@ -175,7 +175,9 @@ export function micro(state: LiveState, event: MicroEvent, only: number | null):
       ? { ...base, agent: event.agent, tool: event.tool, args: event.args }
       : event.step === "result"
         ? { ...base, agent: event.agent, tool: event.tool, text: event.text, ok: event.ok }
-        : { ...base, text: event.text };
+        : event.step === "request"
+          ? { ...base, text: event.text, args: event.where }
+          : { ...base, text: event.text };
   const last = state.steps[0];
   if (last && last.step === step.step && last.text === step.text && last.tool === step.tool && step.step !== "tool") return state;
   return { ...state, steps: [step, ...state.steps].slice(0, STEPS) };

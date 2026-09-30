@@ -39,7 +39,7 @@ const PHASE: Record<Phase, string> = {
 const QUIET_LOG = /uvicorn|apscheduler|event_relay/;
 const TRACE_KINDS = new Set(["plan", "summary", "thought", "info", "error"]);
 
-const GLYPH: Record<StepKind, string> = { tool: "⚙", result: "", screen: "↳", click: "↳", log: "›", trace: "◆", sync: "⟳", run: "●" };
+const GLYPH: Record<StepKind, string> = { tool: "⚙", result: "", screen: "↳", click: "↳", request: "⇢", motion: "~", log: "›", trace: "◆", sync: "⟳", run: "●" };
 const NOTE_LABEL: Partial<Record<StepKind, string>> = { log: "log", trace: "plano", sync: "sync", run: "rodada" };
 
 type Action =
@@ -332,6 +332,23 @@ function StepLine({ step, age }: { step: Step; age: number }) {
       </li>
     );
   }
+  if (step.step === "request") {
+    return (
+      <li data-step="request" data-fresh={fresh || undefined}>
+        <span className="live-glyph">{GLYPH.request}</span>
+        enviando ao jogo <b>{step.text}</b>
+        {step.args && <span className="live-dim"> em {step.args}</span>}
+      </li>
+    );
+  }
+  if (step.step === "motion") {
+    return (
+      <li data-step="motion" data-fresh={fresh || undefined}>
+        <span className="live-glyph">{GLYPH.motion}</span>
+        <span className="live-dim">{step.text}</span>
+      </li>
+    );
+  }
   if (step.step !== "screen" && step.step !== "click") {
     return (
       <li data-step={step.step} data-bad={step.ok === false ? "" : undefined} data-fresh={fresh || undefined}>
@@ -343,7 +360,7 @@ function StepLine({ step, age }: { step: Step; age: number }) {
   return (
     <li data-step={step.step} data-fresh={fresh || undefined}>
       <span className="live-glyph">{GLYPH[step.step]}</span>
-      {step.step === "screen" ? "abrindo tela " : "clicando "}
+      {step.step === "screen" ? "na tela " : "clicando "}
       <b>{step.step === "click" ? `“${clip(step.text, 40)}”` : step.text}</b>
     </li>
   );

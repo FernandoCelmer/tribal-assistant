@@ -58,6 +58,8 @@ export type MicroEvent = { account_id?: number | null } & (
   | { step: "result"; agent: string; tool: string; ok: boolean; text: string; village_id: number }
   | { step: "screen"; text: string }
   | { step: "click"; text: string }
+  | { step: "request"; text: string; where: string; method: string }
+  | { step: "motion"; text: string }
 );
 
 export type StreamEvent =
