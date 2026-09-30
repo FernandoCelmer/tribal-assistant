@@ -69,6 +69,7 @@ class OperatorAgent(VillageAgent):
         "accept_friend",
         "add_friend",
         "reply_forum",
+        "browse_game",
     )
 
     async def rules(self, box: "Toolbox") -> str:

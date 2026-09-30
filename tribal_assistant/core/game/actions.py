@@ -47,6 +47,7 @@ from tribal_assistant.core.game.screens import ScreenCatalog
 from tribal_assistant.core.game.session import game_session
 from tribal_assistant.core.game.social import Social
 from tribal_assistant.core.game.tribe import TribeHall
+from tribal_assistant.core.game.wander import Wanderer
 
 UNIT_SCREEN = {
     "spear": "barracks",
@@ -193,6 +194,10 @@ class GameActions:
     @property
     def market(self) -> Market:
         return Market(self)
+
+    @property
+    def wander(self) -> Wanderer:
+        return Wanderer(self)
 
     @property
     def profile(self) -> Profile:

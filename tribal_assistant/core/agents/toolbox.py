@@ -42,6 +42,7 @@ from tribal_assistant.core.agents.tools.act import (
     UseItem,
 )
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
+from tribal_assistant.core.agents.tools.browse import BrowseGame
 from tribal_assistant.core.agents.tools.conquest import SendNoble
 from tribal_assistant.core.agents.tools.defense import GetIncoming, SimulateBattle
 from tribal_assistant.core.agents.tools.farm import (
@@ -129,6 +130,7 @@ class Toolbox:
         AcceptFriend,
         AddFriend,
         ReplyForum,
+        BrowseGame,
         AcceptMarketOffer,
         CreateMarketOffer,
         ParkMarketOffer,
