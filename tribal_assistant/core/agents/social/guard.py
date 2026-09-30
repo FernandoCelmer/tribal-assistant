@@ -18,7 +18,7 @@ class SocialGuard:
             return refusal
 
         cap = self.knobs.int("social.messages_per_hour")
-        if await self.ledger.sent_since(1) >= cap:
+        if await self.ledger.sent_since(self.knobs.get("social.send_window_hours")) >= cap:
             return f"limite de {cap} mensagens por hora"
         return None
 
@@ -42,7 +42,7 @@ class SocialGuard:
             return "jogador já contatado e ainda sem resposta"
 
         daily = self.knobs.int("social.first_contacts_per_day")
-        if await self.ledger.first_contacts_since(24) >= daily:
+        if await self.ledger.first_contacts_since(self.knobs.get("social.first_contact_window_hours")) >= daily:
             return f"limite de {daily} primeiros contatos por dia"
         return None
 

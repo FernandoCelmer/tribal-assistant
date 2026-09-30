@@ -282,7 +282,7 @@ class SocialProposer(Proposer):
 
         ledger = SocialLedger(view.session)
         daily = knob_int(view, "social.first_contacts_per_day")
-        if await ledger.first_contacts_since(24) >= daily:
+        if await ledger.first_contacts_since(knob(view, "social.first_contact_window_hours")) >= daily:
             self.notes.append(f"limite de {daily} primeiros contatos no dia")
             return []
 
@@ -317,9 +317,9 @@ class SocialProposer(Proposer):
         stops = list(TOUR)
         if (view.ctx.player or {}).get("ally_id"):
             stops.append({"screen": "ally", "label": "tribo"})
-        for neighbour in (await self.neighbours(view, ledger, managed | {me}))[:3]:
+        for neighbour in (await self.neighbours(view, ledger, managed | {me}))[: knob_int(view, "browse.neighbours")]:
             stops.append({"screen": "info_player", "params": {"id": neighbour["player_id"]}, "label": f"perfil de {neighbour['name']}"})
-        for tribe in (await ledger.nearby_tribes(view.knobs))[:2]:
+        for tribe in (await ledger.nearby_tribes(view.knobs))[: knob_int(view, "browse.tribes")]:
             stops.append({"screen": "info_ally", "params": {"id": tribe["id"]}, "label": f"tribo [{tribe['tag']}]"})
 
         chosen = random.sample(stops, min(len(stops), knob_int(view, "browse.pages")))

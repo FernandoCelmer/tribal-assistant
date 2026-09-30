@@ -142,8 +142,9 @@ class RulePlanner:
             add("recruit", "light", max(knobs.int("plan.light_min"), light.total + knobs.int("plan.light_step")), "cavalaria leve é a melhor unidade de saque")
         else:
             spear = ctx.unit("spear")
-            if spear and spear.available and spear.total < 40:
-                add("recruit", "spear", min(40, spear.total + 10), "lanceiros para saque, coleta e a missão dos 40")
+            spear_goal = knobs.int("plan.spear_min")
+            if spear and spear.available and spear.total < spear_goal:
+                add("recruit", "spear", min(spear_goal, spear.total + knobs.int("plan.spear_step")), "lanceiros para saque e coleta")
 
         if any(c["direction"] == "in" and c["kind"] in ("attack", "noble") for c in ctx.commands):
             add("build", "wall", levels.get("wall", 0) + 1, "ataque chegando: muralha")
@@ -152,7 +153,7 @@ class RulePlanner:
             f"Plano automático: {sum(1 for s in steps if s.kind == 'build')} obras — estátua cedo, missões, "
             "edifício principal até 10, madeira na frente e ferro abaixo, portão da cavalaria leve."
         )
-        return summary, steps[:12]
+        return summary, steps[: knobs.int("plan.max_steps")]
 
     def _stable_gate(self, ctx: VillageContext, add) -> None:
         """EP 10, Quartel 5, Ferreiro 5, Estábulo 3, with the storage holding the next cost."""

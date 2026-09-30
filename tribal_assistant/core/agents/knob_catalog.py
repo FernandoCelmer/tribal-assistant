@@ -45,6 +45,7 @@ RAIDS_CALM = settle("raids_lost", 0.1, "saques perdendo tropas")
 NO_TARGETS_UP = more_when("no_targets", 0.3, "nenhuma bárbara no alcance")
 THREAT_UP = either(more_when("threatened", 0.1, "ataques chegando"), settle("threatened", 0.01, "ataques chegando"))
 IDLE_QUEUE_UP = more_when("idle_queue", 0.3, "fila de obras parada")
+ARMY_STALLED_UP = more_when("army_stalled", 0.9, "rodadas sem recrutar nada")
 IRON_CALM = settle("iron_short", 0.1, "obras esperando ferro")
 IRON_SHORT_UP = more_when("iron_short", 0.3, "obras esperando ferro")
 IRON_SHORT_DOWN = less_when("iron_short", 0.3, "obras esperando ferro")
@@ -114,6 +115,25 @@ CATALOG: dict[str, KnobSpec] = {
     "recruit.min_batch": KnobSpec(5, "menor lote que vale recrutar", either(STARVED, settle("recruit_starved", 0.1, "recrutamento sem recurso")), integer=True),
     "scavenge.cap": KnobSpec(1000, "teto de lanceiros para a coleta", either(more_when("scavenge_idle", 0.3, "coleta sem tropas"), less_when("pop_locked", 0.2, "população travada")), integer=True),
     "spy.min": KnobSpec(5, "exploradores mínimos para sondar", integer=True),
+    "raid.min_carry_share": KnobSpec(0.5, "fração mínima do saque desejado que o grupo precisa carregar", less_when("no_targets", 0.3, "sem alvos viáveis"), share=True),
+    "raid.yellow_streak_skip": KnobSpec(2, "relatórios amarelos seguidos antes de pular o alvo até espionar", integer=True),
+    "raid.escort_spies": KnobSpec(1, "exploradores que acompanham um saque em alvo sem muralha", integer=True),
+    "raid.unknown_fill_share": KnobSpec(0.5, "fração da carga que se espera de um alvo sem histórico", share=True),
+    "plan.spear_min": KnobSpec(40, "lanceiros que o plano automático pede antes da cavalaria leve", integer=True),
+    "plan.spear_step": KnobSpec(10, "lanceiros por passo do plano automático", integer=True),
+    "plan.max_steps": KnobSpec(12, "passos guardados no plano da aldeia", integer=True),
+    "plan.recruit_lookahead": KnobSpec(2, "passos de recrutamento do plano olhados por rodada", integer=True),
+    "recruit.max_queued_batches": KnobSpec(2, "lotes de lanceiros na fila antes de esperar", ARMY_STALLED_UP, integer=True),
+    "build.plan_lookahead": KnobSpec(4, "obras do plano propostas por rodada", IDLE_QUEUE_UP, integer=True),
+    "build.unlock_lookahead": KnobSpec(1, "desbloqueios de coleta propostos por rodada", integer=True),
+    "browse.neighbours": KnobSpec(3, "perfis de vizinhos no sorteio do passeio", integer=True),
+    "browse.tribes": KnobSpec(2, "tribos próximas no sorteio do passeio", integer=True),
+    "social.first_contact_window_hours": KnobSpec(24, "janela em horas do limite de primeiros contatos"),
+    "social.send_window_hours": KnobSpec(1, "janela em horas do limite de mensagens"),
+    "defense.hold_margin_hours": KnobSpec(0.25, "horas que as tropas ficam seguradas depois do impacto"),
+    "defense.urgency_horizon_hours": KnobSpec(6, "horas até o impacto em que a defesa passa a ter urgência"),
+    "plan.iron_lookahead": KnobSpec(2, "próximas obras do plano cujo ferro é guardado", integer=True),
+    "plan_reserve.lookahead": KnobSpec(1, "próximas obras do plano com recursos reservados", integer=True),
     "spy.min_send": KnobSpec(5, "exploradores mínimos por envio de espionagem (o jogo recusa menos)", integer=True),
     "spy.per_light": KnobSpec(5, "cavalarias leves por explorador mantido", integer=True),
     "plan_reserve.idle_hours": KnobSpec(0.25, "horas até a próxima obra para reservar com a fila parada", either(IDLE_QUEUE_UP, STARVED)),

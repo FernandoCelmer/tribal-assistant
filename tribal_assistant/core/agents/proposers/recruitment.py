@@ -22,7 +22,7 @@ class RecruitmentProposer(Proposer):
         batch, min_batch = knob_int(view, "recruit.batch"), knob_int(view, "recruit.min_batch")
         weight = {Role.OFFENSIVE: 0.7, Role.DEFENSE: 0.6, Role.SUPPORT: 0.65, Role.EMERGENCY: 0.5}.get(view.role, 0.4)
 
-        for step in PlanTracker.next_recruits(ctx.plan)[:2]:
+        for step in PlanTracker.next_recruits(ctx.plan)[: knob_int(view, "plan.recruit_lookahead")]:
             unit = ctx.unit(step.target)
             if unit is None or not unit.available:
                 continue
@@ -102,7 +102,7 @@ class RecruitmentProposer(Proposer):
         queued = sum(r.count for r in ctx.village.recruit_orders if r.unit == "spear")
         target = self.scavenge_target(ctx.village.pop_max or 0, knobs=tuning(view))
         missing = target - spear.total - queued
-        if missing < min_batch or queued >= batch * 2:
+        if missing < min_batch or queued >= batch * knob_int(view, "recruit.max_queued_batches"):
             return None
 
         plan = view.guard.plan_recruit(ctx, "spear", min(batch, missing))

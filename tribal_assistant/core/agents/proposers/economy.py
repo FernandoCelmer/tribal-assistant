@@ -83,7 +83,7 @@ class EconomyProposer(Proposer):
                 )
             )
 
-        for building in PlanTracker.next_builds(ctx.plan)[:1]:
+        for building in PlanTracker.next_builds(ctx.plan)[: tuning(ctx).int("plan_reserve.lookahead")]:
             cost = view.build_cost(building)
             if not cost or not view.free_slots:
                 continue
@@ -168,11 +168,11 @@ class EconomyProposer(Proposer):
         """Iron the next use asks for: a plan build, a plan recruit batch or the light cavalry research."""
         batch = tuning(ctx).int("recruit.batch")
         needs = []
-        for name in PlanTracker.next_builds(ctx.plan)[:2]:
+        for name in PlanTracker.next_builds(ctx.plan)[: tuning(ctx).int("plan.iron_lookahead")]:
             building = ctx.building(name)
             needs.append((building.next_iron or 0) if building else 0)
 
-        for step in PlanTracker.next_recruits(ctx.plan)[:2]:
+        for step in PlanTracker.next_recruits(ctx.plan)[: tuning(ctx).int("plan.recruit_lookahead")]:
             unit = ctx.unit(step.target)
             if unit is not None and unit.available:
                 needs.append((unit.cost_iron or 0) * min(batch, max(0, step.amount - unit.total)))

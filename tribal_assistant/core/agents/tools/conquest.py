@@ -22,7 +22,7 @@ class SendNoble(AgentTool):
         "type": "object",
         "properties": {
             "target": {"type": "string", "description": "Coordenadas x|y da bárbara, ex.: 498|503."},
-            "nobles": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Quantos nobres no trem."},
+            "nobles": {"type": "integer", "minimum": 1, "description": "Quantos nobres no trem."},
             "escort": UNITS | {"description": "Escolta de CADA nobre, sem o nobre. Ex.: {\"axe\": 200}."},
             "reason": REASON,
         },

@@ -3,7 +3,7 @@
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import knob, tuning
+from tribal_assistant.core.agents.knobs import knob, knob_int, tuning
 from tribal_assistant.core.agents.pacing import BuildPacing
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
@@ -32,7 +32,7 @@ class InfrastructureProposer(Proposer):
         plan = PlanTracker.next_builds(ctx.plan)
 
         quest_buildings = {b for b, _ in self._quests(view)}
-        for index, building in enumerate(plan[:4]):
+        for index, building in enumerate(plan[: knob_int(view, "build.plan_lookahead")]):
             if not self._ok(view, building):
                 continue
 
@@ -66,7 +66,7 @@ class InfrastructureProposer(Proposer):
         if filler:
             items.append(self._build(view, filler, "fila vazia: obra que cabe no estoque enquanto o plano espera", impact=0.4, opportunity=0.8))
 
-        for option_id in PlanTracker.next_unlocks(ctx.plan)[:1]:
+        for option_id in PlanTracker.next_unlocks(ctx.plan)[: knob_int(view, "build.unlock_lookahead")]:
             if not view.guard.check_unlock_scavenge(ctx, option_id):
                 items.append(
                     Proposal(
@@ -108,7 +108,7 @@ class InfrastructureProposer(Proposer):
         """The pit whose resource the next builds miss the most, measured in hours of production."""
         production = view.estimator.production()
         demand = dict.fromkeys(("wood", "clay", "iron"), 0)
-        for building in dict.fromkeys([*plan[:4], "main"]):
+        for building in dict.fromkeys([*plan[: knob_int(view, "build.plan_lookahead")], "main"]):
             for resource, amount in view.build_cost(building).items():
                 if resource in demand:
                     demand[resource] += amount

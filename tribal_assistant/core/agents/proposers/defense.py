@@ -72,7 +72,7 @@ class DefenseProposer(Proposer):
             return []
 
         decision = await self.assess(view)
-        until = now() + timedelta(hours=hours + 0.25)
+        until = now() + timedelta(hours=hours + knob(view, "defense.hold_margin_hours"))
         view.note(Insight("threat", self._describe(hours, decision), Certainty.ESTIMATE if decision else Certainty.HYPOTHESIS, now(), 0.6 if decision else 0.5, hours, self.key))
         if decision is not None and decision.action == "dodge":
             return [Constraint("block_actions", "esquiva: gastar recursos e tirar as tropas antes do impacto", self.key, until, (*SPEND_BLOCKED, "send_scavenge"))]
@@ -115,7 +115,7 @@ class DefenseProposer(Proposer):
             return await self._prepare(view)
 
         decision = await self.assess(view)
-        urgency = clamp(1 - hours / 6)
+        urgency = clamp(1 - hours / knob(view, "defense.urgency_horizon_hours"))
         deadline = now() + timedelta(hours=hours)
         items = []
 

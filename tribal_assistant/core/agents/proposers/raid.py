@@ -113,7 +113,7 @@ class RaidPlanner:
             squad[unit] = count
             carried += count * capacity
 
-        if not squad or carried < min(want, (knobs or Knobs()).int("raid.unknown_haul")) * 0.5:
+        if not squad or carried < min(want, (knobs or Knobs()).int("raid.unknown_haul")) * (knobs or Knobs()).get("raid.min_carry_share"):
             return None
 
         return squad
@@ -179,8 +179,8 @@ class RaidPlanner:
             if big:
                 return RaidPlan(coords, "skip", "bárbara grande sem espionagem e sem exploradores")
 
-            if data.get("yellow_streak", 0) >= 2:
-                return RaidPlan(coords, "skip", "dois relatórios amarelos seguidos")
+            if data.get("yellow_streak", 0) >= knobs.int("raid.yellow_streak_skip"):
+                return RaidPlan(coords, "skip", f"{data['yellow_streak']} relatórios amarelos seguidos")
 
         wall = data.get("wall")
         light_needed = cls.wall_light(wall, has_ram, knobs)
@@ -208,11 +208,12 @@ class RaidPlanner:
         if squad is None:
             return RaidPlan(coords, "skip", "tropas insuficientes para um grupo seguro")
 
-        if wall == 0 and home.get("spy", 0) >= 1:
-            squad["spy"] = 1
+        escort = knobs.int("raid.escort_spies")
+        if wall == 0 and home.get("spy", 0) >= escort:
+            squad["spy"] = escort
 
         carry = cls.carry(squad)
-        haul = min(float(want if expected is not None else data.get("avg_haul") or carry * 0.5), float(carry))
+        haul = min(float(want if expected is not None else data.get("avg_haul") or carry * knobs.get("raid.unknown_fill_share")), float(carry))
         hours = 2 * cls.trip_minutes(squad, distance) / 60
         why = f"espionado: ~{expected} recursos na chegada" if expected is not None else "histórico de relatórios"
         return RaidPlan(coords, "raid", why, squad, haul, haul / hours if hours else haul)
