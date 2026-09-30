@@ -19,7 +19,7 @@ UNIT_BONUS = {"lanceiro": "spear", "espadachim": "sword", "machado": "axe", "arq
 
 class UpkeepProposer(Proposer):
     key = "steward"
-    title = "Mordomo"
+    title = "Rei"
     observes = "relíquias, bandeiras, paladino, inventário, forja do evento e missões simples"
     delivers = "bônus grátis aplicados sem gastar pontos premium"
 
