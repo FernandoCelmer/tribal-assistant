@@ -33,7 +33,7 @@ services:
     environment:
       TRIBAL_API: http://api:8000
       WEB_USER: ${WEB_USER:-admin}
-      WEB_PASSWORD: ${WEB_PASSWORD:?defina WEB_PASSWORD}
+      WEB_PASSWORD: ${WEB_PASSWORD:-}
 
 volumes:
   storage:

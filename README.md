@@ -253,7 +253,7 @@ make web-install && make web   # Next.js panel on :3000, proxies /api/v1 to TRIB
 make web-types             # regenerate the panel types from the API's OpenAPI schema
 ```
 
-`WEB_PASSWORD` (and `WEB_USER`, default `admin`) puts the whole panel behind a password; leave it unset locally.
+`WEB_PASSWORD` (and `WEB_USER`, default `admin`) puts the whole panel behind a password; leave it unset locally, or on a PLAY=false server where the panel is read-only.
 
 Each topic is its own page, reached from the sidebar (a drawer on phones):
 
