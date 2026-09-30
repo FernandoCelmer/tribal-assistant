@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useState } from "react";
-import { STREAM_LABEL, useEvents, type FlowEvent, type MicroEvent, type StreamState } from "@/features/agents/events";
+import { useEffect, useMemo, useState } from "react";
+import { STREAM_LABEL } from "@/features/agents/events";
 import { agentLabel, readable, toolLabel } from "@/features/flow/labels";
 import { ROLES } from "@/lib/game";
 import { Card, EditBar, LAYOUT_CSS, useEditing, useLayout } from "./layout";
 import { SIDE_CSS, VillagePanel } from "./village-panel";
-import { EMPTY, SHOWN, history, micro, note, reduce, seed, type Item, type LiveState, type Phase, type Status, type Step, type StepKind } from "./state";
+import { SHOWN, type Item, type Phase, type Status, type Step, type StepKind } from "./state";
+import { ago, clip, useClock, useLiveFeed } from "./use-live";
 
 const W = 1280;
 const H = 720;
@@ -37,26 +38,8 @@ const PHASE: Record<Phase, string> = {
   done: "rodada concluída",
 };
 
-const QUIET_LOG = /uvicorn|apscheduler|event_relay/;
-const TRACE_KINDS = new Set(["plan", "summary", "thought", "info", "error"]);
-
-const GLYPH: Record<StepKind, string> = { tool: "⚙", result: "", screen: "↳", click: "↳", request: "⇢", motion: "~", type: "⌨", log: "›", trace: "◆", sync: "⟳", run: "●" };
+const GLYPH: Record<StepKind, string> = { tool: "⚙", result: "", screen: "↳", click: "↳", request: "⇢", motion: "~", type: "⌨", repair: "↻", log: "›", trace: "◆", sync: "⟳", run: "●" };
 const NOTE_LABEL: Partial<Record<StepKind, string>> = { log: "log", trace: "plano", sync: "sync", run: "rodada" };
-
-type Action =
-  | { type: "seed"; state: LiveState }
-  | { type: "history"; logs: { at: string; level: string; message: string }[] }
-  | { type: "flow"; event: FlowEvent; only: number | null }
-  | { type: "micro"; event: MicroEvent; only: number | null }
-  | { type: "note"; step: StepKind; text: string; ok?: boolean | null; agent?: string };
-
-function reducer(state: LiveState, action: Action): LiveState {
-  if (action.type === "seed") return state.updated > action.state.updated ? state : { ...action.state, steps: state.steps };
-  if (action.type === "history") return history(state, action.logs);
-  if (action.type === "micro") return micro(state, action.event, action.only);
-  if (action.type === "note") return note(state, action.step, action.text, action.ok ?? null, action.agent ?? "");
-  return reduce(state, action.event, action.only);
-}
 
 function spread(count: number, index: number, top = TOP, bottom = BOTTOM): number {
   if (count <= 1) return (top + bottom) / 2;
@@ -66,10 +49,6 @@ function spread(count: number, index: number, top = TOP, bottom = BOTTOM): numbe
 function curve(x1: number, y1: number, x2: number, y2: number): string {
   const mid = (x1 + x2) / 2;
   return `M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`;
-}
-
-function clip(text: string, size: number): string {
-  return text.length > size ? `${text.slice(0, size - 1)}…` : text;
 }
 
 function label(item: Pick<Item, "title">): string {
@@ -87,66 +66,12 @@ function useStage(): number {
   return scale;
 }
 
-function useClock(): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1_000);
-    return () => clearInterval(timer);
-  }, []);
-  return now;
-}
-
-function ago(ms: number): string {
-  const s = Math.max(0, Math.round(ms / 1000));
-  if (s < 60) return `${s}s`;
-  const m = Math.round(s / 60);
-  return m < 60 ? `${m}min` : `${Math.round(m / 60)}h`;
-}
-
 export function LiveFlow({ only, transparent, edit, saved }: { only: number | null; transparent: boolean; edit: boolean; saved: string | null }) {
-  const [state, dispatch] = useReducer(reducer, EMPTY);
+  const { state, stream } = useLiveFeed(only);
   const scale = useStage();
   const { layout, move, reset, link } = useLayout(saved);
   const [editing, setEditing] = useEditing(edit);
   const now = useClock();
-
-  const stream: StreamState = useEvents((event) => {
-    if (event.kind === "flow") dispatch({ type: "flow", event: event.data, only });
-    if (event.kind === "micro") dispatch({ type: "micro", event: event.data, only });
-    if (event.kind === "log" && !QUIET_LOG.test(event.data.source) && event.data.level !== "DEBUG")
-      dispatch({ type: "note", step: "log", text: event.data.message, ok: event.data.level === "ERROR" || event.data.level === "WARNING" ? false : null });
-    if (event.kind === "step" && TRACE_KINDS.has(event.data.kind))
-      dispatch({ type: "note", step: "trace", text: event.data.content, agent: event.data.agent, ok: event.data.is_error ? false : null });
-    if (event.kind === "sync") dispatch({ type: "note", step: "sync", text: `sincronizou ${event.data.villages} aldeia(s) e ${event.data.reports} relatório(s)` });
-    if (event.kind === "run_started") dispatch({ type: "note", step: "run", text: `rodada ${event.data.run_id} começou (${event.data.trigger})` });
-    if (event.kind === "run_finished")
-      dispatch({ type: "note", step: "run", text: `rodada terminou: ${event.data.actions_ok} feita(s), ${event.data.actions_failed} falha(s)`, ok: event.data.status !== "failed" });
-  });
-
-  useEffect(() => {
-    let alive = true;
-    const load = async () => {
-      try {
-        const [specialists, rounds, logs] = await Promise.all([
-          fetch("/api/v1/agents/proposers").then((r) => (r.ok ? r.json() : [])),
-          fetch("/api/v1/agents/coordination").then((r) => (r.ok ? r.json() : [])),
-          fetch("/api/v1/logs?limit=30&level=INFO").then((r) => (r.ok ? r.json() : [])),
-        ]);
-        const recent = (logs as { at: string; level: string; message: string; source: string }[]).filter((l) => !QUIET_LOG.test(l.source) && l.level !== "DEBUG");
-        if (alive) dispatch({ type: "history", logs: recent });
-        const pool = (rounds as { village_id: number; created_at: string }[]).filter((r) => only === null || r.village_id === only);
-        const latest = pool.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0] ?? null;
-        const list = (specialists as { key: string; title: string }[]).map(({ key, title }) => ({ key, title }));
-        if (alive) dispatch({ type: "seed", state: seed(list, latest as Parameters<typeof seed>[1]) });
-      } catch {
-        return;
-      }
-    };
-    load();
-    return () => {
-      alive = false;
-    };
-  }, [only]);
 
   const specs = state.specialists;
   const specY = useMemo(() => new Map(specs.map((s, i) => [s.key, spread(specs.length, i, SPEC_TOP, SPEC_BOTTOM)])), [specs]);

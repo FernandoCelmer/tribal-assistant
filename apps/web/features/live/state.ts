@@ -59,7 +59,7 @@ type Seed = {
   data: { executed?: SeedEntry[]; deferred?: SeedEntry[]; next_action?: string };
 };
 
-type SeedEntry = { key: string; source: string; action: string; title: string; priority: number; exploration?: boolean; ok?: boolean; result?: string; why?: string };
+type SeedEntry = { key: string; source: string; action: string; title: string; priority: number; exploration?: boolean; ok?: boolean; result?: string; why?: string; reason?: string };
 
 export function instant(text: string): number {
   const zoned = /[zZ]|[+-]\d\d:?\d\d$/.test(text) ? text : `${text}Z`;
@@ -76,6 +76,7 @@ export function seed(specialists: { key: string; title: string }[], round: Seed 
     title: e.title,
     priority: e.priority,
     explored: !!e.exploration,
+    reason: e.reason ?? "",
     status,
     note,
     at,
@@ -179,6 +180,8 @@ export function micro(state: LiveState, event: MicroEvent, only: number | null):
           ? { ...base, text: event.text, args: event.where }
           : event.step === "type"
             ? { ...base, text: event.text, args: event.field }
+            : event.step === "repair"
+              ? { ...base, agent: event.agent, tool: event.tool, text: event.text, args: event.args }
           : { ...base, text: event.text };
   const last = state.steps[0];
   if (last && last.step === step.step && last.text === step.text && last.tool === step.tool && step.step !== "tool") return state;

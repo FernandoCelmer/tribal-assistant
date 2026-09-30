@@ -39,7 +39,7 @@ export type LogEvent = {
   process: string;
 };
 
-export type FlowNode = { key: string; source: string; action: string; title: string; priority: number; explored: boolean };
+export type FlowNode = { key: string; source: string; action: string; title: string; priority: number; explored: boolean; reason?: string };
 
 type FlowPlace = { village_id: number; village: string; coords: string; account_id?: number | null };
 
@@ -61,6 +61,7 @@ export type MicroEvent = { account_id?: number | null } & (
   | { step: "request"; text: string; where: string; method: string }
   | { step: "motion"; text: string }
   | { step: "type"; text: string; field: string }
+  | { step: "repair"; agent: string; tool: string; text: string; args: string; village_id: number }
 );
 
 export type StreamEvent =
