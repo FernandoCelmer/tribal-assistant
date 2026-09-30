@@ -146,6 +146,7 @@ CATALOG: dict[str, KnobSpec] = {
     "learning.min_samples": KnobSpec(4, "resultados mínimos antes de aprender o bônus de um especialista", integer=True),
     "learning.high_factor": KnobSpec(0.5, "valor de um fator a partir do qual a proposta conta como forte nele", share=True),
     "runner.stale_minutes": KnobSpec(15, "minutos até uma rodada presa ser dada como interrompida", integer=True),
+    "research.reserve_hours": KnobSpec(6, "horas até a próxima pesquisa ficar pronta para começar a guardar recursos para ela"),
     "spy.min_send": KnobSpec(5, "exploradores mínimos por envio de espionagem (o jogo recusa menos)", integer=True),
     "spy.per_light": KnobSpec(5, "cavalarias leves por explorador mantido", integer=True),
     "plan_reserve.idle_hours": KnobSpec(0.25, "horas até a próxima obra para reservar com a fila parada", either(IDLE_QUEUE_UP, STARVED)),

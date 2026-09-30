@@ -1,13 +1,18 @@
 """Recruitment: troops the plan asks for, surplus into raiding troops, and the paladin."""
 
+import json
+
+from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
+from tribal_assistant.core.repositories.lessons import LessonRepository
 
 FARM_UNITS = ("light", "spear", "axe")
+RESEARCH_NEED = "research:next"
 
 
 class RecruitmentProposer(Proposer):
@@ -15,6 +20,21 @@ class RecruitmentProposer(Proposer):
     title = "Recrutamento"
     observes = "tropas, população, filas e objetivo militar"
     delivers = "plano de produção de unidades"
+
+    async def reservations(self, view: CoordinationView) -> list[Reservation]:
+        """The next research keeps its cost aside once it is close, so builds stop spending it first."""
+        row = await LessonRepository(view.session).get(f"{RESEARCH_NEED}:{view.ctx.game_id}")
+        need = json.loads(row.data or "{}") if row else {}
+        cost = {k: int(v) for k, v in (need.get("cost") or {}).items() if k in ("wood", "clay", "iron") and v}
+        if not cost or not need.get("unit"):
+            return []
+
+        hours = view.estimator.hours_to_afford(cost)
+        if hours > knob(view, "research.reserve_hours"):
+            return []
+
+        unit = need["unit"]
+        return [Reservation(f"research:{unit}", "strategic", f"pesquisa de {unit} em ~{hours:.1f}h", cost, exempt=("research_unit",))]
 
     async def propose(self, view: CoordinationView) -> list[Proposal]:
         ctx = view.ctx
@@ -140,9 +160,11 @@ class RecruitmentProposer(Proposer):
         ready = {t["unit"]: t for t in techs if t.get("level", 0) == 0 and not t.get("blocked")}
         unit = next((u for u in self.RESEARCH_PRIORITY if u in ready), None)
         if unit is None:
+            await LessonRepository(view.session).observe(f"{RESEARCH_NEED}:{ctx.game_id}", "research", "nenhuma pesquisa pendente", "", {"unit": None, "cost": {}})
             return None
 
         cost = {k: v for k, v in ready[unit].get("cost", {}).items() if v}
+        await LessonRepository(view.session).observe(f"{RESEARCH_NEED}:{ctx.game_id}", "research", f"próxima pesquisa: {unit}", "", {"unit": unit, "cost": cost})
         return Proposal(
             self.key,
             "research_unit",
@@ -154,4 +176,5 @@ class RecruitmentProposer(Proposer):
             horizon=Horizon.TACTICAL,
             confidence=0.8 if cost else 0.6,
             risks=[] if cost else ["custo só aparece na tela do ferreiro"],
+            purpose=f"research:{unit}",
         )
