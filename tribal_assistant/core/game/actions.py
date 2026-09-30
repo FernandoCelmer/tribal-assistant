@@ -808,11 +808,11 @@ class GameActions:
             await human_click(page, use)
             await human_delay(900, 1600)
 
+            self._capture(await page.content(), f"use-item-{key}")
             dialog = page.locator(
-                ".popup_box_container .btn-confirm-yes, .popup_box_container a.btn:visible, .popup_box_container input.btn:visible"
+                ".evt-confirm-btn:visible, .btn-confirm-yes:visible, .popup_box_container a.btn:visible:not(.btn-confirm-no):not(.btn-pp), .popup_box_container input.btn:visible"
             )
             if await dialog.count():
-                self._capture(await page.content(), f"use-item-{key}")
                 await human_click(page, dialog.first)
                 await page.wait_for_timeout(1_500)
 
