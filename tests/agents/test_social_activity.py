@@ -10,6 +10,7 @@ from tribal_assistant.core.agents.knobs import Knobs, Metrics, Tuner
 from tribal_assistant.core.agents.proposers.social import SocialProposer
 from tribal_assistant.core.agents.social.ledger import MENTOR, SocialLedger
 from tribal_assistant.core.agents.social.writer import Written
+from tribal_assistant.core.game.wander import SAFE_SCREENS
 from tribal_assistant.core.models.agent import AgentDecision
 from tribal_assistant.core.models.lesson import Lesson
 from tribal_assistant.core.models.village import Village
@@ -132,12 +133,12 @@ async def test_social_follows_up_the_application_and_befriends_an_active_neighbo
     writer = Writer()
     current = view(session)
 
-    items = await SocialProposer(writer).propose(current)
+    items = [p for p in await SocialProposer(writer).propose(current) if p.action != "browse_game"]
 
     assert [(p.action, p.arguments.get("name") or p.arguments.get("to")) for p in items] == [("add_friend", "Vizinho"), ("send_mail", "Lider")]
     assert items[1].arguments["kind"] == "intro_leader" and "LARGA3" in writer.reasons[0]
     insight = next(i for i in current.insights if i.key == "social")
-    assert insight.text.startswith("social: 2 proposta(s)") and "candidatura LARGA3" in insight.text
+    assert insight.text.startswith("social: 3 proposta(s)") and "candidatura LARGA3" in insight.text
 
 
 async def test_social_says_why_it_proposed_nothing(session: AsyncSession) -> None:
@@ -145,23 +146,34 @@ async def test_social_says_why_it_proposed_nothing(session: AsyncSession) -> Non
     await session.commit()
     current = view(session)
 
-    assert await SocialProposer(Writer()).propose(current) == []
+    assert [p.action for p in await SocialProposer(Writer()).propose(current)] == ["browse_game"]
     insight = next(i for i in current.insights if i.key == "social")
-    assert insight.text.startswith("social sem proposta")
+    assert insight.text.startswith("social: 1 proposta(s)")
     assert "vizinho ativo" in insight.text and "caixa lida: 0 conversa(s)" in insight.text
 
     again = view(session)
     await SocialProposer(Writer()).propose(again)
     text = next(i for i in again.insights if i.key == "social").text
-    assert "caixa lida há pouco" in text and "sem candidatura pendente" in text
+    assert "caixa lida há pouco" in text and "sem candidatura pendente" in text and "passeio pelo jogo feito há pouco" in text
 
 
 async def test_long_social_silence_loosens_the_social_knobs() -> None:
     changes = {name: value for name, value, _ in Tuner.plan(Knobs(), Metrics(rounds=20, social_idle=1.0))}
 
-    assert changes["cooldown.outreach"] < 6 and changes["cooldown.friend_request"] < 12
+    assert changes["cooldown.outreach"] < 2 and changes["cooldown.friend_request"] < 4 and changes["cooldown.browse"] < 0.5
     assert changes["social.active_growth"] < 5 and changes["social.snapshot_hours"] < 1
-    assert changes["social.neighbour_radius"] > 10 and changes["social.first_contacts_per_day"] > 2
+    assert changes["social.neighbour_radius"] > 10 and changes["social.first_contacts_per_day"] > 5
 
-    calm = {name: value for name, value, _ in Tuner.plan(Knobs({"cooldown.outreach": 3}), Metrics(rounds=20, social_idle=0.1))}
-    assert 3 < calm["cooldown.outreach"] <= 6
+    calm = {name: value for name, value, _ in Tuner.plan(Knobs({"cooldown.outreach": 1}), Metrics(rounds=20, social_idle=0.1))}
+    assert 1 < calm["cooldown.outreach"] <= 2
+
+
+async def test_social_browses_rankings_neighbours_and_tribes(session: AsyncSession) -> None:
+    await world(session)
+    current = view(session, {"browse.pages": 30})
+
+    [browse] = [p for p in await SocialProposer(Writer()).propose(current) if p.action == "browse_game"]
+
+    labels = [stop["label"] for stop in browse.arguments["stops"]]
+    assert "ranking de jogadores" in labels and "perfil de Vizinho" in labels
+    assert all(stop["screen"] in SAFE_SCREENS for stop in browse.arguments["stops"])

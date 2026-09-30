@@ -3,6 +3,7 @@
 Never with the other accounts run here, never in bulk, every text written by the model from real data.
 """
 
+import random
 from datetime import timedelta
 from typing import Any
 
@@ -19,6 +20,15 @@ from tribal_assistant.core.agents.social.rules import SocialRules, same
 from tribal_assistant.core.agents.social.writer import SocialWriter
 
 RETRY = "pendente"
+TOUR = (
+    {"screen": "ranking", "params": {"mode": "player"}, "label": "ranking de jogadores"},
+    {"screen": "ranking", "params": {"mode": "ally"}, "label": "ranking de tribos"},
+    {"screen": "map", "label": "mapa ao redor"},
+    {"screen": "report", "label": "relatórios"},
+    {"screen": "info_player", "params": {"mode": "awards"}, "label": "conquistas"},
+    {"screen": "info_player", "params": {"mode": "stats_own"}, "label": "estatísticas"},
+    {"screen": "buddies", "label": "amigos"},
+)
 
 
 class SocialProposer(Proposer):
@@ -44,7 +54,7 @@ class SocialProposer(Proposer):
             self.notes.append(f"recuperado do histórico: {', '.join(restored)}")
 
         items: list[Proposal] = []
-        for step in (self._inbox, self._friends, self._tribe, self._outreach):
+        for step in (self._inbox, self._friends, self._tribe, self._outreach, self._browse):
             try:
                 items += await step(view)
             except Exception as exc:
@@ -296,3 +306,23 @@ class SocialProposer(Proposer):
 
         self.notes.append("sem candidatura pendente para acompanhar nem vizinho ativo novo para apresentar")
         return []
+
+    async def _browse(self, view: CoordinationView) -> list[Proposal]:
+        if not await view.cooldown("browse"):
+            self.notes.append("passeio pelo jogo feito há pouco")
+            return []
+
+        ledger = SocialLedger(view.session)
+        me, managed = self.me(view), await ledger.managed()
+        stops = list(TOUR)
+        if (view.ctx.player or {}).get("ally_id"):
+            stops.append({"screen": "ally", "label": "tribo"})
+        for neighbour in (await self.neighbours(view, ledger, managed | {me}))[:3]:
+            stops.append({"screen": "info_player", "params": {"id": neighbour["player_id"]}, "label": f"perfil de {neighbour['name']}"})
+        for tribe in (await ledger.nearby_tribes(view.knobs))[:2]:
+            stops.append({"screen": "info_ally", "params": {"id": tribe["id"]}, "label": f"tribo [{tribe['tag']}]"})
+
+        chosen = random.sample(stops, min(len(stops), knob_int(view, "browse.pages")))
+        labels = ", ".join(s["label"] for s in chosen)
+        return [self._proposal("browse_game", {"stops": chosen}, f"passear: {labels}", "conhecer vizinhos, tribos e o mundo como um jogador", 0.1, 0.2)]
+
