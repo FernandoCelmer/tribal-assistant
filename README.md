@@ -1,13 +1,23 @@
-# Tribal Assistant — Tribal Wars agents, API, panel and CLI
+# Tribal Assistant — AI Tribal Wars bot with self-learning agents, live panel and API
+
+**Live panel:** [tw.fernandocelmer.com](https://tw.fernandocelmer.com/) · **Stream overlay:** [tw.fernandocelmer.com/live](https://tw.fernandocelmer.com/live)
 
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Playwright](https://img.shields.io/badge/Playwright-browser-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/python/)
+[![Live panel](https://img.shields.io/badge/live-tw.fernandocelmer.com-4ade80?logo=googlechrome&logoColor=white)](https://tw.fernandocelmer.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-panel-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![MCP](https://img.shields.io/badge/MCP-server-8A2BE2)](https://modelcontextprotocol.io/)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-FE5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
 
-**Tribal Assistant** is an open-source Python assistant for the browser strategy game **Tribal Wars** (Guerra Tribal / Die Stämme). It plays your accounts through a real browser session: village agents decide builds, troops, raids, scavenging, trades, quests, the event forge, tribe and mentor, while a coordinator weighs their proposals. Everything they see and decide is stored in the database (SQLite or PostgreSQL) and shown in a Next.js panel that works on desktop and phone.
+**Tribal Assistant** is an open-source Python assistant and AI bot for the browser strategy game **Tribal Wars** (Guerra Tribal, Die Stämme, Plemiona, Tribalwars). It plays your accounts through a real browser session, like a person would: village agents decide builds, troops, raids, scavenging, research, trades, quests, the event forge, tribe, friends and mentor, while a coordinator weighs their proposals, learns from the outcomes and tunes its own numbers. Everything they see and decide is stored in the database (SQLite or PostgreSQL) and shown in a Next.js panel that works on desktop and phone, plus a live overlay for streaming the bot on Twitch or YouTube.
+
+See it running: the read-only panel of a real account is public at **[tw.fernandocelmer.com](https://tw.fernandocelmer.com/)**, and **[tw.fernandocelmer.com/live](https://tw.fernandocelmer.com/live)** shows every decision, tool call, screen and click as it happens.
 
 Use it as a **server** (`tribal-assistant serve` plus the panel in `apps/web`), a **CLI** (`tribal-assistant`), a **Python library** (`import tribal_assistant`) or an **MCP server** for AI clients.
+
+<p align="center"><a href="https://tw.fernandocelmer.com/live"><img src="docs/screenshots/live.png" alt="Live overlay: decision flow, step by step trace and village counters" width="860"></a></p>
 
 | Overview | Strategy |
 |----------|----------|
@@ -25,6 +35,12 @@ Use it as a **server** (`tribal-assistant serve` plus the panel in `apps/web`), 
 
 ## Features
 
+- **Live overlay** — `/live` streams the decision flow (specialists → coordinator → actions), every tool call with its arguments, every screen, click, typed field and request sent to the game, and village counters ticking every second. Cards move and resize (press `E`) and the layout travels in an OBS link.
+- **Self-tuning numbers** — every threshold, share, cooldown, batch and target is a knob in the database that an hourly tuner moves from what happened; nothing is a fixed config. See `/parameters`.
+- **Learning and exploration** — the coordinator learns a bonus per specialist and weights per factor from the results of executed actions, and sometimes tries a viable second choice so rounds do not repeat forever.
+- **Reads its own errors** — a failed action is read by the model with the game's message and retried once with corrected arguments; requirements the game asks for (minimum scouts, minimum scavenging population, paladin level) are learned.
+- **Social life** — answers conversations in context, makes friends, applies to tribes, introduces itself to active neighbours, reads the tribe forum and browses rankings, profiles and the map like a player; every text is written by the configured model from real data.
+- **One machine plays, any machine watches** — a database lease keeps a single machine playing each account, and events travel through PostgreSQL `NOTIFY` so a read-only server shows the playing one live.
 - **Account sync** — player, points, ranking, villages, resources and production, storage, population, troops, recruitment queue, buildings, incoming and outgoing commands, battle reports.
 - **Village agents** — specialists propose, the coordinator scores and executes the best moves within the guardrails; see [Village agents](#village-agents).
 - **Challenges** — reads the game achievements and chases the ones the agents can reach; combat against players, premium and account resets stay out.
@@ -267,6 +283,8 @@ Each topic is its own page, reached from the sidebar (a drawer on phones):
 | `/strategy` | per village: role and mode, next best action with reason, cost and confidence, the executed sequence, deferred proposals and why, reservations, vetoes, insights, the specialists |
 | `/agents` | live status of the agents, decisions per round (done vs deferred by reason, what blocks the most), village plan, rounds, live feed; `/agents/<run>` explains one round: specialist → decision → result, why each proposal was deferred, the round budget, and the full reasoning |
 | `/charts` | agent metrics (actions per hour, refusals, tokens), tool graph (agents → tools → results; `/graph` redirects here) and village evolution |
+| `/live` | stream overlay: decision flow, step by step trace (tools and arguments, screens, clicks, typing, requests) and live village counters; `E` moves and resizes the cards, `?bg=transparent` and `?village=<id>` for OBS |
+| `/parameters` | every self-tuning knob with its value, default and history of adjustments |
 | `/logs` | application logs with live tail |
 | `/settings` | runtime settings, AI status (provider, model, key present, never the key) and system info |
 
@@ -289,7 +307,7 @@ In Dokploy: create a **Compose** service from the Git repository, set the compos
 | `APP_SECRET` | the key that decrypts the stored game passwords: the content of `storage/secret.key` from the machine that created the accounts |
 | `AI_*`, `QUIET_HOURS` | same as the local `.env` |
 
-The API is reached only through the web service, which proxies `/api/v1`, `/docs` and `/openapi.json` behind the same password. `storage/` (browser state, captures) lives in the `storage` volume.
+The API is reached only through the web service, which proxies `/api/v1`, `/docs` and `/openapi.json`; the panel has no login and a `PLAY=false` server refuses every write. Events of the playing machine reach the panel through PostgreSQL `NOTIFY`, so the VPS shows them live. `storage/` (browser state, captures) lives in the `storage` volume.
 
 Only one server may play an account. `PLAY=false` turns a server into a panel: no scheduler, no agents, no game browser (actions that need the game answer 409). Keep `PLAY=true` on the server that plays (the default) and `PLAY=false` on the others, for example play on your machine and set `PLAY=false` on the VPS.
 
