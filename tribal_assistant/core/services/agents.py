@@ -1,12 +1,14 @@
 """Village agents: run a round, read decisions, quests and configuration."""
 
 import json
+from collections.abc import Sequence
 from dataclasses import asdict
 from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.agents.coordination.explain import RoundExplainer
 from tribal_assistant.core.agents.coordination.roles import RoleSelector
 from tribal_assistant.core.agents.coordination.round import VillageRound
 from tribal_assistant.core.agents.loader import ContextLoader
@@ -14,6 +16,7 @@ from tribal_assistant.core.agents.roles.operator import OperatorAgent
 from tribal_assistant.core.agents.runner import AgentRunner
 from tribal_assistant.core.agents.toolbox import Toolbox
 from tribal_assistant.core.errors import NotFoundError
+from tribal_assistant.core.models.coordination import CoordinationRound
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.core.repositories.agents import AgentRepository
@@ -32,7 +35,13 @@ from tribal_assistant.core.schemas.agents import (
     QuestRewardOut,
     QuestsOut,
 )
-from tribal_assistant.core.schemas.coordination import CoordinationOut, ProposerOut, RoleIn, RoleOut
+from tribal_assistant.core.schemas.coordination import (
+    CoordinationOut,
+    ProposerOut,
+    RoleIn,
+    RoleOut,
+    RoundSummaryOut,
+)
 from tribal_assistant.core.schemas.plan import VillagePlanOut
 
 
@@ -65,13 +74,46 @@ class AgentService:
 
     async def coordination(self) -> list[CoordinationOut]:
         repo = CoordinationRepository(self.session)
+        return await self._rounds(repo, await repo.latest())
+
+    async def coordination_run(self, run_id: str) -> list[CoordinationOut]:
+        repo = CoordinationRepository(self.session)
+        rows = await repo.for_run(run_id)
+        if not rows:
+            raise NotFoundError(f"rodada {run_id} sem decisão do coordenador")
+
+        return await self._rounds(repo, rows)
+
+    async def coordination_history(self, limit: int, village_id: int | None = None) -> list[RoundSummaryOut]:
+        rows = await CoordinationRepository(self.session).recent(min(limit * 20, 4000), village_id)
+        runs: dict[str, RoundSummaryOut] = {}
+        for row in rows:
+            if row.run_id not in runs:
+                if len(runs) >= limit:
+                    continue
+                runs[row.run_id] = RoundSummaryOut(run_id=row.run_id, created_at=row.created_at, villages=0, executed=0, refused=0, failed=0, deferred={})
+
+            summary = runs[row.run_id]
+            outcomes, deferrals = RoundExplainer.tally(json.loads(row.data))
+            summary.villages += 1
+            summary.executed += outcomes["ok"]
+            summary.refused += outcomes["refused"]
+            summary.failed += outcomes["failed"]
+            for kind, count in deferrals.items():
+                summary.deferred[kind] = summary.deferred.get(kind, 0) + count
+            summary.created_at = min(summary.created_at, row.created_at)
+
+        return list(reversed(runs.values()))
+
+    async def _rounds(self, repo: CoordinationRepository, rows: Sequence[CoordinationRound]) -> list[CoordinationOut]:
         names = {v.id: f"{v.name} ({v.coords})" for v in await self._own_villages()}
         items = []
-        for row in await repo.latest():
+        for row in rows:
             strategy = await repo.strategy(row.village_id)
             out = CoordinationOut.model_validate(row)
             out.village = names.get(row.village_id, str(row.village_id))
             out.manual_role = bool(strategy and strategy.manual)
+            out.data = RoundExplainer.annotate(out.data)
             items.append(out)
 
         return sorted(items, key=lambda o: o.village_id)

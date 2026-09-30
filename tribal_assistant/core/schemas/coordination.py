@@ -29,6 +29,16 @@ class CoordinationOut(BaseModel):
         return json.loads(value) if isinstance(value, str) else value
 
 
+class RoundSummaryOut(BaseModel):
+    run_id: str
+    created_at: datetime
+    villages: int
+    executed: int
+    refused: int
+    failed: int
+    deferred: dict[str, int]
+
+
 class RoleIn(BaseModel):
     role: RoleName | None = Field(default=None, description="Papel fixo da aldeia; vazio devolve a escolha ao coordenador.")
     reason: str = Field(default="", max_length=200)

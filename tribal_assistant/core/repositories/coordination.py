@@ -57,6 +57,17 @@ class CoordinationRepository:
 
         return list(seen.values())
 
+    async def for_run(self, run_id: str) -> Sequence[CoordinationRound]:
+        stmt = select(CoordinationRound).where(CoordinationRound.run_id == run_id).order_by(CoordinationRound.village_id)
+        return (await self.session.execute(stmt)).scalars().all()
+
+    async def recent(self, limit: int, village_id: int | None = None) -> Sequence[CoordinationRound]:
+        stmt = select(CoordinationRound).order_by(CoordinationRound.id.desc()).limit(limit)
+        if village_id is not None:
+            stmt = stmt.where(CoordinationRound.village_id == village_id)
+
+        return (await self.session.execute(stmt)).scalars().all()
+
     async def history(self, village_id: int, limit: int = 20) -> Sequence[CoordinationRound]:
         stmt = (
             select(CoordinationRound)
