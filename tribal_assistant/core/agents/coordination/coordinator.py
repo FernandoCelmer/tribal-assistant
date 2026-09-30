@@ -14,6 +14,7 @@ from tribal_assistant.core.agents.coordination.proposal import Proposal
 from tribal_assistant.core.agents.coordination.strategy import GOALS, LABELS, Role, Weights
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import knob, knob_int, tuning
+from tribal_assistant.core.agents.watchdog import Watchdog
 
 Execute = Callable[[Proposal], Awaitable[tuple[bool, str]]]
 BUILD_ACTIONS = ("upgrade_building",)
@@ -102,7 +103,8 @@ class Coordinator:
         view = self.view
         decision = Decision(role=view.base_role, mode=view.role, goal=GOALS[view.role], constraints=constraints, budget=self.budget)
 
-        for reservation in sorted(self.live(reservations, proposals), key=lambda r: Budget.KINDS.index(r.kind) if r.kind in Budget.KINDS else 9):
+        live = [r for r in self.live(reservations, proposals) if not await Watchdog(view.session).suppressed(r.purpose, view.ctx.id, knob(view, "watch.suppress_hours"))]
+        for reservation in sorted(live, key=lambda r: Budget.KINDS.index(r.kind) if r.kind in Budget.KINDS else 9):
             self.budget.reserve(reservation)
 
         chosen: set[str] = set()

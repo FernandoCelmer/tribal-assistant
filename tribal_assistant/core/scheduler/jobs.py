@@ -14,6 +14,7 @@ from tribal_assistant.core.agents.coordination.policy import BUILD_SLOTS
 from tribal_assistant.core.agents.knobs import Tuner
 from tribal_assistant.core.agents.routines import Routines
 from tribal_assistant.core.agents.runner import AgentRunner
+from tribal_assistant.core.agents.watchdog import Watchdog
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.session import SessionFactory
 from tribal_assistant.core.game.human import in_quiet_hours
@@ -168,6 +169,11 @@ async def _routines_job() -> None:
         logger.info("Rotinas: {}", "; ".join(done))
 
 
+async def _watch_job() -> None:
+    async with SessionFactory() as session:
+        await Watchdog(session).run()
+
+
 async def _free_finish_job() -> None:
     if in_quiet_hours():
         return
@@ -241,6 +247,15 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         trigger=IntervalTrigger(minutes=1, jitter=15),
         id="routines",
         next_run_time=datetime.now() + timedelta(seconds=45),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        per_account(_watch_job),
+        trigger=IntervalTrigger(minutes=10, jitter=60),
+        id="watchdog",
+        next_run_time=datetime.now() + timedelta(minutes=5),
         max_instances=1,
         coalesce=True,
         replace_existing=True,
