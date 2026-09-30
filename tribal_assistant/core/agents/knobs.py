@@ -184,8 +184,12 @@ class Tuner:
                 whys = [(str(d.get("action")), str(d.get("why", ""))) for d in deferred]
                 stock = (data.get("budget") or {}).get("stock") or {}
                 storage = next((i.get("value") for i in data.get("insights") or [] if i.get("key") == "storage"), None)
+                recruited = any(e.get("action") == "recruit_units" and e.get("ok") for e in data.get("executed") or [])
+                idle = "fila de obras: 0 ordem" in texts
                 flags = {
-                    "idle_queue": "fila de obras: 0 ordem" in texts,
+                    "idle_queue": idle,
+                    "idle_recruiting": idle and recruited,
+                    "army_stalled": not recruited,
                     "recruit_starved": any(a == "recruit_units" and w.startswith(("faltam", "consumiria")) for a, w in whys),
                     "stock_empty": bool(stock) and min(stock.values()) < 50,
                     "storage_full": "enche o armazém em 0." in texts or "armazém enche em 0." in texts or bool(storage),

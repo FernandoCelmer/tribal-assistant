@@ -63,7 +63,12 @@ SHIPMENTS_FAILED_UP = either(more_when("shipments_failed", 0.3, "envios entre al
 def _policy() -> dict[str, KnobSpec]:
     rules = {
         "resource_reserve": (either(STOCK_EMPTY, STARVED), True, False, "fração do armazém reservada"),
-        "recruit_budget": (either(less_when("idle_queue", 0.3, "fila de obras parada"), STORAGE_FULL_UP), True, False, "fração da sobra que o recrutamento pode gastar"),
+        "recruit_budget": (
+            either(less_when("idle_recruiting", 0.3, "fila de obras parada enquanto recrutava"), STORAGE_FULL_UP, more_when("army_stalled", 0.9, "rodadas sem recrutar nada")),
+            True,
+            False,
+            "fração da sobra que o recrutamento pode gastar",
+        ),
         "max_attacks_per_hour": (either(RAIDS_LOST_DOWN, more_when("raids_capped", 0.3, "saques barrados pelo limite por hora")), False, True, "ataques e sondas por hora"),
         "attack_radius": (either(RAIDS_LOST_DOWN, NO_TARGETS_UP), False, True, "raio máximo de saque em campos"),
         "retarget_minutes": (either(RAIDS_LOST_UP, less_when("no_targets", 0.3, "poucos alvos: voltar antes")), False, True, "minutos antes de atacar o mesmo alvo de novo"),
@@ -109,6 +114,7 @@ CATALOG: dict[str, KnobSpec] = {
     "recruit.min_batch": KnobSpec(5, "menor lote que vale recrutar", either(STARVED, settle("recruit_starved", 0.1, "recrutamento sem recurso")), integer=True),
     "scavenge.cap": KnobSpec(1000, "teto de lanceiros para a coleta", either(more_when("scavenge_idle", 0.3, "coleta sem tropas"), less_when("pop_locked", 0.2, "população travada")), integer=True),
     "spy.min": KnobSpec(5, "exploradores mínimos para sondar", integer=True),
+    "spy.min_send": KnobSpec(5, "exploradores mínimos por envio de espionagem (o jogo recusa menos)", integer=True),
     "spy.per_light": KnobSpec(5, "cavalarias leves por explorador mantido", integer=True),
     "plan_reserve.idle_hours": KnobSpec(0.25, "horas até a próxima obra para reservar com a fila parada", either(IDLE_QUEUE_UP, STARVED)),
     "plan_reserve.busy_hours": KnobSpec(1.5, "horas até a próxima obra para reservar com a fila andando", either(IDLE_QUEUE_UP, STARVED)),
@@ -219,7 +225,10 @@ CATALOG: dict[str, KnobSpec] = {
     "role.offensive_targets": KnobSpec(3, "alvos bons que liberam o papel ofensivo", integer=True),
     "role.confirm_rounds": KnobSpec(3, "rodadas pedindo o mesmo papel antes de trocar", integer=True),
     "learning.repeat_window_minutes": KnobSpec(20, "janela das falhas repetidas em minutos", integer=True),
+    "learning.requirement_hours": KnobSpec(12, "horas sem repetir uma ação que o jogo recusou por requisito não atendido"),
     "learning.repeat_limit": KnobSpec(2, "falhas iguais antes de bloquear a ação", integer=True),
+    "session.lease_minutes": KnobSpec(3, "minutos sem uso até outra máquina poder assumir o jogo da conta"),
+    "coordinator.min_review_minutes": KnobSpec(2, "minutos mínimos até a próxima revisão da aldeia"),
     "coordinator.max_actions": KnobSpec(10, "ações por rodada", either(more_when("actions_capped", 0.3, "rodadas no limite de ações"), settle("actions_capped", 0.05, "rodadas no limite de ações")), integer=True),
     "coordinator.recent_minutes": KnobSpec(10, "minutos em que uma ação feita espera o jogo confirmar", integer=True),
     "coordinator.explore_rate": KnobSpec(0.1, "chance de a rodada explorar uma proposta viável que não seria a primeira", exploration(0.5, -LEARNING_MARGIN, 4), share=True),

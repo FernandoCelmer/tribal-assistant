@@ -10,6 +10,8 @@ class Metrics:
 
     rounds: int = 0
     idle_queue: float = 0.0
+    idle_recruiting: float = 0.0
+    army_stalled: float = 0.0
     recruit_starved: float = 0.0
     stock_empty: float = 0.0
     storage_full: float = 0.0
