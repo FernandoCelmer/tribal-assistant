@@ -1,24 +1,14 @@
 from datetime import UTC, datetime, timedelta
 
-from tests.agents.builders import context, scavenge, unit
+from tests.agents.builders import context, unit
 from tribal_assistant.core.agents.routines import Routines
 from tribal_assistant.core.schemas.game import RecruitOrderOut
 
 
-def test_idle_troops_go_scavenging_on_every_free_tier():
-    ctx = context(units=[unit("spear", 200), unit("sword", 40)], scavenge_options=[scavenge(1), scavenge(2), scavenge(3, busy=True), scavenge(4, locked=True)])
+def test_troops_home_count_their_population_without_the_paladin():
+    ctx = context(units=[unit("spear", 20), unit("sword", 5), unit("knight", 1)])
 
-    parts = Routines.scavenge_plan(ctx)
-
-    assert set(parts) <= {1, 2} and parts
-    assert sum(p.get("spear", 0) for p in parts.values()) > 150
-
-
-def test_no_scavenging_while_an_attack_comes():
-    ctx = context(units=[unit("spear", 200)], scavenge_options=[scavenge(1)])
-    ctx.commands = [{"direction": "in", "kind": "attack"}]
-
-    assert Routines.scavenge_plan(ctx) == {}
+    assert Routines.troops_home(ctx) == 25
 
 
 def test_recruit_batch_spends_only_a_share_of_the_stock():

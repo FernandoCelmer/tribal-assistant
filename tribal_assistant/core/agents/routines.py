@@ -8,11 +8,16 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
-from tribal_assistant.core.agents.coordination.round import ProposerAgent
-from tribal_assistant.core.agents.knobs import knob, knob_int, tuning
+from tribal_assistant.core.agents.coordination.policy import Policy
+from tribal_assistant.core.agents.coordination.roles import RoleSelector
+from tribal_assistant.core.agents.coordination.round import ProposerAgent, VillageRound
+from tribal_assistant.core.agents.coordination.view import CoordinationView
+from tribal_assistant.core.agents.knobs import KnobStore, knob, knob_int, tuning
+from tribal_assistant.core.agents.knowledge import UNITS
+from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.loader import ContextLoader
 from tribal_assistant.core.agents.plan import PlanTracker
-from tribal_assistant.core.agents.proposers.attack import SCAVENGERS, AttackProposer
+from tribal_assistant.core.agents.proposers.attack import AttackProposer
 from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
 from tribal_assistant.core.agents.research import ResearchNeed
 from tribal_assistant.core.agents.toolbox import Toolbox
@@ -34,6 +39,7 @@ class Routines:
         self.config = config
         self.actions = actions or GameActions()
         self.run_id = f"routine-{uuid.uuid4().hex[:8]}"
+        self.siblings: list[VillageContext] = []
 
     def box(self, ctx: VillageContext) -> Toolbox:
         box = Toolbox(agent=AGENT, ctx=ctx, session=self.session, config=self.config, run_id=self.run_id, dry_run=self.config.dry_run, actions=self.actions)
@@ -42,8 +48,10 @@ class Routines:
 
     async def run(self) -> list[str]:
         done: list[str] = []
-        for ctx in await ContextLoader(self.session).load():
-            for step in (self.scavenge, self.research, self.recruit):
+        contexts = await ContextLoader(self.session).load()
+        self.siblings = contexts
+        for ctx in contexts:
+            for step in (self.troops, self.research, self.recruit):
                 try:
                     text = await step(ctx)
                 except Exception as exc:
@@ -54,32 +62,42 @@ class Routines:
         return done
 
     @staticmethod
-    def scavenge_plan(ctx: VillageContext) -> dict[int, dict[str, int]]:
-        """Every idle scavenger home goes out, shared across the free tiers like the coordinator does."""
-        if any(c.get("direction") == "in" for c in ctx.commands):
-            return {}
-        free = {o.option_id: o.loot_factor or 0.1 * o.option_id for o in ctx.village.scavenge if not o.is_locked and o.return_at is None}
-        if not free:
-            return {}
-        keep = knob(ctx, "routine.scavenge_keep_share")
-        units = {}
-        for name in SCAVENGERS:
-            unit = ctx.unit(name)
-            count = int((unit.home if unit else 0) * (1 - keep))
-            if count > 0:
-                units[name] = count
-        return AttackProposer.split(units, free, knob_int(ctx, "scavenge.min_pop")) if units else {}
+    def troops_home(ctx: VillageContext) -> int:
+        return sum(UNITS[u.name].pop * u.home for u in ctx.village.units if u.name in UNITS and u.name != "knight")
 
-    async def scavenge(self, ctx: VillageContext) -> str | None:
-        parts = self.scavenge_plan(ctx)
-        if not parts:
+    async def view(self, ctx: VillageContext, siblings: list[VillageContext]) -> CoordinationView:
+        knobs = await KnobStore(self.session).load()
+        base, mode, _ = await RoleSelector(self.session, knobs).select(ctx, siblings)
+        ctx.policy = Policy.for_role(mode.value, knobs)
+        view = CoordinationView(ctx, self.session, self.config, self.actions, self.config.dry_run, mode, base, self.box(ctx))
+        view.knobs = knobs
+        view.siblings = siblings
+        view.recent = await VillageRound(self.session, self.config, self.run_id, self.config.dry_run, self.actions)._recent(ctx, knobs.int("coordinator.recent_minutes"))
+        return view
+
+    async def troops(self, ctx: VillageContext) -> str | None:
+        """Troops home go out at once: trusted raids and probes first, the rest scavenging, the same plan the attack specialist makes."""
+        if any(c.get("direction") == "in" for c in ctx.commands):
             return None
+        if self.troops_home(ctx) < knob_int(ctx, "scavenge.min_pop"):
+            return None
+        book = LessonBook(self.session)
+        pause = f"routine_troops:{ctx.game_id}"
+        if not await book.due(pause, knob(ctx, "routine.troops_retry_minutes") / 60):
+            return None
+
+        view = await self.view(ctx, self.siblings)
+        least = knob(view, "raid.min_confidence")
         box = self.box(ctx)
         sent = []
-        for option, squad in parts.items():
-            outcome = await box.invoke("send_scavenge", {"option_id": option, "units": squad, "reason": "rotina: tropas ociosas coletando"})
+        for proposal in await AttackProposer().propose(view):
+            if proposal.key in view.recent or (proposal.action != "send_scavenge" and proposal.confidence < least):
+                continue
+            outcome = await box.invoke(proposal.action, proposal.arguments)
             if outcome.ok:
-                sent.append(f"coleta {option}")
+                sent.append(proposal.title())
+        if not sent:
+            await book.mark(pause, "nada para enviar")
         return ", ".join(sent) or None
 
     @staticmethod

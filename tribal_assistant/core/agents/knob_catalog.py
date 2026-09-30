@@ -155,6 +155,7 @@ CATALOG: dict[str, KnobSpec] = {
     "raid.probe_fresh_hours": KnobSpec(6, "horas em que uma sonda recente dispensa sondar o mesmo alvo de novo"),
     "plan.refresh_minutes": KnobSpec(120, "minutos até o estrategista refazer o plano da aldeia com a IA quando nada mudou"),
     "quests.refresh_minutes": KnobSpec(15, "minutos entre leituras da janela de missões quando o jogo não avisa novidade"),
+    "routine.troops_retry_minutes": KnobSpec(5, "minutos de espera da rotina de tropas depois de uma passada sem nada para enviar"),
     "spy.min_send": KnobSpec(5, "exploradores mínimos por envio de espionagem (o jogo recusa menos)", integer=True),
     "spy.per_light": KnobSpec(5, "cavalarias leves por explorador mantido", integer=True),
     "plan_reserve.idle_hours": KnobSpec(0.25, "horas até a próxima obra para reservar com a fila parada", either(IDLE_QUEUE_UP, STARVED)),
