@@ -5,7 +5,7 @@ import { AutoRefresh } from "@/components/ui/auto-refresh";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { Stat } from "@/components/ui/stat";
-import { BuildingsTable, RecruitQueue, ScavengePanel, TroopsTable, VillagePicker, pickVillage } from "@/features/village";
+import { BuildingsTable, RecruitQueue, ScavengePanel, TroopsTable, VillagePicker, VillageTimelapse, pickVillage } from "@/features/village";
 import { maybe, server } from "@/lib/api";
 import { num, relative } from "@/lib/format";
 import { RESOURCES, type Resource } from "@/lib/game";
@@ -27,6 +27,7 @@ export default async function VillagePage({ searchParams }: Props) {
     );
   }
 
+  const frames = (await maybe(server.GET("/api/v1/villages/{village_id}/frames", { params: { path: { village_id: village.id } } }))) ?? [];
   const stock: Record<Resource, number> = { wood: village.wood, clay: village.clay, iron: village.iron };
   const production: Record<Resource, number> = { wood: village.wood_prod, clay: village.clay_prod, iron: village.iron_prod };
   const home = village.units.reduce((sum, u) => sum + u.home, 0);
@@ -77,6 +78,8 @@ export default async function VillagePage({ searchParams }: Props) {
       </div>
 
       <BuildingsTable buildings={village.buildings} />
+
+      <VillageTimelapse key={village.id} frames={frames} />
     </div>
   );
 }

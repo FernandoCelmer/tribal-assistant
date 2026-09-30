@@ -379,6 +379,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/villages/{village_id}/frames": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Frames */
+        get: operations["frames_api_v1_villages__village_id__frames_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/frames/{frame_id}.jpg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Frame Image */
+        get: operations["frame_image_api_v1_frames__frame_id__jpg_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/agents/live": {
         parameters: {
             query?: never;
@@ -1421,6 +1455,30 @@ export interface components {
             /** Tool Outcome */
             tool_outcome: components["schemas"]["FlowLink"][];
         };
+        /** FrameOut */
+        FrameOut: {
+            /** Id */
+            id: number;
+            /**
+             * Taken At
+             * Format: date-time
+             */
+            taken_at: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Points */
+            points: number;
+            /** Points Gained */
+            points_gained: number;
+            /** Levels */
+            levels: {
+                [key: string]: number;
+            };
+            /** Diff */
+            diff: components["schemas"]["LevelChange"][];
+        };
         /** GameOverview */
         GameOverview: {
             player: components["schemas"]["PlayerOut"] | null;
@@ -1570,6 +1628,17 @@ export interface components {
              * Format: date-time
              */
             last_seen: string;
+        };
+        /** LevelChange */
+        LevelChange: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Before */
+            before: number;
+            /** After */
+            after: number;
         };
         /** LiveOut */
         LiveOut: {
@@ -2909,6 +2978,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorldStatus"];
+                };
+            };
+        };
+    };
+    frames_api_v1_villages__village_id__frames_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                village_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrameOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    frame_image_api_v1_frames__frame_id__jpg_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                frame_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Foto da aldeia em JPEG */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
