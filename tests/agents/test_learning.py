@@ -78,3 +78,14 @@ async def test_learned_refusal_does_not_count_as_a_new_failure(session):
     row = await LessonRepository(session).get(f"attempt:{book.signature('unlock_scavenge', args)}")
     assert row.failed == 2
     assert "aprendido" not in row.text
+
+
+@pytest.mark.asyncio
+async def test_our_own_refusals_never_become_a_learned_block(session):
+    book = LessonBook(session)
+    args = {"target": "487|757", "count": 5}
+
+    for _ in range(3):
+        await book.action("attack", "send_spy", args, False, "RECUSADO: sonda usa de 1 a 2 exploradores")
+
+    assert await book.blocked("send_spy", args) is None

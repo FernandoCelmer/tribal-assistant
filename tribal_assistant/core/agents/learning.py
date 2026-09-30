@@ -62,17 +62,17 @@ class LessonBook:
         args = {k: v for k, v in arguments.items() if k != "reason"}
         attempt = f"attempt:{self.signature(action, arguments)}"
 
+        refused = result.startswith("RECUSADO")
         if ok:
             existing = await self.repo.get(attempt)
             if existing is not None:
                 existing.failed = 0
                 await self.repo.session.commit()
-        else:
+        elif not refused:
             await self.repo.observe(
                 attempt, "attempt", f"{action} {args}", result, {"args": args}, ok=False
             )
 
-        refused = result.startswith("RECUSADO")
         topic = "rule" if not ok else "action"
         key = f"{topic}:{action}:{self.normalize(result) if not ok else 'ok'}"
         title = f"{action}: {result}" if not ok else f"{action} funciona"
