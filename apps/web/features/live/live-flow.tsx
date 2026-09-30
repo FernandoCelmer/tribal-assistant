@@ -4,12 +4,13 @@ import { useEffect, useMemo, useReducer, useState } from "react";
 import { STREAM_LABEL, useEvents, type FlowEvent, type MicroEvent, type StreamState } from "@/features/agents/events";
 import { agentLabel, readable, toolLabel } from "@/features/flow/labels";
 import { ROLES } from "@/lib/game";
+import { Card, EditBar, LAYOUT_CSS, useEditing, useLayout } from "./layout";
 import { SIDE_CSS, VillagePanel } from "./village-panel";
 import { EMPTY, SHOWN, history, micro, note, reduce, seed, type Item, type LiveState, type Phase, type Status, type Step, type StepKind } from "./state";
 
 const W = 1280;
 const H = 720;
-const MAIN = 940;
+const GRAPH_VIEW = "12 112 916 360";
 const SPEC_X = 170;
 const HUB = { x: 450, y: 290 };
 const ACT_X = 590;
@@ -102,9 +103,11 @@ function ago(ms: number): string {
   return m < 60 ? `${m}min` : `${Math.round(m / 60)}h`;
 }
 
-export function LiveFlow({ only, transparent }: { only: number | null; transparent: boolean }) {
+export function LiveFlow({ only, transparent, edit, saved }: { only: number | null; transparent: boolean; edit: boolean; saved: string | null }) {
   const [state, dispatch] = useReducer(reducer, EMPTY);
   const scale = useStage();
+  const { layout, move, reset, link } = useLayout(saved);
+  const [editing, setEditing] = useEditing(edit);
   const now = useClock();
 
   const stream: StreamState = useEvents((event) => {
@@ -161,8 +164,9 @@ export function LiveFlow({ only, transparent }: { only: number | null; transpare
 
   return (
     <div className="live-root" data-transparent={transparent || undefined}>
-      <style>{CSS + SIDE_CSS}</style>
+      <style>{CSS + SIDE_CSS + LAYOUT_CSS}</style>
       <div className="live-stage" style={{ width: W, height: H, transform: `scale(${scale})` }}>
+        <Card id="head" box={layout.head} editing={editing} scale={scale} onChange={move}>
         <header className="live-head">
           <span className="live-dot" data-state={stream} />
           <span className="live-tag">{stream === "live" ? "AO VIVO" : STREAM_LABEL[stream].toUpperCase()}</span>
@@ -176,12 +180,12 @@ export function LiveFlow({ only, transparent }: { only: number | null; transpare
             {state.phase === "done" && quiet > 0 && <span className="live-dim"> · há {ago(quiet)}</span>}
           </span>
         </header>
+        </Card>
 
+        <Card id="graph" box={layout.graph} editing={editing} scale={scale} onChange={move}>
         <div className="live-panel live-graph-panel">
           <div className="live-cap">Fluxo de decisões</div>
-        </div>
-
-        <svg className="live-graph" viewBox={`0 0 ${MAIN} ${H}`} width={MAIN} height={H} aria-label="fluxo de decisões dos agentes">
+        <svg className="live-graph" viewBox={GRAPH_VIEW} preserveAspectRatio="xMidYMid meet" aria-label="fluxo de decisões dos agentes">
           <defs>
             <radialGradient id="hub-glow">
               <stop offset="0%" stopColor="var(--live-running)" stopOpacity="0.35" />
@@ -270,8 +274,10 @@ export function LiveFlow({ only, transparent }: { only: number | null; transpare
             </text>
           )}
         </svg>
+        </div>
+        </Card>
 
-        <section className="live-bottom">
+        <Card id="steps" box={layout.steps} editing={editing} scale={scale} onChange={move}>
           <div className="live-steps">
             <div className="live-cap">
               Passo a passo
@@ -284,6 +290,8 @@ export function LiveFlow({ only, transparent }: { only: number | null; transpare
               {!state.steps.length && <li className="live-dim">esperando o próximo passo…</li>}
             </ol>
           </div>
+        </Card>
+        <Card id="results" box={layout.results} editing={editing} scale={scale} onChange={move}>
           <div className="live-results">
             <div className="live-cap">
               Resultados
@@ -305,10 +313,13 @@ export function LiveFlow({ only, transparent }: { only: number | null; transpare
               ))}
             </ul>
           </div>
-        </section>
+        </Card>
 
-        <VillagePanel only={only} now={now} nextReview={state.nextReview} />
+        <Card id="village" box={layout.village} editing={editing} scale={scale} onChange={move}>
+          <VillagePanel only={only} now={now} nextReview={state.nextReview} />
+        </Card>
       </div>
+      {editing && <EditBar onReset={reset} link={link} onClose={() => setEditing(false)} />}
     </div>
   );
 }
@@ -396,8 +407,8 @@ const CSS = `
 .live-stage { position: relative; flex: none; transform-origin: center; background: var(--live-bg); }
 .live-root[data-transparent] .live-stage { background: transparent; }
 .live-panel, .live-head, .live-steps, .live-results, .live-side { background: var(--live-panel); border: 1px solid var(--live-line); border-radius: 8px; overflow: hidden; }
-.live-graph-panel { position: absolute; top: 72px; left: 12px; width: 916px; height: 400px; }
-.live-head { position: absolute; top: 12px; left: 12px; right: 12px; height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; font-size: 14px; z-index: 1; }
+.live-graph-panel { height: 100%; display: flex; flex-direction: column; }
+.live-head { height: 100%; display: flex; align-items: center; gap: 12px; padding: 0 16px; font-size: 14px; z-index: 1; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--live-ok); animation: live-pulse 1.6s ease-in-out infinite; }
 .live-dot[data-state="connecting"], .live-dot[data-state="retrying"] { background: var(--live-running); }
 .live-tag { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 500; border: 1px solid color-mix(in srgb, var(--live-ok) 30%, transparent); background: color-mix(in srgb, var(--live-ok) 10%, transparent); color: var(--live-ok); }
@@ -407,7 +418,7 @@ const CSS = `
 .live-phase[data-phase="acting"], .live-phase[data-phase="deciding"], .live-phase[data-phase="thinking"] { color: var(--live-running); }
 .live-dim { color: var(--live-dim); font-weight: 400; }
 .live-bad { color: var(--live-bad); }
-.live-graph { position: absolute; top: 0; left: 0; pointer-events: none; }
+.live-graph { flex: 1; width: 100%; min-height: 0; display: block; }
 .live-edge { fill: none; stroke: var(--live-line); stroke-width: 1.5; opacity: .55; transition: stroke .4s, opacity .4s; }
 .live-edge[data-on] { opacity: .9; stroke-width: 2; }
 .live-edge[data-flow] { stroke-dasharray: 6 6; animation: live-flow 1.2s linear infinite; }
@@ -434,10 +445,9 @@ const CSS = `
 .live-act[data-status="deferred"] .live-act-title { fill: var(--live-dim); font-weight: 500; }
 .live-act-note { font-size: 11px; fill: var(--live-dim); }
 .live-explore { fill: var(--live-explore); font-size: 11px; font-weight: 600; }
-.live-bottom { position: absolute; left: 12px; width: 916px; top: 484px; height: 224px; display: grid; grid-template-columns: 1fr 300px; gap: 12px; }
 .live-cap { display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-bottom: 1px solid var(--live-line); font-size: 13px; font-weight: 600; color: var(--live-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .live-now { color: var(--live-running); font-weight: 500; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
-.live-steps { overflow: hidden; }
+.live-steps { height: 100%; overflow: hidden; }
 .live-steps ol { padding: 8px 14px !important; }
 .live-ticks { padding: 8px 14px !important; }
 .live-steps ol { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 16.5px; }
@@ -452,7 +462,7 @@ const CSS = `
 .live-kind { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--live-pending); margin-right: 2px; }
 .live-glyph { display: inline-block; width: 16px; color: var(--live-running); font-weight: 700; }
 .live-args { margin-left: 8px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: var(--live-dim); background: var(--surface-hover); padding: 1px 6px; border-radius: 4px; }
-.live-results { overflow: hidden; }
+.live-results { height: 100%; overflow: hidden; }
 .live-ticks { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 22px; }
 .live-ticks li { display: flex; gap: 6px; white-space: nowrap; animation: live-in .5s ease-out; }
 .live-tick-text { overflow: hidden; text-overflow: ellipsis; }

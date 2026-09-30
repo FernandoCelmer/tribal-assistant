@@ -196,7 +196,7 @@ export function VillagePanel({ only, now, nextReview }: { only: number | null; n
 }
 
 export const SIDE_CSS = `
-.live-side { position: absolute; top: 72px; right: 12px; bottom: 12px; width: 328px; font-size: 13px; display: flex; flex-direction: column; }
+.live-side { height: 100%; font-size: 13px; display: flex; flex-direction: column; }
 .live-block { display: flex; flex-direction: column; gap: 5px; padding: 0 14px 10px; border-bottom: 1px solid var(--live-line); }
 .live-block:last-child { border-bottom: 0; }
 .live-block > .live-cap { margin: 0 -14px 4px; min-height: 34px; border-bottom: 0; padding-top: 4px; font-size: 12px; color: var(--live-dim); font-weight: 500; }
