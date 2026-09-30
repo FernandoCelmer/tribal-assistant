@@ -114,3 +114,12 @@ def test_pure_planners_read_the_knobs_they_are_given() -> None:
     assert RaidPlanner.in_range("spear", 5, wider) and not RaidPlanner.in_range("spear", 5)
     assert RaidPlanner.max_raids(1000, 30, 0, wider) == 20
     assert BuildPacing.pit_caps({"wood": 6, "stone": 6}, Knobs({"pacing.iron_gap": 1}))["iron"] == 5
+
+
+async def test_tuner_runs_once_per_interval_even_across_restarts(session: AsyncSession) -> None:
+    assert await Tuner(session).due()
+    await Tuner(session).run()
+
+    assert not await Tuner(session).due()
+    assert await Tuner(session).run() == []
+    assert await Tuner(session).run(force=True) == []

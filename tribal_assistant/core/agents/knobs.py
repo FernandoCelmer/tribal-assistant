@@ -22,6 +22,7 @@ from tribal_assistant.core.agents.social.ledger import SENDS, SocialLedger
 from tribal_assistant.core.models.agent import AgentDecision
 from tribal_assistant.core.models.coordination import CoordinationRound
 from tribal_assistant.core.models.knob import TuningKnob
+from tribal_assistant.core.repositories.lessons import LessonRepository
 
 __all__ = ["KnobSpec", "KnobStore", "Knobs", "Metrics", "Rule", "Tuner", "cooldown", "either", "knob", "knob_int", "less_when", "more_when", "settle", "tuning"]
 
@@ -29,6 +30,8 @@ WINDOW_HOURS = 6
 MIN_ROUNDS = 10
 STEP = 0.15
 HISTORY = 30
+MIN_INTERVAL_HOURS = 0.9
+LAST_RUN = "tuning:last_run"
 
 
 class Knobs:
@@ -142,6 +145,7 @@ class Tuner:
 
     def __init__(self, session: AsyncSession) -> None:
         self.store = KnobStore(session)
+        self.lessons = LessonRepository(session)
         self.session = session
 
     @classmethod
@@ -215,7 +219,16 @@ class Tuner:
                 changes.append((name, value, why))
         return changes
 
-    async def run(self) -> list[tuple[str, float, str]]:
+    async def due(self) -> bool:
+        """At most one pass per interval, however often the server restarts."""
+        row = await self.lessons.get(LAST_RUN)
+        return row is None or datetime.now(UTC).replace(tzinfo=None) - row.last_seen >= timedelta(hours=MIN_INTERVAL_HOURS)
+
+    async def run(self, force: bool = False) -> list[tuple[str, float, str]]:
+        if not force and not await self.due():
+            return []
+
+        await self.lessons.observe(LAST_RUN, "tuning", "Último ajuste automático", commit=False)
         knobs = await self.store.load()
         changes = self.plan(knobs, await self.store.metrics())
         for name, value, why in changes:

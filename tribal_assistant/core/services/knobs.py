@@ -22,7 +22,7 @@ class KnobService:
         return items
 
     async def tune_now(self) -> KnobTuneOut:
-        changes = await Tuner(self.session).run()
+        changes = await Tuner(self.session).run(force=True)
         return KnobTuneOut(changes=[KnobTuneChange(name=name, value=value, reason=why) for name, value, why in changes])
 
     async def set(self, name: str, body: KnobIn) -> KnobOut:
