@@ -12,6 +12,7 @@ from tribal_assistant.core.accounts.context import use_account
 from tribal_assistant.core.accounts.registry import AccountRegistry
 from tribal_assistant.core.agents.coordination.policy import BUILD_SLOTS
 from tribal_assistant.core.agents.knobs import Tuner
+from tribal_assistant.core.agents.routines import Routines
 from tribal_assistant.core.agents.runner import AgentRunner
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.db.session import SessionFactory
@@ -19,6 +20,7 @@ from tribal_assistant.core.game.human import in_quiet_hours
 from tribal_assistant.core.game.modules.free_finish import FreeFinishWatcher
 from tribal_assistant.core.game.modules.game_sync import sync_game
 from tribal_assistant.core.game.modules.world_sync import sync_world
+from tribal_assistant.core.game.session import game_session
 from tribal_assistant.core.models.building import Building
 from tribal_assistant.core.models.command import Command
 from tribal_assistant.core.models.scavenge_option import ScavengeOption
@@ -150,6 +152,22 @@ async def _agents_job() -> None:
     logger.info("Rodada dos agentes {} ({}): {}", report.run_id, report.brain, report.error or "ok")
 
 
+async def _routines_job() -> None:
+    """Small routine work between rounds, without the model or the coordinator; waits while a round holds the browser."""
+    if in_quiet_hours() or game_session.lock.locked():
+        return
+
+    async with SessionFactory() as session:
+        config = await AgentSettingsRepository(session).get()
+        if not config.enabled:
+            return
+
+        done = await Routines(session, config).run()
+
+    if done:
+        logger.info("Rotinas: {}", "; ".join(done))
+
+
 async def _free_finish_job() -> None:
     if in_quiet_hours():
         return
@@ -214,6 +232,15 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         trigger=IntervalTrigger(minutes=1, jitter=20),
         id="village_agents",
         next_run_time=datetime.now() + timedelta(seconds=90),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        per_account(_routines_job),
+        trigger=IntervalTrigger(minutes=1, jitter=15),
+        id="routines",
+        next_run_time=datetime.now() + timedelta(seconds=45),
         max_instances=1,
         coalesce=True,
         replace_existing=True,
