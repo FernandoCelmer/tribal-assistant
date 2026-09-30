@@ -1,6 +1,5 @@
 """Routine work that needs no model and no coordinator: idle troops scavenge, the barracks never stands still."""
 
-import json
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -14,10 +13,10 @@ from tribal_assistant.core.agents.knobs import knob, knob_int, tuning
 from tribal_assistant.core.agents.loader import ContextLoader
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.attack import SCAVENGERS, AttackProposer
-from tribal_assistant.core.agents.proposers.recruitment import RESEARCH_NEED, RecruitmentProposer
+from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
+from tribal_assistant.core.agents.research import ResearchNeed
 from tribal_assistant.core.agents.toolbox import Toolbox
 from tribal_assistant.core.game.actions import GameActions
-from tribal_assistant.core.repositories.lessons import LessonRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
 AGENT = ProposerAgent("routine", "Rotina")
@@ -134,25 +133,23 @@ class Routines:
         """Starts the next smithy research as soon as its cost is in stock; reads the smithy again when the need is old."""
         if ctx.levels.get("smith", 0) < 1:
             return None
-        lessons = LessonRepository(self.session)
-        key = f"{RESEARCH_NEED}:{ctx.game_id}"
-        row = await lessons.get(key)
+        needs = ResearchNeed(self.session, ctx.game_id)
+        row = await needs.row()
         stale = row is None or _now() - row.last_seen > timedelta(hours=knob(ctx, "cooldown.smith"))
         if stale:
             techs = await self.actions.smith(ctx.game_id)
             ready = {t["unit"]: t for t in techs if t.get("level", 0) == 0 and not t.get("blocked")}
             unit = next((u for u in RecruitmentProposer.RESEARCH_PRIORITY if u in ready), None)
             cost = {k: v for k, v in (ready[unit].get("cost", {}) if unit else {}).items() if v}
-            await lessons.observe(key, "research", f"próxima pesquisa: {unit or 'nenhuma'}", "", {"unit": unit, "cost": cost})
+            await needs.save(unit, cost)
             need = {"unit": unit, "cost": cost}
         else:
-            need = json.loads(row.data or "{}")
+            need = await needs.get()
 
         unit, cost = need.get("unit"), need.get("cost") or {}
         if not unit or not cost or any(ctx.stock.get(r, 0) < int(v) for r, v in cost.items() if r in RESOURCES):
             return None
         outcome = await self.box(ctx).invoke("research_unit", {"unit": unit, "reason": "rotina: pesquisa com recurso disponível"})
         if outcome.ok:
-            await lessons.observe(key, "research", f"pesquisa de {unit} iniciada", "", {"unit": None, "cost": {}})
             return f"pesquisa de {unit}"
         return None

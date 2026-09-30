@@ -1,7 +1,5 @@
 """Recruitment: troops the plan asks for, surplus into raiding troops, and the paladin."""
 
-import json
-
 from tribal_assistant.core.agents.coordination.budget import Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
@@ -9,10 +7,9 @@ from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.proposers.base import Proposer
-from tribal_assistant.core.repositories.lessons import LessonRepository
+from tribal_assistant.core.agents.research import ResearchNeed
 
 FARM_UNITS = ("light", "spear", "axe")
-RESEARCH_NEED = "research:next"
 
 
 class RecruitmentProposer(Proposer):
@@ -23,8 +20,7 @@ class RecruitmentProposer(Proposer):
 
     async def reservations(self, view: CoordinationView) -> list[Reservation]:
         """The next research keeps its cost aside once it is close, so builds stop spending it first."""
-        row = await LessonRepository(view.session).get(f"{RESEARCH_NEED}:{view.ctx.game_id}")
-        need = json.loads(row.data or "{}") if row else {}
+        need = await ResearchNeed(view.session, view.ctx.game_id).get()
         cost = {k: int(v) for k, v in (need.get("cost") or {}).items() if k in ("wood", "clay", "iron") and v}
         if not cost or not need.get("unit"):
             return []
@@ -149,22 +145,48 @@ class RecruitmentProposer(Proposer):
             risks=["concorre com obras econômicas"],
         )
 
+    async def _saved_research(self, view: CoordinationView) -> Proposal | None:
+        """The research already read from the smithy starts as soon as its cost is in stock, without waiting for the next visit."""
+        need = await ResearchNeed(view.session, view.ctx.game_id).get()
+        unit, cost = need.get("unit"), {k: int(v) for k, v in (need.get("cost") or {}).items() if v}
+        if not unit or not cost or any(view.ctx.stock.get(r, 0) < v for r, v in cost.items() if r in ("wood", "clay", "iron")):
+            return None
+        return Proposal(
+            self.key,
+            "research_unit",
+            {"unit": unit, "reason": f"pesquisar {unit}"},
+            f"{unit} guardado para pesquisa e o custo já está no estoque",
+            f"permite recrutar {unit}",
+            cost=cost,
+            factors=Factors(urgency=0.8, impact=0.7 if unit in ("light", "axe") else 0.45, opportunity=0.6),
+            horizon=Horizon.IMMEDIATE,
+            confidence=0.9,
+            purpose=f"research:{unit}",
+        )
+
     RESEARCH_PRIORITY = ("light", "axe", "spy", "marcher", "heavy", "ram", "archer", "sword", "catapult")
 
     async def _research(self, view: CoordinationView) -> Proposal | None:
         ctx = view.ctx
-        if ctx.levels.get("smith", 0) < 1 or view.dry_run or not await view.cooldown("smith"):
+        if ctx.levels.get("smith", 0) < 1 or view.dry_run:
+            return None
+
+        ready = await self._saved_research(view)
+        if ready is not None:
+            return ready
+
+        if not await view.cooldown("smith"):
             return None
 
         techs = await view.actions.smith(ctx.game_id)
         ready = {t["unit"]: t for t in techs if t.get("level", 0) == 0 and not t.get("blocked")}
         unit = next((u for u in self.RESEARCH_PRIORITY if u in ready), None)
         if unit is None:
-            await LessonRepository(view.session).observe(f"{RESEARCH_NEED}:{ctx.game_id}", "research", "nenhuma pesquisa pendente", "", {"unit": None, "cost": {}})
+            await ResearchNeed(view.session, ctx.game_id).save(None, {})
             return None
 
         cost = {k: v for k, v in ready[unit].get("cost", {}).items() if v}
-        await LessonRepository(view.session).observe(f"{RESEARCH_NEED}:{ctx.game_id}", "research", f"próxima pesquisa: {unit}", "", {"unit": unit, "cost": cost})
+        await ResearchNeed(view.session, ctx.game_id).save(unit, cost)
         return Proposal(
             self.key,
             "research_unit",

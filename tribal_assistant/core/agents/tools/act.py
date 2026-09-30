@@ -9,6 +9,7 @@ from tribal_assistant.core.agents.logistics import CARRY, Merchants
 from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.quests import QuestRules
+from tribal_assistant.core.agents.research import ResearchNeed
 from tribal_assistant.core.agents.social.ledger import MENTOR, SocialLedger
 from tribal_assistant.core.agents.social.rules import SocialRules
 from tribal_assistant.core.agents.squads import MIN_POP, UNIT_POP, MinimumSquad
@@ -975,6 +976,8 @@ class ResearchUnit(AgentTool):
             return ToolOutcome(True, f"(simulação) pesquisar {unit}")
 
         result = await box.actions.research(box.ctx.game_id, unit)
+        if result.ok:
+            await ResearchNeed(box.session, box.ctx.game_id).done(unit)
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
