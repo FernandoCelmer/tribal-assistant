@@ -39,19 +39,42 @@ export type LogEvent = {
   process: string;
 };
 
+export type FlowNode = { key: string; source: string; action: string; title: string; priority: number; explored: boolean };
+
+type FlowPlace = { village_id: number; village: string; coords: string; account_id?: number | null };
+
+export type FlowEvent = FlowPlace &
+  (
+    | { phase: "start"; mode: string; role: string; specialists: { key: string; title: string }[] }
+    | { phase: "plan"; proposals: FlowNode[] }
+    | ({ phase: "running" } & FlowNode)
+    | ({ phase: "result"; ok: boolean; text: string } & FlowNode)
+    | ({ phase: "deferred"; why: string } & FlowNode)
+    | { phase: "done"; summary: string; executed: number; failed: number; deferred: number; next_review_at: string | null }
+  );
+
+export type MicroEvent = { account_id?: number | null } & (
+  | { step: "tool"; agent: string; tool: string; args: string; village_id: number }
+  | { step: "result"; agent: string; tool: string; ok: boolean; text: string; village_id: number }
+  | { step: "screen"; text: string }
+  | { step: "click"; text: string }
+);
+
 export type StreamEvent =
   | { kind: "run_started"; data: RunEvent }
   | { kind: "run_finished"; data: RunEvent }
   | { kind: "step"; data: StepEvent }
   | { kind: "log"; data: LogEvent }
   | { kind: "sync"; data: { villages: number; reports: number; account_id?: number | null } }
-  | { kind: "decision"; data: { action: string; ok: boolean; village_id: number; account_id?: number | null } };
+  | { kind: "decision"; data: { action: string; ok: boolean; village_id: number; account_id?: number | null } }
+  | { kind: "flow"; data: FlowEvent }
+  | { kind: "micro"; data: MicroEvent };
 
 export type StreamState = "connecting" | "live" | "retrying";
 
 type Listener = { event: (e: StreamEvent) => void; state: (s: StreamState) => void };
 
-const KINDS = ["run_started", "step", "run_finished", "log", "sync", "decision"] as const;
+const KINDS = ["run_started", "step", "run_finished", "log", "sync", "decision", "flow", "micro"] as const;
 
 class Stream {
   private source: EventSource | null = null;

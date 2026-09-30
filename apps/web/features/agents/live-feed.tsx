@@ -15,7 +15,7 @@ import { AgentMark } from "./agent-mark";
 import { STREAM_LABEL, useEvents, type StreamEvent } from "./events";
 import { KIND_LABELS, TRIGGERS, agentLabel } from "./labels";
 
-type FeedEvent = Exclude<StreamEvent, { kind: "sync" } | { kind: "decision" }>;
+type FeedEvent = Exclude<StreamEvent, { kind: "sync" } | { kind: "decision" } | { kind: "flow" } | { kind: "micro" }>;
 type Item = { id: number; event: FeedEvent };
 
 const LIMIT = 200;
@@ -73,7 +73,7 @@ export function LiveFeed() {
 
   const state = useEvents((event) => {
     if (event.kind === "log" && !logs) return;
-    if (event.kind === "sync" || event.kind === "decision") return;
+    if (event.kind === "sync" || event.kind === "decision" || event.kind === "flow" || event.kind === "micro") return;
     setItems((list) => [{ id: Date.now() + Math.random(), event }, ...list].slice(0, LIMIT));
   });
 

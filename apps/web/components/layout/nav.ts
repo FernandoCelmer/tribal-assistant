@@ -1,4 +1,4 @@
-import { Bot, Castle, ChartLine, Compass, KeyRound, LayoutDashboard, Map, ScrollText, Settings, SlidersHorizontal, TextSearch, Trophy } from "lucide-react";
+import { Bot, Castle, ChartLine, Compass, KeyRound, LayoutDashboard, Map, Radio, ScrollText, Settings, SlidersHorizontal, TextSearch, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean; writes?: boolean };
@@ -20,6 +20,7 @@ export const NAV: NavGroup[] = [
     items: [
       { href: "/strategy", label: "Estratégia", icon: Compass },
       { href: "/agents", label: "Agentes", icon: Bot },
+      { href: "/live", label: "Ao vivo", icon: Radio },
       { href: "/charts", label: "Gráficos", icon: ChartLine },
       { href: "/parameters", label: "Parâmetros", icon: SlidersHorizontal },
       { href: "/logs", label: "Logs", icon: TextSearch },
