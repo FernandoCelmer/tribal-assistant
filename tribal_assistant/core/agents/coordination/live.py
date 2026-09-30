@@ -26,6 +26,7 @@ class FlowFeed:
             "title": proposal.title(),
             "priority": round(proposal.priority, 1),
             "explored": proposal.explored,
+            "reason": proposal.reason,
         }
 
     def start(self, mode: str, role: str, specialists: list[dict[str, str]]) -> None:

@@ -138,6 +138,10 @@ class Narrator:
         cls._publish("type", text=shown, field=name)
 
     @classmethod
+    def repair(cls, agent: str, tool: str, error: str, arguments: dict[str, Any], village_id: int) -> None:
+        cls._publish("repair", agent=agent, tool=tool, text=error, args=cls.arguments(arguments), village_id=village_id)
+
+    @classmethod
     def motion(cls, text: str) -> None:
         cls._publish("motion", text=text)
 

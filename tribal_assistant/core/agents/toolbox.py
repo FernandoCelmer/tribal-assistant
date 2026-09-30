@@ -196,6 +196,7 @@ class Toolbox:
                 await self._record(tool, arguments, outcome)
                 await self._trace("thought", f"erro lido: {outcome.text[:160]} → nova tentativa com {AgentTool.dump(corrected)}", name)
                 logger.info("[{}] {} corrige {} depois do erro: {}", self.ctx.village.coords, self.agent.key, name, outcome.text[:120])
+                Narrator.repair(self.agent.key, name, outcome.text, corrected, self.ctx.id)
                 arguments = corrected
                 outcome = await self._attempt(tool, arguments)
 
