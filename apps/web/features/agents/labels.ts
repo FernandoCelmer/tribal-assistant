@@ -24,6 +24,7 @@ export const AREAS: Record<string, string> = {
   expansion: "caminho do nobre",
   intelligence: "relatórios, vizinhos e desafios",
   diplomacy: "tribo e mentor",
+  social: "mensagens, amigos, fórum da tribo e contatos",
   coordinator: "compara propostas e decide",
   operator: "ordens diretas (MCP)",
   economist: "substituído por Economia e Infraestrutura",
