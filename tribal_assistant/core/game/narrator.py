@@ -2,9 +2,10 @@
 
 import json
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from playwright.async_api import Error as PlaywrightError
-from playwright.async_api import Locator
+from playwright.async_api import Frame, Locator, Page, Request
 
 from tribal_assistant.core.events import event_bus
 
@@ -55,6 +56,10 @@ LABEL_JS = """(n) => (n.innerText || n.value || n.getAttribute('data-title') || 
   || n.getAttribute('aria-label') || n.getAttribute('name') || n.id || '').replace(/\\s+/g, ' ').trim()"""
 
 
+GAME_PATH = "/game.php"
+PAUSE_SECONDS = 2.0
+
+
 class Narrator:
     @staticmethod
     def _publish(step: str, **data: Any) -> None:
@@ -74,11 +79,55 @@ class Narrator:
     def result(cls, agent: str, tool: str, ok: bool, text: str, village_id: int) -> None:
         cls._publish("result", agent=agent, tool=tool, ok=ok, text=text, village_id=village_id)
 
-    @classmethod
-    def screen(cls, screen: str, params: dict[str, str]) -> None:
+    @staticmethod
+    def place(screen: str, params: dict[str, str]) -> str:
         name = SCREENS.get(params.get("building", "")) or SCREENS.get(screen, screen.replace("_", " "))
         mode = params.get("mode")
-        cls._publish("screen", text=f"{name} ({mode.replace('_', ' ')})" if mode else name)
+        return f"{name} ({mode.replace('_', ' ')})" if mode else name
+
+    @staticmethod
+    def query(url: str) -> dict[str, str] | None:
+        parsed = urlparse(url)
+        if parsed.path != GAME_PATH:
+            return None
+        return {k: v[0] for k, v in parse_qs(parsed.query).items()}
+
+    @classmethod
+    def watch(cls, page: Page) -> None:
+        page.on("framenavigated", lambda frame: cls.navigated(page, frame))
+        page.on("request", cls.request)
+
+    @classmethod
+    def navigated(cls, page: Page, frame: Frame) -> None:
+        if frame != page.main_frame:
+            return
+        params = cls.query(frame.url)
+        if params is None:
+            cls._publish("screen", text=urlparse(frame.url).netloc or "página")
+            return
+        cls._publish("screen", text=cls.place(params.get("screen", "overview"), params))
+
+    @classmethod
+    def request(cls, request: Request) -> None:
+        if request.method != "POST" and request.resource_type != "xhr":
+            return
+        params = cls.query(request.url)
+        if params is None:
+            return
+        action = params.get("ajaxaction") or params.get("action")
+        if not action:
+            return
+        where = cls.place(params.get("screen", ""), params) if params.get("screen") else ""
+        cls._publish("request", text=action.replace("_", " "), where=where, method=request.method)
+
+    @classmethod
+    def motion(cls, text: str) -> None:
+        cls._publish("motion", text=text)
+
+    @classmethod
+    def pause(cls, seconds: float) -> None:
+        if seconds >= PAUSE_SECONDS:
+            cls._publish("motion", text=f"pausa de {seconds:.0f}s, como um jogador")
 
     @classmethod
     async def click(cls, target: Locator) -> None:

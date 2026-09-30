@@ -9,7 +9,6 @@ from playwright.async_api import Page
 from tribal_assistant.core.accounts.context import current_account
 from tribal_assistant.core.game.human import human_click, reading_pause
 from tribal_assistant.core.game.login import VILLAGE_MENU_SELECTOR, login
-from tribal_assistant.core.game.narrator import Narrator
 from tribal_assistant.core.game.session import game_session
 
 EVALUATE_ATTEMPTS = 3
@@ -55,7 +54,6 @@ def screen_url(screen: str, village_id: str | None = None, **params: str) -> str
 
 async def open_screen(page: Page, screen: str, village_id: str | None = None, **params: str) -> None:
     """Reach a screen the way a player would: click its link when one is on the page."""
-    Narrator.screen(screen, params)
     found = False
     if village_id and page.url.startswith(current_account().base_url):
         want = {"screen": screen, "village": village_id, **params}

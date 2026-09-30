@@ -16,6 +16,7 @@ from playwright.async_api import Browser, BrowserContext, Page, Playwright, asyn
 from tribal_assistant.core.accounts.context import AccountContext, current_account
 from tribal_assistant.core.config import settings
 from tribal_assistant.core.errors import ConflictError
+from tribal_assistant.core.game.narrator import Narrator
 
 VIEWPORTS = ({"width": 1366, "height": 768}, {"width": 1440, "height": 900}, {"width": 1536, "height": 864})
 
@@ -64,6 +65,7 @@ class GameSession:
             timezone_id="America/Sao_Paulo",
         )
         self._page = await self._context.new_page()
+        Narrator.watch(self._page)
         logger.info("Sessão do navegador iniciada para a conta {}", self.account.name)
 
     async def save_state(self) -> None:

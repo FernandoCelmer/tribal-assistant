@@ -16,11 +16,13 @@ async def human_delay(min_ms: int | None = None, max_ms: int | None = None) -> N
     delay = random.uniform(lo, hi)
     if random.random() < 0.08:
         delay += random.uniform(2000, 7000)
+    Narrator.pause(delay / 1000)
     await asyncio.sleep(delay / 1000)
 
 
 async def wander_mouse(page: Page, moves: int | None = None) -> None:
     viewport = page.viewport_size or {"width": 1280, "height": 720}
+    Narrator.motion("movendo o mouse pela tela")
     for _ in range(moves if moves is not None else random.randint(1, 3)):
         await page.mouse.move(
             random.uniform(40, viewport["width"] - 40),
@@ -33,6 +35,7 @@ async def wander_mouse(page: Page, moves: int | None = None) -> None:
 async def reading_pause(page: Page) -> None:
     await wander_mouse(page)
     if random.random() < 0.5:
+        Narrator.motion("rolando a tela para ler")
         for _ in range(random.randint(1, 3)):
             await page.mouse.wheel(0, random.randint(120, 480))
             await asyncio.sleep(random.uniform(0.3, 1.2))
