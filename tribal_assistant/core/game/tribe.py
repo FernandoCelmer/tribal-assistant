@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
-from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.human import human_click, human_delay, human_fill
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.scraper.social import TribeParser
 from tribal_assistant.core.game.session import game_session
@@ -61,7 +61,7 @@ class TribeHall:
             if not await field.count():
                 return ActionResult(False, "reply_forum", "campo de resposta do fórum não encontrado")
 
-            await field.fill(text)
+            await human_fill(field, text)
             await human_delay(600, 1500)
             submit = field.locator("xpath=ancestor::form[1]").locator(SUBMIT).first
             if not await submit.count():

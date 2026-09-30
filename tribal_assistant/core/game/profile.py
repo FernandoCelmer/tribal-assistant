@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.human import human_click, human_delay, human_fill
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
 
@@ -48,7 +48,7 @@ class Profile:
             if (await page.evaluate(CURRENT_JS)) == text.strip():
                 return ActionResult(True, "set_profile_text", "texto do perfil já está atualizado")
 
-            await field.fill(text)
+            await human_fill(field, text)
             await human_delay(500, 1200)
 
             form = field.locator("xpath=ancestor::form[1]")

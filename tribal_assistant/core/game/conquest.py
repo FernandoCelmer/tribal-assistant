@@ -8,7 +8,13 @@ from typing import TYPE_CHECKING, Any
 from bs4 import BeautifulSoup
 from loguru import logger
 
-from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
+from tribal_assistant.core.game.human import (
+    human_click,
+    human_delay,
+    human_fill,
+    human_type,
+    reading_pause,
+)
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
 
@@ -87,15 +93,15 @@ class Conquest:
                     return ActionResult(False, "send_noble", f"sem campo para {unit}")
 
                 await box.first.click()
-                await box.first.type(str(count), delay=80)
+                await human_type(box.first, str(count), delay=80)
 
             coords = page.locator("input.target-input-field").first
             if await coords.count() and await coords.is_visible():
                 await coords.click()
-                await coords.type(target, delay=70)
+                await human_type(coords, target, delay=70)
             else:
-                await page.locator("#inputx").fill(str(x))
-                await page.locator("#inputy").fill(str(y))
+                await human_fill(page.locator("#inputx"), str(x))
+                await human_fill(page.locator("#inputy"), str(y))
 
             await human_delay(400, 1100)
             await self.actions._click_and_settle(page, page.locator("#target_attack"))

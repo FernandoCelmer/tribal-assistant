@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
-from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.human import human_click, human_delay, human_fill
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.scraper.farm_assistant import TEMPLATES, FarmAssistantParser
 from tribal_assistant.core.game.session import game_session
@@ -78,7 +78,7 @@ class FarmAssistant:
                 for unit in fields:
                     box = form.locator(f'input[name="{unit}[{template['index']}]"]')
                     if await box.count():
-                        await box.first.fill(str(int(units.get(unit, 0))))
+                        await human_fill(box.first, str(int(units.get(unit, 0))))
                         await human_delay(120, 300)
 
             await human_delay(400, 900)

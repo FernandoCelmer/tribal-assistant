@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from bs4 import BeautifulSoup, Tag
 from loguru import logger
 
-from tribal_assistant.core.game.human import human_delay
+from tribal_assistant.core.game.human import human_delay, human_fill, human_type
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
 
@@ -191,12 +191,12 @@ class Market:
 
             _, high = OwnOfferParser.ratio(html)
             wanted = int(amount * high + 1e-6)
-            await form.locator("#res_sell_amount").fill(str(amount))
+            await human_fill(form.locator("#res_sell_amount"), str(amount))
             await form.locator(f"#res_sell_{sell}").check()
-            await form.locator("#res_buy_amount").fill(str(wanted))
+            await human_fill(form.locator("#res_buy_amount"), str(wanted))
             await form.locator(f"#res_buy_{buy}").check()
-            await form.locator('input[name="multi"]').fill(str(lots))
-            await form.locator('input[name="max_time"]').fill(str(max_hours))
+            await human_fill(form.locator('input[name="multi"]'), str(lots))
+            await human_fill(form.locator('input[name="max_time"]'), str(max_hours))
             await human_delay(500, 1100)
             await self.actions._click_and_settle(page, form.locator("#submit_offer"))
             after = await page.content()
@@ -240,13 +240,13 @@ class Market:
             sender = page.locator("#market-send-form")
             for resource, amount in fields.items():
                 if amount > 0:
-                    await sender.locator(f'input[name="{resource}"]').fill(str(amount))
+                    await human_fill(sender.locator(f'input[name="{resource}"]'), str(amount))
                     await human_delay(200, 500)
 
             await sender.locator('input[name="target_type"][value="coord"]').check()
             coords = sender.locator("input.target-input-field").first
             await coords.click()
-            await coords.type(target, delay=70)
+            await human_type(coords, target, delay=70)
             await page.evaluate("([x, y]) => { const ix = document.querySelector('#inputx'); const iy = document.querySelector('#inputy'); if (ix) ix.value = x; if (iy) iy.value = y; }", [str(x), str(y)])
             await human_delay(400, 900)
             await self.actions._click_and_settle(page, sender.locator('input[type="submit"]').first)

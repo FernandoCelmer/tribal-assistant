@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
-from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.human import human_click, human_delay, human_fill
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.scraper.social import BuddiesParser, InboxParser
 from tribal_assistant.core.game.session import game_session
@@ -59,7 +59,7 @@ class Social:
             if not await field.count():
                 return ActionResult(False, "reply_mail", "campo de resposta não encontrado")
 
-            await field.fill(text)
+            await human_fill(field, text)
             await human_delay(600, 1500)
             submit = field.locator("xpath=ancestor::form[1]").locator(SUBMIT).first
             if not await submit.count():
@@ -88,11 +88,11 @@ class Social:
             if not (await recipient.count() and await title.count() and await body.count()):
                 return ActionResult(False, "send_mail", "formulário de nova mensagem não encontrado")
 
-            await recipient.fill(to)
+            await human_fill(recipient, to)
             await human_delay(400, 900)
-            await title.fill(subject)
+            await human_fill(title, subject)
             await human_delay(400, 900)
-            await body.fill(text)
+            await human_fill(body, text)
             await human_delay(600, 1500)
 
             submit = page.locator(SEND_BUTTON).first
@@ -149,7 +149,7 @@ class Social:
             if not await field.count():
                 return ActionResult(False, "add_friend", "formulário de amizade não encontrado")
 
-            await field.fill(name)
+            await human_fill(field, name)
             await human_delay(500, 1200)
             submit = field.locator("xpath=ancestor::form[1]").locator(SUBMIT).first
             if not await submit.count():

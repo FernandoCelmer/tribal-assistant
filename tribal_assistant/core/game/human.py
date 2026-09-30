@@ -58,6 +58,16 @@ async def human_click(page: Page, target: Locator) -> None:
     await page.mouse.click(x, y, delay=random.randint(40, 140))
 
 
+async def human_fill(target: Locator, text: str) -> None:
+    await Narrator.typing(target, text)
+    await target.fill(text)
+
+
+async def human_type(target: Locator, text: str, delay: int = 80) -> None:
+    await Narrator.typing(target, text)
+    await target.type(text, delay=delay)
+
+
 def in_quiet_hours(now: datetime | None = None) -> bool:
     """`QUIET_HOURS=1-7` pauses scheduled syncs from 01:00 to 06:59 local time."""
     if not settings.quiet_hours:

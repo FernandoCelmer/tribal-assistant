@@ -25,7 +25,13 @@ from tribal_assistant.core.game.conquest import Conquest
 from tribal_assistant.core.game.diplomacy import Diplomacy
 from tribal_assistant.core.game.farm_assistant import FarmAssistant
 from tribal_assistant.core.game.forge import Forge
-from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
+from tribal_assistant.core.game.human import (
+    human_click,
+    human_delay,
+    human_fill,
+    human_type,
+    reading_pause,
+)
 from tribal_assistant.core.game.items import ItemCount
 from tribal_assistant.core.game.market import Market
 from tribal_assistant.core.game.profile import Profile
@@ -406,7 +412,7 @@ class GameActions:
 
                 await field_.click()
                 await field_.fill("")
-                await field_.type(str(count), delay=80)
+                await human_type(field_, str(count), delay=80)
 
             await human_delay(500, 1200)
             await start.first.click()
@@ -505,7 +511,7 @@ class GameActions:
                 return ActionResult(False, "recruit", "sem recursos ou população", {"unit": unit})
 
             await field_.first.click()
-            await field_.first.type(str(count), delay=90)
+            await human_type(field_.first, str(count), delay=90)
             await self._click_and_settle(page, page.locator("#train_form .btn-recruit").first)
 
             if error := await self._game_error(page):
@@ -543,15 +549,15 @@ class GameActions:
                     )
 
                 await box.first.click()
-                await box.first.type(str(count), delay=80)
+                await human_type(box.first, str(count), delay=80)
 
             coords = page.locator("input.target-input-field").first
             if await coords.count() and await coords.is_visible():
                 await coords.click()
-                await coords.type(target, delay=70)
+                await human_type(coords, target, delay=70)
             else:
-                await page.locator("#inputx").fill(str(x))
-                await page.locator("#inputy").fill(str(y))
+                await human_fill(page.locator("#inputx"), str(x))
+                await human_fill(page.locator("#inputy"), str(y))
 
             await human_delay(400, 1100)
             await self._click_and_settle(page, page.locator("#target_attack"))
@@ -953,7 +959,7 @@ class GameActions:
 
             await field_.click()
             await field_.fill("")
-            await field_.type(name[:32], delay=70)
+            await human_type(field_, name[:32], delay=70)
             await human_delay(400, 900)
             await self._click_and_settle(
                 page, page.locator('form[action*="action=change_name"] input[type="submit"]').first
@@ -1166,7 +1172,7 @@ class GameActions:
             row = rows.nth(match["index"])
             count = row.locator('input[name="count"]')
             if await count.count():
-                await count.first.fill("1")
+                await human_fill(count.first, "1")
 
             button = row.locator('input[type="submit"]:not(.btn-pp), .btn:not(.btn-pp)').first
             await self._click_and_settle(page, button)
@@ -1209,12 +1215,12 @@ class GameActions:
             if not await form.count():
                 return ActionResult(False, "create_offer", "formulário de oferta não encontrado")
 
-            await form.locator("#res_sell_amount").fill(str(amount))
+            await human_fill(form.locator("#res_sell_amount"), str(amount))
             await form.locator(f"#res_sell_{sell}").check()
-            await form.locator("#res_buy_amount").fill(str(amount))
+            await human_fill(form.locator("#res_buy_amount"), str(amount))
             await form.locator(f"#res_buy_{buy}").check()
-            await form.locator('input[name="multi"]').fill("1")
-            await form.locator('input[name="max_time"]').fill(str(max_hours))
+            await human_fill(form.locator('input[name="multi"]'), "1")
+            await human_fill(form.locator('input[name="max_time"]'), str(max_hours))
             await human_delay(500, 1100)
             await self._click_and_settle(page, form.locator("#submit_offer"))
             self._capture(await page.content(), "market-offer")

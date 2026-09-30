@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
-from tribal_assistant.core.game.human import human_click, human_delay
+from tribal_assistant.core.game.human import human_click, human_delay, human_fill
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.scraper.social import TribeParser
 from tribal_assistant.core.game.session import game_session
@@ -66,7 +66,7 @@ class Diplomacy:
             if not await field.count():
                 return ActionResult(False, "apply_to_tribe", "campo da candidatura não encontrado")
 
-            await field.fill(text)
+            await human_fill(field, text)
             await human_delay(500, 1200)
 
             submit = page.locator('form input[type="submit"]:visible, form button[type="submit"]:visible, form .btn:visible').first

@@ -4,7 +4,6 @@ import json
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Frame, Locator, Page, Request
 
 from tribal_assistant.core.events import event_bus
@@ -51,6 +50,11 @@ SCREENS = {
     "wall": "muralha",
     "hide": "esconderijo",
 }
+
+FIELD_JS = """(n) => ({type: (n.type || '').toLowerCase(), name: (n.getAttribute('name') || n.id || n.placeholder
+  || n.getAttribute('aria-label') || n.tagName || '').toString().trim()})"""
+MAX_TYPED = 60
+SECRET_FIELDS = ("pass", "senha", "token")
 
 LABEL_JS = """(n) => (n.innerText || n.value || n.getAttribute('data-title') || n.title || n.alt
   || n.getAttribute('aria-label') || n.getAttribute('name') || n.id || '').replace(/\\s+/g, ' ').trim()"""
@@ -121,6 +125,19 @@ class Narrator:
         cls._publish("request", text=action.replace("_", " "), where=where, method=request.method)
 
     @classmethod
+    async def typing(cls, target: Locator, text: str) -> None:
+        if not text:
+            return
+        try:
+            field = dict(await target.evaluate(FIELD_JS, timeout=LABEL_TIMEOUT_MS))
+        except Exception:
+            field = {"type": "", "name": ""}
+        name = str(field.get("name") or "campo")[:MAX_LABEL]
+        secret = field.get("type") == "password" or any(word in name.lower() for word in SECRET_FIELDS)
+        shown = "••••" if secret else (text if len(text) <= MAX_TYPED else text[: MAX_TYPED - 1] + "…")
+        cls._publish("type", text=shown, field=name)
+
+    @classmethod
     def motion(cls, text: str) -> None:
         cls._publish("motion", text=text)
 
@@ -133,7 +150,7 @@ class Narrator:
     async def click(cls, target: Locator) -> None:
         try:
             label = str(await target.evaluate(LABEL_JS, timeout=LABEL_TIMEOUT_MS))
-        except PlaywrightError:
+        except Exception:
             label = ""
         label = label[:MAX_LABEL] if label else "elemento"
         cls._publish("click", text=label)
