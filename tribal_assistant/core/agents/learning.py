@@ -17,6 +17,7 @@ from tribal_assistant.core.models.world import WorldAlly, WorldPlayer, WorldVill
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
 CHALLENGES = "challenges"
+REQUIREMENT = re.compile(r"deve ter pelo menos|precisa (?:de|ter)|requer|requisito|nível mínimo|não atend", re.I)
 
 IGNORED = ("(simulação)", "RECUSADO: aprendido")
 TEXT_LIMIT = 300
@@ -41,13 +42,16 @@ class LessonBook:
 
     async def blocked(self, action: str, arguments: dict[str, Any], knobs: Knobs | None = None) -> str | None:
         knobs = knobs or Knobs()
-        row = await self.repo.recent_failure(
-            f"attempt:{self.signature(action, arguments)}", knobs.int("learning.repeat_window_minutes"), knobs.int("learning.repeat_limit")
-        )
-        if row is None:
-            return None
+        key = f"attempt:{self.signature(action, arguments)}"
+        row = await self.repo.recent_failure(key, knobs.int("learning.repeat_window_minutes"), knobs.int("learning.repeat_limit"))
+        if row is not None:
+            return f"RECUSADO: aprendido — {action} falhou {row.failed}x com os mesmos argumentos: {row.text[:120]}"
 
-        return f"RECUSADO: aprendido — {action} falhou {row.failed}x com os mesmos argumentos: {row.text[:120]}"
+        row = await self.repo.recent_failure(key, round(knobs.get("learning.requirement_hours") * 60), 1)
+        if row is not None and REQUIREMENT.search(row.text or ""):
+            return f"RECUSADO: aprendido — o jogo pede um requisito que ainda falta: {row.text[:120]}"
+
+        return None
 
     async def action(
         self, agent: str, action: str, arguments: dict[str, Any], ok: bool, result: str

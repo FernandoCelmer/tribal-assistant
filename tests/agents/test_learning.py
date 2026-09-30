@@ -23,6 +23,17 @@ async def test_repeated_identical_failure_is_blocked_until_it_works(session):
 
 
 @pytest.mark.asyncio
+async def test_a_missing_requirement_blocks_after_one_failure(session):
+    book = LessonBook(session)
+    args = {"key": "2001_0"}
+
+    await book.action("steward", "use_item", args, False, "Paladino deve ter pelo menos o nível 8.")
+
+    assert "requisito" in (await book.blocked("use_item", args) or "")
+    assert await book.blocked("use_item", {"key": "1001_0"}) is None
+
+
+@pytest.mark.asyncio
 async def test_rules_quests_and_notices_are_stored_and_summarized(session):
     book = LessonBook(session)
 
