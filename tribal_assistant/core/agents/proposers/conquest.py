@@ -4,7 +4,7 @@ from tribal_assistant.core.agents.conquest import ConquestBook, ConquestPlanner,
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.knobs import tuning
+from tribal_assistant.core.agents.knobs import knob_int, tuning
 from tribal_assistant.core.agents.noble import Candidate
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.expansion import ExpansionProposer
@@ -33,8 +33,9 @@ class ConquestProposer(Proposer):
         step = ConquestPlanner.step(await view.lessons.target(target.coords), await book.state(target.coords), home, await book.per_hour(), tuning(view), travelling)
         view.note(Insight("conquest", f"conquista de {target.coords}: {step.why}", Certainty.ESTIMATE, now(), 0.8, {"step": step.kind, "loyalty": round(step.loyalty)}, self.key))
 
-        if step.kind == "scout" and home.get("spy", 0) >= 1:
-            return [self._scout(target)]
+        spies = knob_int(view, "spy.min_send")
+        if step.kind == "scout" and home.get("spy", 0) >= spies:
+            return [self._scout(target, spies)]
 
         if step.kind == "cleanup":
             return [self._cleanup(target, step)]
@@ -44,14 +45,14 @@ class ConquestProposer(Proposer):
 
         return []
 
-    def _scout(self, target: Candidate) -> Proposal:
+    def _scout(self, target: Candidate, spies: int) -> Proposal:
         return Proposal(
             self.key,
             "send_spy",
-            {"target": target.coords, "count": 1, "reason": "espionar alvo do nobre"},
+            {"target": target.coords, "count": spies, "reason": "espionar alvo do nobre"},
             f"alvo do nobre {target.coords} sem espionagem recente",
             "tropas e muralha antes da limpeza",
-            troops={"spy": 1},
+            troops={"spy": spies},
             factors=Factors(urgency=0.5, impact=0.6, opportunity=0.6),
             horizon=Horizon.IMMEDIATE,
             confidence=0.95,

@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from tribal_assistant.core.agents.knobs import Knobs, knob
+from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int
 from tribal_assistant.core.agents.knowledge import GameKnowledge
 from tribal_assistant.core.agents.logistics import CARRY, Merchants
 from tribal_assistant.core.agents.market import MarketRule
@@ -11,6 +11,7 @@ from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.quests import QuestRules
 from tribal_assistant.core.agents.social.ledger import MENTOR, SocialLedger
 from tribal_assistant.core.agents.social.rules import SocialRules
+from tribal_assistant.core.agents.squads import MIN_POP, UNIT_POP, MinimumSquad
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 from tribal_assistant.core.repositories.plans import PlanRepository
 from tribal_assistant.core.schemas.plan import PlanStep
@@ -201,7 +202,7 @@ class SendFarmAttack(AgentTool):
 class SendSpy(AgentTool):
     name = "send_spy"
     description = (
-        "Sonda uma aldeia BÁRBARA com 1 ou 2 exploradores para ver muralha, recursos e tropas antes do saque. "
+        "Sonda uma aldeia BÁRBARA com exploradores (no mínimo o que o mundo exige) para ver muralha, recursos e tropas antes do saque. "
         "Não carrega recursos; conta no limite de ataques por hora. Use em alvos desconhecidos, grandes ou com "
         "resultado amarelo. RECUSADO para jogadores, fora do raio, sem exploradores ou alvo espionado há pouco."
     )
@@ -209,7 +210,7 @@ class SendSpy(AgentTool):
         "type": "object",
         "properties": {
             "target": {"type": "string", "description": "Coordenadas x|y do alvo, ex.: 498|503."},
-            "count": {"type": "integer", "minimum": 1, "maximum": 2, "description": "Exploradores: 1 basta contra bárbara."},
+            "count": {"type": "integer", "minimum": 1, "maximum": 50, "description": "Exploradores; sobe sozinho para o mínimo do mundo."},
             "reason": REASON,
         },
         "required": ["target", "reason"],
@@ -219,7 +220,7 @@ class SendSpy(AgentTool):
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
         target = str(args["target"]).strip()
-        count = int(args.get("count") or 1)
+        count = max(int(args.get("count") or 1), knob_int(box.ctx, "spy.min_send"))
 
         refusal = await box.guard.check_spy(box.ctx, target, count)
         if refusal:
@@ -231,6 +232,10 @@ class SendSpy(AgentTool):
             x, y = (int(part) for part in target.split("|"))
             result = await box.actions.send_attack(box.ctx.game_id, x, y, {"spy": count})
             result_ok, detail, arrival = result.ok, result.detail, result.data.get("arrival")
+
+        needed = MIN_POP.search(detail or "")
+        if not result_ok and needed:
+            await MinimumSquad(box.session).learn("spy.min_send", int(needed.group(1)), UNIT_POP["spy"])
 
         if result_ok:
             spy = box.ctx.unit("spy")

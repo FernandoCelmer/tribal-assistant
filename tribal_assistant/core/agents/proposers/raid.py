@@ -14,7 +14,6 @@ CAVALRY = ("light", "knight", "marcher")
 INFANTRY = ("spear", "sword", "axe", "archer")
 RADIUS = {"spear": "raid.radius_infantry", "sword": "raid.radius_infantry", "axe": "raid.radius_infantry", "archer": "raid.radius_infantry", "light": "raid.radius_cavalry", "marcher": "raid.radius_cavalry", "knight": "raid.radius_cavalry"}
 WALL_LIGHT = {0: 1, 1: 2, 2: 8, 3: 22, 4: 46, 5: 85}
-PROBE = {"spy": 1}
 
 
 @dataclass
@@ -173,8 +172,9 @@ class RaidPlanner:
             return RaidPlan(coords, "skip", f"{data['defenders_left']} defensor(es) na aldeia segundo o último relatório")
 
         if cls.needs_probe(data, points, median):
-            if home.get("spy", 0) >= 1 and cls.in_range("light", distance, knobs):
-                return RaidPlan(coords, "probe", "alvo grande sem espionagem" if big else "sondar antes de saquear", dict(PROBE))
+            spies = knobs.int("spy.min_send")
+            if home.get("spy", 0) >= spies and cls.in_range("light", distance, knobs):
+                return RaidPlan(coords, "probe", "alvo grande sem espionagem" if big else "sondar antes de saquear", {"spy": spies})
 
             if big:
                 return RaidPlan(coords, "skip", "bárbara grande sem espionagem e sem exploradores")

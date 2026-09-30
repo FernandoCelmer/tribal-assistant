@@ -8,10 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.agents.builders import context, unit
 from tribal_assistant.core.agents.guardrails import Guardrails
+from tribal_assistant.core.agents.knobs import KnobStore
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.proposers.attack import AttackProposer
 from tribal_assistant.core.agents.proposers.raid import RaidPlanner
 from tribal_assistant.core.agents.proposers.recruitment import RecruitmentProposer
+from tribal_assistant.core.agents.squads import MIN_POP, UNIT_POP, MinimumSquad
 from tribal_assistant.core.agents.target_intel import TargetIntel
 from tribal_assistant.core.game.modules.game_sync import REPORT_DETAIL_JS
 from tribal_assistant.core.game.scraper.game import ReportSnapshot
@@ -88,11 +90,11 @@ def test_radius_follows_unit_speed():
 
 
 def test_targets_are_probed_first_then_ranked_by_haul_per_hour():
-    home = {"light": 50, "spy": 3}
+    home = {"light": 50, "spy": 6}
     known = {"attacks": 3, "last_result": "green", "avg_haul": 400}
 
     unknown = RaidPlanner.plan({"coords": "501|500", "distance": 1, "points": 30}, {}, home, 60)
-    assert unknown.kind == "probe" and unknown.squad == {"spy": 1}
+    assert unknown.kind == "probe" and unknown.squad == {"spy": 5}
 
     yellow = RaidPlanner.plan({"coords": "502|500", "distance": 2, "points": 30}, {**known, "yellow_streak": 1}, home, 60)
     assert yellow.kind == "probe"
@@ -207,3 +209,10 @@ async def test_spy_probe_guardrails(session: AsyncSession):
 def test_small_unknown_targets_are_raided_when_there_are_no_spies(points: int):
     plan = RaidPlanner.plan({"coords": "503|500", "distance": 3, "points": points}, {}, {"light": 10}, 100)
     assert plan.kind == "raid"
+
+
+async def test_the_game_refusal_raises_the_minimum_spies(session):
+    found = MIN_POP.search("Cada ataque desta aldeia precisa de pelo menos 14 de população. Você está tentando enviar 10.")
+    assert await MinimumSquad(session).learn("spy.min_send", int(found.group(1)), UNIT_POP["spy"]) == 7
+    assert (await KnobStore(session).load()).int("spy.min_send") == 7
+    assert await MinimumSquad(session).learn("spy.min_send", 4, UNIT_POP["spy"]) == 7
