@@ -39,7 +39,7 @@ const PHASE: Record<Phase, string> = {
 const QUIET_LOG = /uvicorn|apscheduler|event_relay/;
 const TRACE_KINDS = new Set(["plan", "summary", "thought", "info", "error"]);
 
-const GLYPH: Record<StepKind, string> = { tool: "⚙", result: "", screen: "↳", click: "↳", request: "⇢", motion: "~", log: "›", trace: "◆", sync: "⟳", run: "●" };
+const GLYPH: Record<StepKind, string> = { tool: "⚙", result: "", screen: "↳", click: "↳", request: "⇢", motion: "~", type: "⌨", log: "›", trace: "◆", sync: "⟳", run: "●" };
 const NOTE_LABEL: Partial<Record<StepKind, string>> = { log: "log", trace: "plano", sync: "sync", run: "rodada" };
 
 type Action =
@@ -337,6 +337,15 @@ function StepLine({ step, age }: { step: Step; age: number }) {
       <li data-step="request" data-fresh={fresh || undefined}>
         <span className="live-glyph">{GLYPH.request}</span>
         enviando ao jogo <b>{step.text}</b>
+        {step.args && <span className="live-dim"> em {step.args}</span>}
+      </li>
+    );
+  }
+  if (step.step === "type") {
+    return (
+      <li data-step="type" data-fresh={fresh || undefined}>
+        <span className="live-glyph">{GLYPH.type}</span>
+        digitando <b>“{clip(step.text, 50)}”</b>
         {step.args && <span className="live-dim"> em {step.args}</span>}
       </li>
     );

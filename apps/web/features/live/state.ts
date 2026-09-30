@@ -177,6 +177,8 @@ export function micro(state: LiveState, event: MicroEvent, only: number | null):
         ? { ...base, agent: event.agent, tool: event.tool, text: event.text, ok: event.ok }
         : event.step === "request"
           ? { ...base, text: event.text, args: event.where }
+          : event.step === "type"
+            ? { ...base, text: event.text, args: event.field }
           : { ...base, text: event.text };
   const last = state.steps[0];
   if (last && last.step === step.step && last.text === step.text && last.tool === step.tool && step.step !== "tool") return state;

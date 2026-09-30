@@ -60,6 +60,7 @@ export type MicroEvent = { account_id?: number | null } & (
   | { step: "click"; text: string }
   | { step: "request"; text: string; where: string; method: string }
   | { step: "motion"; text: string }
+  | { step: "type"; text: string; field: string }
 );
 
 export type StreamEvent =
