@@ -65,8 +65,10 @@ class Evidence:
 
 
 class Outcomes:
-    def __init__(self, evidence: Evidence | None = None) -> None:
+    def __init__(self, evidence: Evidence | None = None, min_samples: int = MIN_SAMPLES, high_factor: float = HIGH_FACTOR) -> None:
         self.evidence = evidence or Evidence()
+        self.min_samples = min_samples
+        self.high_factor = high_factor
 
     def value(self, entry: dict[str, Any], village_id: int, at: datetime) -> float | None:
         """-1 refused or lost, -0.5 failed, from 0.25 to 1 when done and confirmed by what happened afterwards."""
@@ -99,7 +101,7 @@ class Outcomes:
         by_source: dict[str, list[float]] = defaultdict(list)
         for _, entry, value in self.valued(records):
             by_source[str(entry.get("source") or "")].append(value)
-        return {source: self.mean(values) for source, values in by_source.items() if source and len(values) >= MIN_SAMPLES}
+        return {source: self.mean(values) for source, values in by_source.items() if source and len(values) >= self.min_samples}
 
     def factor_gaps(self, records: list[RoundRecord]) -> dict[str, float]:
         """Per role and factor: value of proposals strong in the factor minus value of the weak ones."""
@@ -109,8 +111,8 @@ class Outcomes:
             factors = entry.get("factors") or {}
             for factor in FACTORS:
                 high, low = split[f"{role}.{factor}"]
-                (high if float(factors.get(factor) or 0) >= HIGH_FACTOR else low).append(value)
-        return {key: round(self.mean(high) - self.mean(low), 3) for key, (high, low) in split.items() if len(high) >= MIN_SAMPLES and len(low) >= MIN_SAMPLES}
+                (high if float(factors.get(factor) or 0) >= self.high_factor else low).append(value)
+        return {key: round(self.mean(high) - self.mean(low), 3) for key, (high, low) in split.items() if len(high) >= self.min_samples and len(low) >= self.min_samples}
 
     def explore(self, records: list[RoundRecord]) -> tuple[int, float]:
         """How many explored actions were measured and how much better or worse they did than the usual choices."""

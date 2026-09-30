@@ -113,11 +113,11 @@ class InfrastructureProposer(Proposer):
                 if resource in demand:
                     demand[resource] += amount
 
-        for step in PlanTracker.next_recruits(view.ctx.plan)[:1]:
+        for step in PlanTracker.next_recruits(view.ctx.plan)[: knob_int(view, "plan.recruit_lookahead")]:
             unit = view.ctx.unit(step.target)
             if unit is not None:
                 for resource, per in (("wood", unit.cost_wood), ("clay", unit.cost_clay), ("iron", unit.cost_iron)):
-                    demand[resource] += (per or 0) * 10
+                    demand[resource] += (per or 0) * knob_int(view, "build.recruit_demand_units")
 
         def pressure(pit: str) -> float:
             resource = PIT_RESOURCE[pit]

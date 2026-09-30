@@ -85,8 +85,7 @@ class PlanTracker:
 class RulePlanner:
     """Early game after the forum sprint: statue early, quests, main building, wood-led pits, gate to light cavalry."""
 
-    STABLE_PATH = (("main", 10), ("barracks", 5), ("smith", 5), ("stable", 3))
-    STORAGE_FOR_STABLE = 6
+    STABLE_PATH = (("main", 10), ("barracks", 5), ("smith", 5))
 
     def plan(self, ctx: VillageContext) -> tuple[str, list[PlanStep]]:
         knobs = tuning(ctx)
@@ -156,17 +155,18 @@ class RulePlanner:
         return summary, steps[: knobs.int("plan.max_steps")]
 
     def _stable_gate(self, ctx: VillageContext, add) -> None:
-        """EP 10, Quartel 5, Ferreiro 5, Estábulo 3, with the storage holding the next cost."""
+        """EP 10, Quartel 5, Ferreiro 5 and the stable gate, with the storage holding the next cost."""
+        knobs = tuning(ctx)
         levels = ctx.levels
-        for building, target in self.STABLE_PATH:
+        for building, target in (*self.STABLE_PATH, ("stable", knobs.int("pacing.stable_gate"))):
             if levels.get(building, 0) >= target:
                 continue
 
             nxt = ctx.building(building)
             cost = max((nxt.next_wood or 0, nxt.next_clay or 0, nxt.next_iron or 0)) if nxt else 0
             storage = ctx.village.storage or 0
-            wants_storage = levels.get("main", 0) >= 10 and levels.get("storage", 0) < self.STORAGE_FOR_STABLE
-            if storage and (cost > storage * 0.95 or wants_storage):
+            wants_storage = levels.get("main", 0) >= 10 and levels.get("storage", 0) < knobs.int("plan.storage_for_stable")
+            if storage and (cost > storage * knobs.get("plan.storage_cost_share") or wants_storage):
                 add("build", "storage", levels.get("storage", 0) + 1, "armazém 6-7 comporta o caminho do estábulo")
 
             add("build", building, levels.get(building, 0) + 1, "portão da cavalaria leve: EP 10, Quartel 5, Ferreiro 5, Estábulo 3")

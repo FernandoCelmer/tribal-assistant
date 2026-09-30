@@ -292,7 +292,7 @@ class DefenseProposer(Proposer):
     @staticmethod
     def hide_level(neighbours: int, dangerous: int, storage: int, knobs: Knobs | None = None) -> int:
         knobs = knobs or Knobs()
-        level = 7 if dangerous else 5 if neighbours else 3
+        level = knobs.int("defense.hide_level_danger" if dangerous else "defense.hide_level_near" if neighbours else "defense.hide_level_calm")
         want = storage * knobs.get("defense.hide_share_danger" if dangerous else "defense.hide_share_near" if neighbours else "defense.hide_share_calm")
         while level < 10 and HIDE_CAPACITY[level] < want:
             level += 1

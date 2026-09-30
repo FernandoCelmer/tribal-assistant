@@ -49,11 +49,14 @@ class RecruitmentProposer(Proposer):
 
         storage = ctx.village.storage or 1
         if any(v >= storage * knob(view, "storage.near_full_share") for v in ctx.stock.values()):
+            overflow = 0
             for unit in FARM_UNITS:
                 plan = view.guard.plan_recruit(ctx, unit, batch)
                 if not plan.refusal:
                     items.append(self._recruit(view, unit, plan.count, "armazém quase cheio: excedente em tropas de saque", weight * 0.8, opportunity=0.6))
-                    break
+                    overflow += 1
+                    if overflow >= knob_int(view, "recruit.overflow_units"):
+                        break
 
         return items
 

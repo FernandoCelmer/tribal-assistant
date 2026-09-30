@@ -156,7 +156,7 @@ class KnobStore:
     async def learn(self, metrics: Metrics, records: list[RoundRecord], since: datetime) -> None:
         """What the executed proposals yielded afterwards, per specialist, per factor and for explorations."""
         knobs = await self.load()
-        outcomes = Outcomes(await OutcomeReader(self.session).evidence(since, WINDOW_HOURS))
+        outcomes = Outcomes(await OutcomeReader(self.session).evidence(since, WINDOW_HOURS), knobs.int("learning.min_samples"), knobs.get("learning.high_factor"))
         metrics.yields = outcomes.yields(records)
         metrics.factor_gaps = outcomes.factor_gaps(records)
         metrics.explored, metrics.explore_gap = outcomes.explore(records)

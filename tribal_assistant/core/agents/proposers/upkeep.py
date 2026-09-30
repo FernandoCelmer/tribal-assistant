@@ -139,7 +139,7 @@ class UpkeepProposer(Proposer):
         multiple, full = knobs.get("knight.train_stock_multiple"), knobs.get("knight.train_full_share")
         lowest = min(stock.get(r, 0) for r in ("wood", "clay", "iron"))
         for regimen, cost in cls.TRAINING:
-            if cost * multiple <= lowest or (storage and lowest >= storage * full and cost <= lowest * 0.5):
+            if cost * multiple <= lowest or (storage and lowest >= storage * full and cost <= lowest * knobs.get("knight.train_max_share")):
                 return regimen
 
         return None

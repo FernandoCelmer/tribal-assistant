@@ -11,6 +11,7 @@ from tribal_assistant.core.agents.brains.base import Brain
 from tribal_assistant.core.agents.brains.llm import LLMBrain
 from tribal_assistant.core.agents.brains.rules import RuleBrain
 from tribal_assistant.core.agents.coordination.round import VillageRound
+from tribal_assistant.core.agents.knobs import KnobStore
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.loader import ContextLoader
 from tribal_assistant.core.agents.roles.base import VillageAgent
@@ -26,8 +27,6 @@ from tribal_assistant.core.game.modules.game_sync import sync_game
 from tribal_assistant.core.repositories.agent_settings import AgentSettingsRepository
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.repositories.observability import ObservabilityRepository
-
-STALE_MINUTES = 15
 
 
 @dataclass
@@ -83,9 +82,10 @@ class AgentRunner:
 
         async with self._lock, SessionFactory() as session:
             observability = ObservabilityRepository(session)
-            await observability.interrupt_stale(older_than_minutes=STALE_MINUTES)
+            stale = (await KnobStore(session).load()).int("runner.stale_minutes")
+            await observability.interrupt_stale(older_than_minutes=stale)
 
-            active = await observability.active_run(within_minutes=STALE_MINUTES)
+            active = await observability.active_run(within_minutes=stale)
             if active is not None:
                 report.error = f"rodada {active.run_id} ({active.trigger}) ainda em andamento em outro processo"
                 logger.info("Rodada ignorada: {}", report.error)

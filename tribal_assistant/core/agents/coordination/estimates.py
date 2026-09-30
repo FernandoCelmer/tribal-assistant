@@ -5,6 +5,7 @@ from typing import Any
 
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.insight import Certainty, Insight, now
+from tribal_assistant.core.agents.knobs import tuning
 
 RESOURCES = ("wood", "clay", "iron")
 
@@ -101,7 +102,7 @@ class Estimator:
                 Insight("storage_full", f"{first} enche o armazém em {full[first]:.1f}h", Certainty.ESTIMATE, now(), 0.85, full[first], "produção por hora")
             )
 
-        if self.pop_ratio() < 0.15:
+        if self.pop_ratio() < tuning(self.ctx).get("farm.pressure_ratio"):
             items.append(Insight("farm_pressure", "população quase no limite: fazenda vai travar obras e tropas", Certainty.ESTIMATE, now(), 0.9, self.pop_ratio(), "fazenda"))
 
         impact = self.hours_to_impact()
