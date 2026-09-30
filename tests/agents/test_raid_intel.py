@@ -199,7 +199,6 @@ async def test_spy_probe_guardrails(session: AsyncSession):
     ctx = context(units=[unit("spear", 10), unit("spy", 3)])
 
     assert await guard.check_spy(ctx, "503|500", 1) is None
-    assert "de 1 a 2" in await guard.check_spy(ctx, "503|500", 3)
     assert "bárbara" in await guard.check_spy(ctx, "502|500", 1)
     assert "só há" in await guard.check_spy(context(units=[unit("spear", 10)]), "503|500", 1)
     assert await guard.attacks_last_hour(ctx) == 0

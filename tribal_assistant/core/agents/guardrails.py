@@ -20,7 +20,6 @@ from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
 SCAVENGE_MIN_POP = 10
-SPY_PROBE = (1, 2)
 RAID_ACTIONS = ("send_farm_attack", "send_farm_template", "send_spy")
 
 
@@ -202,11 +201,7 @@ class Guardrails:
         return None
 
     async def check_spy(self, ctx: VillageContext, target: str, count: int) -> str | None:
-        """A scouting probe: 1 to 2 scouts, barbarians only, inside the radius and the hourly limit; it carries nothing."""
-        low, high = SPY_PROBE
-        if not low <= count <= high:
-            return f"sonda usa de {low} a {high} exploradores"
-
+        """A scouting probe: barbarians only, inside the radius and the hourly limit; the game decides the squad size."""
         try:
             tx, ty = (int(part) for part in target.split("|"))
             ox, oy = (int(part) for part in ctx.village.coords.split("|"))

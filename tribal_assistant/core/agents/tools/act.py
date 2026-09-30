@@ -210,7 +210,7 @@ class SendSpy(AgentTool):
         "type": "object",
         "properties": {
             "target": {"type": "string", "description": "Coordenadas x|y do alvo, ex.: 498|503."},
-            "count": {"type": "integer", "minimum": 1, "maximum": 50, "description": "Exploradores; sobe sozinho para o mínimo do mundo."},
+            "count": {"type": "integer", "minimum": 1, "description": "Exploradores; sobe sozinho para o mínimo do mundo."},
             "reason": REASON,
         },
         "required": ["target", "reason"],
