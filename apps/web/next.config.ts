@@ -3,6 +3,7 @@ import { version } from "./package.json";
 
 const config: NextConfig = {
   reactStrictMode: true,
+  compress: false,
   devIndicators: false,
   output: "standalone",
   env: { WEB_VERSION: version },
