@@ -199,3 +199,12 @@ def test_idle_queue_takes_the_cheapest_pit_that_fits_when_the_plan_is_far():
 def test_base_reserve_never_swallows_the_whole_stock():
     assert EconomyProposer.base_reserve(5222, 0.1, {"wood": 495, "clay": 386, "iron": 446}, 0.25) == {"wood": 123, "clay": 96, "iron": 111}
     assert EconomyProposer.base_reserve(5222, 0.1, {"wood": 4000, "clay": 4000, "iron": 4000}, 0.25) == {"wood": 522, "clay": 522, "iron": 522}
+
+
+def test_profile_quest_is_detected_until_finished():
+    from tribal_assistant.core.agents.proposers.upkeep import UpkeepProposer
+
+    quest = {"id": "1500", "title": "A aparência importa", "goals": [{"title": "Altere o texto do seu perfil"}]}
+    assert UpkeepProposer.profile_quest([quest])
+    assert not UpkeepProposer.profile_quest([{**quest, "finished": True}])
+    assert not UpkeepProposer.profile_quest([{"id": "1", "title": "Construa o quartel"}])

@@ -26,6 +26,7 @@ from tribal_assistant.core.game.diplomacy import Diplomacy
 from tribal_assistant.core.game.forge import Forge
 from tribal_assistant.core.game.human import human_click, human_delay, reading_pause
 from tribal_assistant.core.game.market import Market
+from tribal_assistant.core.game.profile import Profile
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.scraper.quests import (
     Quest,
@@ -178,6 +179,10 @@ class GameActions:
     @property
     def market(self) -> Market:
         return Market(self)
+
+    @property
+    def profile(self) -> Profile:
+        return Profile(self)
 
     def _capture(self, page_html: str, name: str) -> None:
         """Keep the HTML of screens we act on, so scrapers can be written against real markup."""

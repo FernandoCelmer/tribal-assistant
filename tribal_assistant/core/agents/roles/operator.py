@@ -48,6 +48,7 @@ class OperatorAgent(VillageAgent):
         "choose_relic",
         "equip_relic",
         "rename_village",
+        "set_profile_text",
         "assign_flag",
         "learn_knight_skill",
         "train_knight",

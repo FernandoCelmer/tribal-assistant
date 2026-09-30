@@ -116,6 +116,7 @@ CATALOG: dict[str, KnobSpec] = {
     "cooldown.knight": KnobSpec(1, "horas entre verificações do paladino", cooldowns("recruit_knight", "learn_knight_skill", "train_knight")),
     "cooldown.items": KnobSpec(0.5, "horas entre leituras do inventário", cooldown("use_item")),
     "cooldown.rename": KnobSpec(24, "horas entre tentativas de renomear para a missão", cooldown("rename_village")),
+    "cooldown.profile": KnobSpec(24, "horas entre tentativas de escrever o texto do perfil para a missão", cooldown("set_profile_text")),
     "cooldown.tribe": KnobSpec(12, "horas entre buscas de tribo", cooldowns("apply_to_tribe", "accept_tribe_invite")),
     "cooldown.mentor": KnobSpec(24, "horas entre buscas de mentor", cooldown("accept_mentor")),
     "cooldown.smith": KnobSpec(1, "horas entre visitas ao ferreiro", cooldown("research_unit")),

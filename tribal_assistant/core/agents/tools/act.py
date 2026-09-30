@@ -645,6 +645,29 @@ class RenameVillage(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class SetProfileText(AgentTool):
+    name = "set_profile_text"
+    description = "Escreve o texto do perfil do jogador (Configurações → Perfil). Conclui a missão 'A aparência importa'."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"text": {"type": "string", "minLength": 10, "maxLength": 500}, "reason": REASON},
+        "required": ["text", "reason"],
+        "additionalProperties": False,
+    }
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        text = str(args["text"]).strip()[:500]
+        if len(text) < 10:
+            return ToolOutcome(False, "RECUSADO: texto curto demais")
+
+        if box.dry_run:
+            return ToolOutcome(True, "(simulação) salvar texto do perfil")
+
+        result = await box.actions.profile.set_text(box.ctx.game_id, text)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class AssignFlag(AgentTool):
     name = "assign_flag"
     description = (
