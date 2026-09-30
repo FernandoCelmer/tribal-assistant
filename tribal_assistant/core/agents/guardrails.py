@@ -19,7 +19,6 @@ from tribal_assistant.core.models.world import WorldVillage
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.schemas.agent_settings import AgentSettings
 
-SCAVENGE_MIN_POP = 10
 RAID_ACTIONS = ("send_farm_attack", "send_farm_template", "send_spy")
 
 
@@ -108,8 +107,9 @@ class Guardrails:
                 return f"só há {current.home if current else 0} {unit} em casa"
 
         pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
-        if pop < SCAVENGE_MIN_POP:
-            return f"coleta exige pelo menos {SCAVENGE_MIN_POP} de população; as tropas somam {pop}"
+        least = knob_int(ctx, "scavenge.min_pop")
+        if pop < least:
+            return f"coleta exige pelo menos {least} de população; as tropas somam {pop}"
 
         if any(c["direction"] == "in" and c["kind"] in ("attack", "noble") for c in ctx.commands):
             return "ataque chegando; tropas ficam em casa"

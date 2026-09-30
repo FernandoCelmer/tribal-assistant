@@ -8,8 +8,7 @@ from tribal_assistant.core.agents.coordination.insight import Certainty, Insight
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
-from tribal_assistant.core.agents.guardrails import SCAVENGE_MIN_POP
-from tribal_assistant.core.agents.knobs import Knobs, knob, tuning
+from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
 from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.agents.proposers.base import Proposer, clamp
 from tribal_assistant.core.agents.proposers.farm import FarmChoice, FarmPlanner
@@ -242,8 +241,9 @@ class AttackProposer(Proposer):
         return sorted(sets, key=rate, reverse=True)
 
     @classmethod
-    def split(cls, units: dict[str, int], factors: dict[int, float]) -> dict[int, dict[str, int]]:
-        """Troops for the tiers that yield the most per minute, shared 1/loot factor so every run ends together; each part at least 10 pop."""
+    def split(cls, units: dict[str, int], factors: dict[int, float], least: int | None = None) -> dict[int, dict[str, int]]:
+        """Troops for the tiers that yield the most per minute, shared 1/loot factor so every run ends together; each part at least the world's minimum."""
+        least = least if least is not None else Knobs().int("scavenge.min_pop")
         def pop(part: dict[str, int]) -> int:
             return sum(UNITS[u].pop * n for u, n in part.items() if u in UNITS)
 
@@ -257,7 +257,7 @@ class AttackProposer(Proposer):
                 parts[top][unit] += count - sum(p[unit] for p in parts.values())
 
             parts = {t: {u: n for u, n in p.items() if n > 0} for t, p in parts.items()}
-            if all(pop(p) >= SCAVENGE_MIN_POP for p in parts.values()):
+            if all(pop(p) >= least for p in parts.values()):
                 return parts
 
         return {}
@@ -275,10 +275,10 @@ class AttackProposer(Proposer):
             if count > 0:
                 units[name] = count
 
-        parts = self.split(units, free)
+        parts = self.split(units, free, knob_int(view, "scavenge.min_pop"))
         if not parts:
             pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
-            view.note(Insight("scavenge_pop", f"coleta parada: só {pop} de população em casa (mínimo {SCAVENGE_MIN_POP})", Certainty.FACT, now(), 1.0, pop, self.key))
+            view.note(Insight("scavenge_pop", f"coleta parada: só {pop} de população em casa (mínimo {knob_int(view, 'scavenge.min_pop')})", Certainty.FACT, now(), 1.0, pop, self.key))
             return []
 
         return [

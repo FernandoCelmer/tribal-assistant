@@ -215,3 +215,8 @@ async def test_the_game_refusal_raises_the_minimum_spies(session):
     assert await MinimumSquad(session).learn("spy.min_send", int(found.group(1)), UNIT_POP["spy"]) == 7
     assert (await KnobStore(session).load()).int("spy.min_send") == 7
     assert await MinimumSquad(session).learn("spy.min_send", 4, UNIT_POP["spy"]) == 7
+
+
+async def test_the_scavenge_minimum_is_learned_from_the_game(session):
+    found = MIN_POP.search("A coleta deve consistir em pelo menos 12 população.")
+    assert await MinimumSquad(session).learn("scavenge.min_pop", int(found.group(1)), 1) == 12

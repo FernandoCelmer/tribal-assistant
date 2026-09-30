@@ -3,7 +3,6 @@
 from tribal_assistant.core.agents.knobs import Knobs
 
 LOT = 100
-MAX_LOT = 1000
 
 
 class MarketRule:
@@ -27,12 +26,13 @@ class MarketRule:
         return None
 
     @staticmethod
-    def lot(stock: dict[str, int], min_gap: int | None = None) -> tuple[str, str, int] | None:
+    def lot(stock: dict[str, int], min_gap: int | None = None, max_lot: int | None = None) -> tuple[str, str, int] | None:
         min_gap = min_gap if min_gap is not None else Knobs().int("market.min_gap")
+        max_lot = max_lot if max_lot is not None else Knobs().int("market.max_lot")
         high = max(stock, key=stock.get)
         low = min(stock, key=stock.get)
         gap = stock[high] - stock[low]
         if gap < min_gap:
             return None
 
-        return high, low, min(MAX_LOT, (gap // 2) // LOT * LOT)
+        return high, low, min(max_lot, (gap // 2) // LOT * LOT)

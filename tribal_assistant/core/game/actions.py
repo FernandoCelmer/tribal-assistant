@@ -13,8 +13,6 @@ from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 
 from tribal_assistant.core.accounts.context import current_account
-from tribal_assistant.core.agents.guardrails import SCAVENGE_MIN_POP
-from tribal_assistant.core.agents.knowledge import UNITS
 from tribal_assistant.core.game.browser import (
     BUILD_QUEUE_JS,
     ensure_in_game,
@@ -401,14 +399,8 @@ class GameActions:
             units = {
                 u: min(n, int(home.get(u, 0))) for u, n in units.items() if int(home.get(u, 0)) > 0
             }
-            pop = sum(UNITS[u].pop * n for u, n in units.items() if u in UNITS)
-            if pop < SCAVENGE_MIN_POP:
-                return ActionResult(
-                    False,
-                    "send_scavenge",
-                    f"só {pop} de população disponível em casa; a coleta exige {SCAVENGE_MIN_POP}",
-                    {"home": home},
-                )
+            if not units:
+                return ActionResult(False, "send_scavenge", "nenhuma das tropas pedidas está em casa", {"home": home})
 
             for unit, count in units.items():
                 field_ = page.locator(f"input.unitsInput[name='{unit}']").first

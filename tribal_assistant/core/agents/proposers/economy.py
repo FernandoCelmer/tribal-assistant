@@ -14,7 +14,6 @@ from tribal_assistant.core.agents.social.ledger import SocialLedger
 from tribal_assistant.core.repositories.game import GameRepository
 
 SPENDING = ("recruit_units", "train_knight", "use_item", "research_unit")
-LIGHT_RESEARCH_IRON = 2000
 
 
 class IronParking:
@@ -180,7 +179,7 @@ class EconomyProposer(Proposer):
 
         light = ctx.unit("light")
         if ctx.levels.get("stable", 0) >= 1 and ctx.levels.get("smith", 0) >= 1 and light is not None and not light.available:
-            needs.append(LIGHT_RESEARCH_IRON)
+            needs.append(tuning(ctx).int("economy.light_research_iron"))
 
         return max(needs, default=0)
 
@@ -353,7 +352,7 @@ class EconomyProposer(Proposer):
 
     @staticmethod
     def own_offer(stock: dict[str, int], storage: int, knobs: Knobs | None = None) -> tuple[str, str, int] | None:
-        plan = MarketRule.lot(stock, (knobs or Knobs()).int("market.min_gap"))
+        plan = MarketRule.lot(stock, (knobs or Knobs()).int("market.min_gap"), (knobs or Knobs()).int("market.max_lot"))
         if plan is None:
             return None
 

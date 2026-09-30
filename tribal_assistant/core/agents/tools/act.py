@@ -318,6 +318,10 @@ class SendScavenge(AgentTool):
             result = await box.actions.send_scavenge(box.ctx.game_id, option_id, units)
             result_ok, detail = result.ok, result.detail
 
+        needed = MIN_POP.search(detail or "")
+        if not result_ok and needed:
+            await MinimumSquad(box.session).learn("scavenge.min_pop", int(needed.group(1)), 1)
+
         if result_ok:
             for unit, count in units.items():
                 current = box.ctx.unit(unit)

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.knobs import KnobStore
 
-MIN_POP = re.compile(r"pelo menos (\d+) de população", re.I)
+MIN_POP = re.compile(r"pelo menos (\d+)(?: de)? população", re.I)
 UNIT_POP = {"spear": 1, "sword": 1, "axe": 1, "archer": 1, "spy": 2, "light": 4, "marcher": 5, "heavy": 6, "ram": 5, "catapult": 8, "knight": 10, "snob": 100}
 
 
