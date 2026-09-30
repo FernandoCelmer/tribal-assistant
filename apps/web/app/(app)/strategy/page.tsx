@@ -83,7 +83,7 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
           </div>
           <p className="mt-0.5 text-[13px] text-secondary">Automático deixa o coordenador escolher a cada rodada; fixar mantém o papel até você mudar.</p>
         </div>
-        <RoleSelect key={`${round.village_id}-${role}-${round.manual_role}`} villageId={round.village_id} role={role} manual={round.manual_role ?? false} />
+        <RoleSelect key={round.village_id} villageId={round.village_id} role={role} manual={round.manual_role ?? false} />
       </Panel>
       </Writable>
 

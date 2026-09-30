@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useReadOnly } from "@/components/layout/read-only";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
@@ -15,6 +15,10 @@ export function RoleSelect({ villageId, role, manual }: { villageId: number; rol
   const [busy, setBusy] = useState(false);
   const locked = useReadOnly();
   const [value, setValue] = useState(manual ? role : "");
+
+  useEffect(() => {
+    if (!busy) setValue(manual ? role : "");
+  }, [manual, role]);
 
   const change = async (next: string) => {
     const previous = value;

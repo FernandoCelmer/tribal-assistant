@@ -16,6 +16,10 @@ export function LiveRefresh() {
 
   const refresh = () => {
     if (document.visibilityState !== "visible") return;
+    if (document.querySelector('[role="listbox"], [role="dialog"]')) {
+      schedule();
+      return;
+    }
     last.current = Date.now();
     router.refresh();
   };
