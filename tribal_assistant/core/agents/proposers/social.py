@@ -4,7 +4,7 @@ Never with the other accounts run here, never in bulk, every text written by the
 """
 
 import random
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from loguru import logger
@@ -15,6 +15,7 @@ from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import knob, knob_int
 from tribal_assistant.core.agents.proposers.base import Proposer
 from tribal_assistant.core.agents.proposers.diplomacy import PENDING, lead
+from tribal_assistant.core.agents.sightings import Sighting, SightingBook
 from tribal_assistant.core.agents.social.ledger import FRIENDS, TRIBE_MEMBERS, SocialLedger, now
 from tribal_assistant.core.agents.social.rules import SocialRules, same
 from tribal_assistant.core.agents.social.writer import SocialWriter
@@ -307,6 +308,23 @@ class SocialProposer(Proposer):
         self.notes.append("sem candidatura pendente para acompanhar nem vizinho ativo novo para apresentar")
         return []
 
+    @staticmethod
+    async def curious(view: CoordinationView, stops: list[dict[str, Any]], pages: int) -> list[dict[str, Any]]:
+        """Pages never seen first, then pages that changed on the last visit, then the longest unvisited; a little chance mixed in."""
+        keys = {Sighting.key_for(s["screen"], s.get("params")): s for s in stops}
+        visits = await SightingBook(view.session).visits(list(keys))
+        moment = now()
+
+        def interest(key: str) -> float:
+            seen = visits.get(key)
+            if not seen or not seen.get("at"):
+                return 1000.0
+            hours = (moment - datetime.fromisoformat(seen["at"]).replace(tzinfo=None)).total_seconds() / 3600
+            return hours * (3 if seen.get("changed") else 1) + random.random()
+
+        ranked = sorted(keys, key=interest, reverse=True)
+        return [keys[k] for k in ranked[:pages]]
+
     async def _browse(self, view: CoordinationView) -> list[Proposal]:
         if not await view.cooldown("browse"):
             self.notes.append("passeio pelo jogo feito há pouco")
@@ -322,7 +340,7 @@ class SocialProposer(Proposer):
         for tribe in (await ledger.nearby_tribes(view.knobs))[: knob_int(view, "browse.tribes")]:
             stops.append({"screen": "info_ally", "params": {"id": tribe["id"]}, "label": f"tribo [{tribe['tag']}]"})
 
-        chosen = random.sample(stops, min(len(stops), knob_int(view, "browse.pages")))
+        chosen = await self.curious(view, stops, knob_int(view, "browse.pages"))
         labels = ", ".join(s["label"] for s in chosen)
         return [self._proposal("browse_game", {"stops": chosen}, f"passear: {labels}", "conhecer vizinhos, tribos e o mundo como um jogador", 0.1, 0.2)]
 

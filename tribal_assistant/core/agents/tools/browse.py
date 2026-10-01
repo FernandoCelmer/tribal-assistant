@@ -2,6 +2,8 @@
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from tribal_assistant.core.agents.knobs import tuning
+from tribal_assistant.core.agents.sightings import SightingBook
 from tribal_assistant.core.agents.tools.base import AgentTool, ToolOutcome
 from tribal_assistant.core.game.wander import SAFE_SCREENS
 
@@ -38,4 +40,10 @@ class BrowseGame(AgentTool):
 
     async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
         result = await box.actions.wander.tour(box.ctx.game_id, list(args["stops"]))
-        return ToolOutcome(result.ok, result.detail, result.data)
+        read = (result.data or {}).pop("read", [])
+        if not result.ok or not read:
+            return ToolOutcome(result.ok, result.detail, result.data)
+
+        notes = await SightingBook(box.session).learn(read, tuning(box))
+        learned = f" · aprendeu: {'; '.join(notes[:4])}" if notes else " · nada mudou desde a última visita"
+        return ToolOutcome(True, result.detail + learned, {**result.data, "learned": notes})

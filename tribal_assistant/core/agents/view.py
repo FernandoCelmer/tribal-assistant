@@ -12,9 +12,9 @@ KIND = {"build": "construir", "recruit": "recrutar", "unlock_scavenge": "desbloq
 
 class ContextView:
     SECTIONS: ClassVar[dict[str, tuple[str, ...]]] = {
-        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "lessons", "coordination"),
+        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "sightings", "lessons", "coordination"),
         "quartermaster": ("quests",),
-        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "lessons", "coordination"),
+        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "sightings", "lessons", "coordination"),
     }
 
     def __init__(self, ctx: VillageContext, queue_slots: int) -> None:
@@ -156,6 +156,9 @@ class ContextView:
             if d["action"] != "summary"
         ][:6]
         return "Feito há pouco:\n" + "\n".join(rows) if rows else ""
+
+    def sightings(self) -> str:
+        return self.ctx.sightings
 
     def lessons(self) -> str:
         return self.ctx.lessons

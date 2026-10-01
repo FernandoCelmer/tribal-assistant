@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.knobs import Knobs
+from tribal_assistant.core.agents.sightings import SightingBook
 from tribal_assistant.core.models.world import WorldPlayer, WorldVillage
 
 
@@ -16,18 +17,21 @@ class Threat:
     player: str
     points: int
     distance: float
+    player_id: str = ""
 
 
 class ThreatScan:
     def __init__(self, session: AsyncSession, knobs: Knobs | None = None) -> None:
         self.session = session
         self.knobs = knobs or Knobs()
+        self.expanding: set[str] = set()
 
     async def near(self, ctx: VillageContext, radius: int | None = None) -> list[Threat]:
         radius = radius or self.knobs.int("threat.radius")
         x, y = (int(n) for n in ctx.village.coords.split("|"))
         own_player = (ctx.player or {}).get("id")
         own_name, own_ally = await self.own(ctx)
+        self.expanding = await SightingBook(self.session).expanding(self.knobs.get("threat.expanding_hours"))
         rows = (
             await self.session.execute(
                 select(WorldVillage, WorldPlayer)
@@ -49,7 +53,7 @@ class ThreatScan:
             distance = round(math.hypot(village.x - x, village.y - y), 1)
             current = threats.get(player.name)
             if current is None or distance < current.distance:
-                threats[player.name] = Threat(player.name, player.points, distance)
+                threats[player.name] = Threat(player.name, player.points, distance, str(player.id))
 
         return sorted(threats.values(), key=lambda t: t.distance)
 
@@ -70,4 +74,4 @@ class ThreatScan:
     def dangerous(self, threats: list[Threat], own_points: int, within: float | None = None) -> list[Threat]:
         within = within if within is not None else self.knobs.get("threat.danger_distance")
         floor = max(self.knobs.int("threat.danger_points"), own_points * self.knobs.get("threat.danger_ratio"))
-        return [t for t in threats if t.distance <= within and t.points >= floor]
+        return [t for t in threats if t.distance <= within and (t.points >= floor or t.player_id in self.expanding)]

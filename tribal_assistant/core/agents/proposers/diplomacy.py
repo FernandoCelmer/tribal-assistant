@@ -9,6 +9,7 @@ from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon,
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import knob, knob_int
 from tribal_assistant.core.agents.proposers.base import Proposer
+from tribal_assistant.core.agents.sightings import SightingBook
 from tribal_assistant.core.agents.social.ledger import SocialLedger, now
 from tribal_assistant.core.agents.social.writer import SocialWriter
 from tribal_assistant.core.game.diplomacy import Diplomacy
@@ -100,6 +101,13 @@ class DiplomacyProposer(Proposer):
         candidates = {str(t["id"]): t for t in await ledger.nearby_tribes(view.knobs)}
         for tribe in state.get("nearby", []):
             candidates[str(tribe["id"])] = {**candidates.get(str(tribe["id"]), {}), **tribe, "id": str(tribe["id"])}
+
+        seen = await SightingBook(view.session).tribes()
+        for ally_id, signals in seen.items():
+            if ally_id in candidates and signals.get("closed"):
+                avoid = avoid | {ally_id}
+            elif ally_id in candidates and signals.get("recruiting"):
+                candidates[ally_id]["score"] = candidates[ally_id].get("score", 0) + 1
 
         best = Diplomacy.best_tribe(list(candidates.values()), tried | avoid | {str(a.get("ally_id")) for a in still}, knob_int(view, "diplomacy.min_members"))
         if best is None:

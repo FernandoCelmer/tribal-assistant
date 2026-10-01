@@ -27,6 +27,7 @@ class VillageContext:
     absence: str = ""
     absence_new: bool = False
     absence_soon: str = ""
+    sightings: str = ""
     lessons: str = ""
     coordination: str = ""
     policy: Policy = field(default_factory=Policy)

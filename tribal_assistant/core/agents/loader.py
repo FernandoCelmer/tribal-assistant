@@ -12,6 +12,7 @@ from tribal_assistant.core.agents.coordination.policy import Policy
 from tribal_assistant.core.agents.knobs import KnobStore
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.plan import PlanTracker
+from tribal_assistant.core.agents.sightings import SightingBook
 from tribal_assistant.core.repositories.agents import AgentRepository
 from tribal_assistant.core.repositories.coordination import CoordinationRepository
 from tribal_assistant.core.repositories.plans import PlanRepository
@@ -68,6 +69,7 @@ class ContextLoader:
 
         ctx.lessons = await LessonBook(self.plans.session).summary()
         ctx.coordination = await self._coordination(ctx.id)
+        ctx.sightings = await SightingBook(self.plans.session).summary()
 
         strategy = await CoordinationRepository(self.plans.session).strategy(ctx.id)
         ctx.policy = Policy.for_role(strategy.role if strategy else "growth", await KnobStore(self.plans.session).load())
