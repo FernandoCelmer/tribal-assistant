@@ -3,7 +3,7 @@
 import math
 from datetime import UTC, datetime, timedelta
 
-from tribal_assistant.core.agents.coordination.budget import Reservation
+from tribal_assistant.core.agents.coordination.budget import FILLER, Reservation
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.view import CoordinationView
 from tribal_assistant.core.agents.knobs import Knobs, knob, knob_int, tuning
@@ -98,6 +98,7 @@ class EconomyProposer(Proposer):
                         f"próxima obra do plano ({building}) em ~{hours:.1f}h",
                         {k: v for k, v in cost.items() if k != "pop"},
                         exempt=() if idle else ("recruit_units",),
+                        yields=(FILLER,),
                     )
                 )
 

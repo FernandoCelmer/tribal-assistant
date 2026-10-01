@@ -234,7 +234,7 @@ class Coordinator:
         if proposal.cost and not self.budget.affordable(proposal.cost, proposal.purpose, proposal.action):
             short = self.budget.shortfall(proposal.cost, proposal.purpose, proposal.action)
             stock = self.budget.stock()
-            reserved = [r.purpose for r in self.budget.reservations if r.purpose != proposal.purpose and r.cost and r.covers(proposal.action)]
+            reserved = [r.purpose for r in self.budget.reservations if r.cost and r.binds(proposal.purpose, proposal.action)]
             if all(stock[k] >= proposal.cost.get(k, 0) for k in short) and reserved:
                 return f"consumiria recursos reservados para {', '.join(reserved)}"
 

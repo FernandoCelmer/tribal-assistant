@@ -6,6 +6,7 @@ from typing import Any
 from tribal_assistant.core.agents.context import VillageContext
 
 RESOURCES = ("wood", "clay", "iron")
+FILLER = "filler"
 
 
 @dataclass
@@ -17,9 +18,14 @@ class Reservation:
     troops: dict[str, int] = field(default_factory=dict)
     applies_to: tuple[str, ...] = ()
     exempt: tuple[str, ...] = ()
+    yields: tuple[str, ...] = ()
 
     def covers(self, action: str) -> bool:
         return action not in self.exempt and (not self.applies_to or action in self.applies_to)
+
+    def binds(self, purpose: str, action: str) -> bool:
+        """Whether this reservation keeps a proposal with `purpose` and `action` from its resources."""
+        return self.purpose != purpose and purpose not in self.yields and (not action or self.covers(action))
 
     def to_dict(self) -> dict[str, Any]:
         return {"purpose": self.purpose, "kind": self.kind, "reason": self.reason, "cost": self.cost, "troops": self.troops}
@@ -50,7 +56,7 @@ class Budget:
     def held(self, excluding: str = "", action: str = "") -> dict[str, int]:
         total = dict.fromkeys(RESOURCES, 0)
         for reservation in self.reservations:
-            if reservation.purpose == excluding or (action and not reservation.covers(action)):
+            if not reservation.binds(excluding, action):
                 continue
             for r in RESOURCES:
                 total[r] += reservation.cost.get(r, 0)

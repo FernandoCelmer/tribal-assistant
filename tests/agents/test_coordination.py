@@ -37,6 +37,14 @@ def test_reserved_resources_are_not_free() -> None:
     assert budget.affordable({"wood": 2500}, purpose="expansion")
 
 
+def test_a_plan_reservation_yields_to_a_filler_build() -> None:
+    budget = Budget(context(stock=1500, storage=9000))
+    budget.reserve(Reservation("plan:main", "operation", "próxima obra", {"wood": 1500}, yields=("filler",)))
+
+    assert not budget.affordable({"wood": 600}, action="upgrade_building")
+    assert budget.affordable({"wood": 600}, purpose="filler", action="upgrade_building")
+
+
 def test_emergency_weights_put_risk_above_economic_return() -> None:
     growth = Proposal("infrastructure", "upgrade_building", {"building": "wood"}, "", factors=Factors(impact=0.9, opportunity=0.5))
     defense = Proposal("defense", "upgrade_building", {"building": "wall"}, "", factors=Factors(urgency=0.9, risk_avoided=0.9))

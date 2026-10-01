@@ -1,5 +1,6 @@
 """Infrastructure: which building best removes the current bottleneck, with its justification."""
 
+from tribal_assistant.core.agents.coordination.budget import FILLER
 from tribal_assistant.core.agents.coordination.proposal import Factors, Horizon, Proposal
 from tribal_assistant.core.agents.coordination.strategy import Role
 from tribal_assistant.core.agents.coordination.view import CoordinationView
@@ -65,7 +66,7 @@ class InfrastructureProposer(Proposer):
 
         filler = self.filler(view, plan)
         if filler:
-            items.append(self._build(view, filler, "fila vazia: obra que cabe no estoque enquanto o plano espera", impact=0.4, opportunity=0.8))
+            items.append(self._build(view, filler, "fila vazia: obra que cabe no estoque enquanto o plano espera", impact=0.4, opportunity=0.8, purpose=FILLER))
 
         for option_id in PlanTracker.next_unlocks(ctx.plan)[: knob_int(view, "build.unlock_lookahead")]:
             if not view.guard.check_unlock_scavenge(ctx, option_id):
