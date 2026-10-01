@@ -171,14 +171,17 @@ class SightingBook:
         reader = next(r for r in cls.READERS if r.fits(sight))
         return reader.read(sight, before, hours, knobs)
 
-    async def learn(self, pages: list[dict[str, Any]], knobs: Knobs) -> list[str]:
+    async def learn(self, pages: list[dict[str, Any]], knobs: Knobs) -> tuple[list[str], int]:
+        """Findings of the tour and how many of its pages were read for the first time."""
         now = datetime.now(UTC)
         notes: list[str] = []
+        first = 0
 
         for page in pages:
             sight = Sighting.of(page)
             row = await self.repo.get(sight.key)
             before = json.loads(row.data or "{}") if row else {}
+            first += not before
             seen_at = Clock.aware(before.get("at"))
             hours = (now - seen_at).total_seconds() / 3600 if seen_at else 0.0
 
@@ -197,7 +200,7 @@ class SightingBook:
             await self.repo.observe(sight.key, "seen", sight.label, "", snapshot, commit=False)
 
         await self.session.commit()
-        return notes
+        return notes, first
 
     async def visits(self, keys: list[str]) -> dict[str, dict[str, Any]]:
         rows = (await self.session.execute(select(Lesson).where(Lesson.key.in_(keys)))).scalars().all()

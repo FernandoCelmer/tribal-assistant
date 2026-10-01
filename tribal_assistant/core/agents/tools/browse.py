@@ -44,6 +44,10 @@ class BrowseGame(AgentTool):
         if not result.ok or not read:
             return ToolOutcome(result.ok, result.detail, result.data)
 
-        notes = await SightingBook(box.session).learn(read, tuning(box))
-        learned = f" · aprendeu: {'; '.join(notes[:4])}" if notes else " · nada mudou desde a última visita"
+        notes, first = await SightingBook(box.session).learn(read, tuning(box))
+        learned = f" · aprendeu: {'; '.join(notes[:4])}" if notes else ""
+        if first:
+            learned += f" · {first} página(s) lidas pela primeira vez"
+        elif not notes:
+            learned = " · nada mudou desde a última visita"
         return ToolOutcome(True, result.detail + learned, {**result.data, "learned": notes})

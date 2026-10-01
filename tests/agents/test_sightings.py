@@ -54,9 +54,9 @@ async def test_learning_a_tour_feeds_the_threat_scan(session: AsyncSession) -> N
     book = SightingBook(session)
     first = {"screen": "info_player", "params": {"id": "77"}, "label": "perfil de Doris", "pairs": {"Pontos": "100"}, "coords": ["480|750"]}
     await book.learn([first], Knobs())
-    notes = await book.learn([{**first, "coords": ["480|750", "481|751"]}], Knobs())
+    notes, new = await book.learn([{**first, "coords": ["480|750", "481|751"]}], Knobs())
 
-    assert notes and "ganhou aldeia" in notes[0]
+    assert notes and "ganhou aldeia" in notes[0] and new == 0
     assert "77" in await book.expanding(48)
 
     scan = ThreatScan(session)

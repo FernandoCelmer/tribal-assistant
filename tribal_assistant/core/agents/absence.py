@@ -191,7 +191,7 @@ class Absence:
 
     async def _last_known(self, ctx: VillageContext) -> dict[str, Any]:
         """Before the first heartbeat: the last finished round and the village snapshot taken before it."""
-        ended = await self.session.scalar(select(func.max(AgentRun.finished_at)).where(AgentRun.status != "running"))
+        ended = await self.session.scalar(select(func.max(AgentRun.finished_at)).where(AgentRun.status.not_in(("running", "interrupted"))))
         if ended is None:
             return {}
 
