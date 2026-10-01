@@ -153,7 +153,7 @@ class KnobStore:
         metrics.contacts_unanswered = await ledger.unanswered_share() or 0.0
         metrics.builds_done = float(await FrameRepository(self.session).most_levels_gained(since))
         last = await ledger.last_social_action()
-        metrics.social_idle = 1.0 if last is None else round(min(1.0, (moment - last).total_seconds() / 3600 / window), 3)
+        metrics.social_idle = 1.0 if last is None else round(min(1.0, (moment - last).total_seconds() / 3600 / (await self.load()).get("tuner.window_hours")), 3)
         await self.learn(metrics, records, since, window)
         return metrics
 
