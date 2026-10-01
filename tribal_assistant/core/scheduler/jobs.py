@@ -208,7 +208,7 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
     )
     scheduler.add_job(
         per_account(_tuning_job),
-        trigger=IntervalTrigger(hours=1, jitter=120),
+        trigger=IntervalTrigger(minutes=5, jitter=30),
         id="tuning",
         next_run_time=datetime.now() + timedelta(minutes=5),
         max_instances=1,

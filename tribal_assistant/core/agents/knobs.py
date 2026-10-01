@@ -33,7 +33,7 @@ WINDOW_HOURS = 6
 MIN_ROUNDS = 10
 STEP = 0.15
 HISTORY = 30
-MIN_INTERVAL_HOURS = 0.9
+BUCKET_MINUTES = 10
 LAST_RUN = "tuning:last_run"
 FARM_HAULS = re.compile(r"(\d+)/(\d+) relatórios com carga cheia")
 RAIDS = ("send_farm_attack", "send_farm_template")
@@ -130,9 +130,13 @@ class KnobStore:
         history.append({"at": now.isoformat(timespec="minutes"), "from": row.value, "to": value, "why": reason})
         row.value, row.reason, row.updated_at, row.history = value, reason, now, json.dumps(history[-HISTORY:], ensure_ascii=False)
 
-    async def metrics(self) -> Metrics:
+    async def updated(self) -> dict[str, datetime]:
+        return {r.name: r.updated_at for r in (await self.session.execute(select(TuningKnob))).scalars().all()}
+
+    async def metrics(self, since: datetime | None = None) -> Metrics:
         moment = datetime.now(UTC).replace(tzinfo=None)
-        since = moment - timedelta(hours=WINDOW_HOURS)
+        since = since or moment - timedelta(hours=WINDOW_HOURS)
+        window = max((moment - since).total_seconds() / 3600, 1 / 60)
         rows = (
             await self.session.execute(
                 select(CoordinationRound.village_id, CoordinationRound.created_at, CoordinationRound.data).where(CoordinationRound.created_at >= since)
@@ -149,14 +153,14 @@ class KnobStore:
         metrics.contacts_unanswered = await ledger.unanswered_share() or 0.0
         metrics.builds_done = float(await FrameRepository(self.session).most_levels_gained(since))
         last = await ledger.last_social_action()
-        metrics.social_idle = 1.0 if last is None else round(min(1.0, (moment - last).total_seconds() / 3600 / WINDOW_HOURS), 3)
-        await self.learn(metrics, records, since)
+        metrics.social_idle = 1.0 if last is None else round(min(1.0, (moment - last).total_seconds() / 3600 / window), 3)
+        await self.learn(metrics, records, since, window)
         return metrics
 
-    async def learn(self, metrics: Metrics, records: list[RoundRecord], since: datetime) -> None:
+    async def learn(self, metrics: Metrics, records: list[RoundRecord], since: datetime, window: float = WINDOW_HOURS) -> None:
         """What the executed proposals yielded afterwards, per specialist, per factor and for explorations."""
         knobs = await self.load()
-        outcomes = Outcomes(await OutcomeReader(self.session).evidence(since, WINDOW_HOURS), knobs.int("learning.min_samples"), knobs.get("learning.high_factor"))
+        outcomes = Outcomes(await OutcomeReader(self.session).evidence(since, window), knobs.int("learning.min_samples"), knobs.get("learning.high_factor"))
         metrics.yields = outcomes.yields(records)
         metrics.factor_gaps = outcomes.factor_gaps(records)
         metrics.explored, metrics.explore_gap = outcomes.explore(records)
@@ -245,13 +249,13 @@ class Tuner:
         return full, 1 - full
 
     @staticmethod
-    def plan(knobs: Knobs, metrics: Metrics) -> list[tuple[str, float, str]]:
-        if metrics.rounds < MIN_ROUNDS:
+    def plan(knobs: Knobs, metrics: Metrics, names: set[str] | None = None, least: int = MIN_ROUNDS) -> list[tuple[str, float, str]]:
+        if metrics.rounds < least:
             return []
 
         changes = []
         for name, spec in Knobs.SPECS.items():
-            if spec.rule is None:
+            if spec.rule is None or (names is not None and name not in names):
                 continue
             verdict = spec.rule(metrics)
             if verdict is None:
@@ -263,18 +267,36 @@ class Tuner:
                 changes.append((name, value, why))
         return changes
 
-    async def due(self) -> bool:
-        """At most one pass per interval, however often the server restarts."""
+    async def due(self, knobs: Knobs | None = None) -> bool:
+        """At most one pass per tuned interval, however often the server restarts."""
+        knobs = knobs or await self.store.load()
         row = await self.lessons.get(LAST_RUN)
-        return row is None or datetime.now(UTC).replace(tzinfo=None) - row.last_seen >= timedelta(hours=MIN_INTERVAL_HOURS)
+        return row is None or datetime.now(UTC).replace(tzinfo=None) - row.last_seen >= timedelta(minutes=knobs.get("tuner.interval_minutes"))
+
+    @staticmethod
+    def since(updated: datetime | None, start: datetime) -> datetime:
+        """A knob is judged only by the rounds played under its current value, bucketed so knobs share a measurement."""
+        moment = max(updated or start, start)
+        return moment.replace(minute=moment.minute - moment.minute % BUCKET_MINUTES, second=0, microsecond=0)
 
     async def run(self, force: bool = False) -> list[tuple[str, float, str]]:
-        if not force and not await self.due():
+        knobs = await self.store.load()
+        if not force and not await self.due(knobs):
             return []
 
         await self.lessons.observe(LAST_RUN, "tuning", "Último ajuste automático", commit=False)
-        knobs = await self.store.load()
-        changes = self.plan(knobs, await self.store.metrics())
+        start = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=knobs.get("tuner.window_hours"))
+        updated = await self.store.updated()
+
+        groups: dict[datetime, set[str]] = {}
+        for name, spec in Knobs.SPECS.items():
+            if spec.rule is not None:
+                groups.setdefault(self.since(updated.get(name), start), set()).add(name)
+
+        changes = []
+        for since, names in sorted(groups.items()):
+            changes += self.plan(knobs, await self.store.metrics(since), names, knobs.int("tuner.min_rounds"))
+
         for name, value, why in changes:
             await self.store.set(name, value, why)
         await self.session.commit()

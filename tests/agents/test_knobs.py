@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.agents.coordination.policy import Policy
@@ -17,6 +19,21 @@ def test_knobs_move_the_way_their_rule_asks() -> None:
 
 def test_no_change_without_enough_rounds() -> None:
     assert Tuner.plan(Knobs(), Metrics(rounds=3, idle_queue=1.0)) == []
+
+
+def test_a_knob_is_judged_only_by_rounds_after_its_last_change() -> None:
+    start = datetime(2026, 10, 1, 12, 0)
+
+    assert Tuner.since(None, start) == start
+    assert Tuner.since(datetime(2026, 10, 1, 9, 0), start) == start
+    assert Tuner.since(datetime(2026, 10, 1, 13, 47, 31), start) == datetime(2026, 10, 1, 13, 40)
+
+
+def test_plan_moves_only_the_knobs_of_its_group() -> None:
+    metrics = Metrics(rounds=5, idle_queue=0.5, recruit_starved=0.4)
+    changes = {name for name, _, _ in Tuner.plan(Knobs(), metrics, {"filler_wait_hours"}, least=4)}
+
+    assert changes == {"filler_wait_hours"}
 
 
 def test_shares_never_pass_the_whole() -> None:
