@@ -63,7 +63,7 @@ SHIPMENTS_FAILED_UP = either(more_when("shipments_failed", 0.3, "envios entre al
 
 def _policy() -> dict[str, KnobSpec]:
     rules = {
-        "resource_reserve": (either(STOCK_EMPTY, STARVED, less_when("army_stalled", 0.9, "rodadas sem recrutar nada")), True, False, "fração do armazém reservada"),
+        "resource_reserve": (either(STOCK_EMPTY, STARVED, less_when("army_stalled", 0.75, "rodadas sem recrutar nada")), True, False, "fração do armazém reservada"),
         "recruit_budget": (
             either(less_when("idle_recruiting", 0.3, "fila de obras parada enquanto recrutava"), STORAGE_FULL_UP, more_when("army_stalled", 0.9, "rodadas sem recrutar nada")),
             True,
