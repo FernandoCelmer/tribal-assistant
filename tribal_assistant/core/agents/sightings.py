@@ -148,12 +148,17 @@ class AllyReader(PageReader):
 
 
 class ChangeReader(PageReader):
-    """Any other page: which labelled numbers moved since the last visit."""
+    """Any other page: which labelled numbers moved since the last visit; the map only shows a hover tooltip, so it is skipped."""
+
+    NOISY: ClassVar[tuple[str, ...]] = ("map",)
 
     def fits(self, sight: Sighting) -> bool:
         return True
 
     def read(self, sight: Sighting, before: dict[str, Any], hours: float, knobs: Knobs) -> list[Finding]:
+        if sight.screen in self.NOISY:
+            return []
+
         old = before.get("pairs") or {}
         moved = [f"{k} {old[k]}→{v}" for k, v in sight.pairs.items() if k in old and old[k] != v][:4]
         return [Finding(f"{sight.label}: " + "; ".join(moved))] if moved else []

@@ -63,3 +63,9 @@ async def test_learning_a_tour_feeds_the_threat_scan(session: AsyncSession) -> N
     scan.expanding = {"77"}
     weak = Threat("Doris", 100, 3.0, "77")
     assert scan.dangerous([weak], own_points=5000) == [weak]
+
+
+def test_the_map_tooltip_is_not_a_finding() -> None:
+    tooltip = Sighting("map", {}, "mapa ao redor", {"Pontos": "26"})
+
+    assert SightingBook.findings(tooltip, {"pairs": {"Pontos": "243"}}, 1, Knobs()) == []
