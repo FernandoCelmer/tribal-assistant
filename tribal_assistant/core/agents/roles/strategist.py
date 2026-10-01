@@ -52,7 +52,18 @@ class StrategistAgent(VillageAgent):
         return age > timedelta(minutes=max(config.plan_refresh_minutes, knob(ctx, "plan.refresh_minutes")))
 
     def needs_llm(self, ctx: VillageContext, config: AgentSettings) -> bool:
-        return self.stale(ctx, config) or PlanTracker.needs_refresh(ctx.plan)
+        return self.stale(ctx, config) or ctx.absence_new or self.before_stop(ctx) or PlanTracker.needs_refresh(ctx.plan)
+
+    @staticmethod
+    def before_stop(ctx: VillageContext) -> bool:
+        if not ctx.absence_soon:
+            return False
+
+        if ctx.plan_refreshed_at is None:
+            return True
+
+        age = datetime.now(UTC).replace(tzinfo=None) - ctx.plan_refreshed_at
+        return age > timedelta(minutes=knob(ctx, "absence.prepare_minutes"))
 
     async def rules(self, box: "Toolbox") -> str:
         ctx = box.ctx

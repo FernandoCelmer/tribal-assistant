@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.agents.absence import Absence
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.policy import Policy
 from tribal_assistant.core.agents.knobs import KnobStore
@@ -70,6 +71,7 @@ class ContextLoader:
 
         strategy = await CoordinationRepository(self.plans.session).strategy(ctx.id)
         ctx.policy = Policy.for_role(strategy.role if strategy else "growth", await KnobStore(self.plans.session).load())
+        await Absence(self.plans.session).attach(ctx)
 
     async def _coordination(self, village_id: int) -> str:
         rows = await CoordinationRepository(self.plans.session).history(village_id, 1)

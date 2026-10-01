@@ -30,6 +30,8 @@ class ContextView:
             self.clock.header(v.synced_at, player.get("protection_until")),
         ]
 
+        lines += [text for text in (self.ctx.absence, self.ctx.absence_soon) if text]
+
         for section in self.SECTIONS.get(role, self.SECTIONS["operator"]):
             text = getattr(self, section)()
             if text:

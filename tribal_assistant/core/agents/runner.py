@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from loguru import logger
 
+from tribal_assistant.core.agents.absence import Absence
 from tribal_assistant.core.agents.brains.base import Brain
 from tribal_assistant.core.agents.brains.llm import LLMBrain
 from tribal_assistant.core.agents.brains.rules import RuleBrain
@@ -150,11 +151,19 @@ class AgentRunner:
             await trace.step("error", report.error, is_error=True)
             return False
 
+        absence = Absence(session)
+        for ctx in contexts:
+            await absence.observe(ctx, config.interval_minutes)
+            if ctx.absence_new:
+                await trace.step("info", ctx.absence)
+
         if await self._quests_due(session, contexts[0]):
             trace.focus(None, "", "quartermaster")
             await trace.step("info", "lendo missões e recompensas no jogo")
             await self._refresh_quests(session, contexts[0].game_id)
-            contexts = await ContextLoader(session).load(village_ids)
+            fresh = {c.id: c for c in await ContextLoader(session).load(village_ids)}
+            for ctx in contexts:
+                ctx.quests, ctx.rewards_pending = fresh[ctx.id].quests, fresh[ctx.id].rewards_pending
 
         acted = False
         siblings = await ContextLoader(session).load() if village_ids else contexts
@@ -209,7 +218,7 @@ class AgentRunner:
     @staticmethod
     async def _quests_due(session: Any, ctx: Any) -> bool:
         """The quest window is read again only when the game flags news or the tuned interval passed."""
-        if (ctx.player or {}).get("new_quests") or ctx.rewards_pending:
+        if (ctx.player or {}).get("new_quests") or ctx.rewards_pending or ctx.absence_new:
             return True
         return await LessonBook(session).due(f"quests_read:{ctx.game_id}", knob(ctx, "quests.refresh_minutes") / 60)
 

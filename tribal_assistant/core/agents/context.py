@@ -24,6 +24,9 @@ class VillageContext:
     plan_summary: str = ""
     plan_refreshed_at: datetime | None = None
     goal_set_at: datetime | None = None
+    absence: str = ""
+    absence_new: bool = False
+    absence_soon: str = ""
     lessons: str = ""
     coordination: str = ""
     policy: Policy = field(default_factory=Policy)
