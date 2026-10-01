@@ -12,6 +12,7 @@ from tribal_assistant.core.accounts.context import use_account
 from tribal_assistant.core.accounts.registry import AccountRegistry
 from tribal_assistant.core.agents.coordination.policy import BUILD_SLOTS
 from tribal_assistant.core.agents.knobs import Tuner
+from tribal_assistant.core.agents.reflection import Reflection
 from tribal_assistant.core.agents.routines import Routines
 from tribal_assistant.core.agents.runner import AgentRunner
 from tribal_assistant.core.agents.watchdog import Watchdog
@@ -95,6 +96,11 @@ async def _tuning_job() -> None:
 
     for name, value, why in changes:
         logger.info("Ajuste automático: {} = {} ({})", name, value, why)
+
+
+async def _reflection_job() -> None:
+    async with SessionFactory() as session:
+        await Reflection(session).run()
 
 
 async def _build_slot_free(session, now: datetime, slots: int) -> bool:
@@ -247,6 +253,15 @@ def register_jobs(scheduler: AsyncIOScheduler) -> None:
         trigger=IntervalTrigger(minutes=1, jitter=15),
         id="routines",
         next_run_time=datetime.now() + timedelta(seconds=45),
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        per_account(_reflection_job),
+        trigger=IntervalTrigger(minutes=15, jitter=60),
+        id="reflection",
+        next_run_time=datetime.now() + timedelta(minutes=8),
         max_instances=1,
         coalesce=True,
         replace_existing=True,

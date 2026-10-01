@@ -36,6 +36,7 @@ class StrategistAgent(VillageAgent):
         "fim da proteção, academia) chame search_docs antes de planejar, por exemplo \"sprint popeye\", "
         "\"fim da proteção\", \"muralha cavalaria leve bárbara\", \"academia armazenamento\" ou "
         "\"torre de vigia\"; fora disso use lookup_knowledge ou search_docs só com dúvida de requisito. "
+        "Siga as conclusões aprendidas com confiança alta e evite o que elas contrariam. "
         "Uma chamada set_village_plan basta; set_village_goal só se o objetivo mudar ou se ele ficou velho e cita "
         "metas já cumpridas."
     )
