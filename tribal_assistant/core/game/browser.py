@@ -17,8 +17,9 @@ BUILD_QUEUE_JS = """() => [...document.querySelectorAll('#buildqueue tr[class*="
   const cls = [...tr.classList].find(c => c.startsWith('buildorder_')) || '';
   const timer = tr.querySelector('[data-endtime]');
   const cell = tr.querySelector('td');
+  const done = tr.cells[3];
   return {building: cls.slice('buildorder_'.length), text: cell ? cell.innerText : '',
-    end: timer ? timer.dataset.endtime : null};
+    end: timer ? timer.dataset.endtime : null, done: done ? done.innerText : ''};
 })"""
 
 FIND_LINK_JS = """(want) => {

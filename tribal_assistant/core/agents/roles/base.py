@@ -21,6 +21,9 @@ limite de ataques por hora, intervalo entre ataques ao mesmo alvo e só aldeias 
 - Recursos só saem por troca no mercado ou por send_resources para aldeias suas desta mesma conta; \
 nunca envie recursos para outros jogadores nem para outras contas.
 - Com ATAQUES CHEGANDO no estado, tropas ficam em casa.
+- Tempo: "Agora" é a hora do servidor; cada fila, coleta, tropa e plano diz quando termina ou há quanto \
+tempo existe. Não repita o que está na fila ou em "Feito há pouco"; o que termina em minutos se espera, \
+e um passo parado há horas pede outro caminho.
 - Toda ação leva um "reason" curto (até 8 palavras), ex.: "missão: Bosque 5".
 - Economize: no máximo 5 chamadas, sem texto entre elas; se nada for útil, não chame ferramentas.
 - Resposta final: uma frase em português com o que fez e o próximo passo, ou por que não fez nada.

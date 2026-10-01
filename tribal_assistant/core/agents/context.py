@@ -23,6 +23,7 @@ class VillageContext:
     plan: list[PlanStep] = field(default_factory=list)
     plan_summary: str = ""
     plan_refreshed_at: datetime | None = None
+    goal_set_at: datetime | None = None
     lessons: str = ""
     coordination: str = ""
     policy: Policy = field(default_factory=Policy)

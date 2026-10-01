@@ -49,6 +49,7 @@ class ContextLoader:
                     quests=quests,
                     rewards_pending=rewards,
                     goal=await self.repo.goal(village.id),
+                    goal_set_at=await self.repo.goal_set_at(village.id),
                     recent=await self._recent(village.id),
                     stock=self._live_stock(village),
                     pop_free=village.pop_max - village.pop_current,

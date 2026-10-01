@@ -2,6 +2,7 @@
 
 from typing import ClassVar
 
+from tribal_assistant.core.agents.clock import Clock
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.knowledge import GameKnowledge
 
@@ -11,18 +12,23 @@ KIND = {"build": "construir", "recruit": "recrutar", "unlock_scavenge": "desbloq
 
 class ContextView:
     SECTIONS: ClassVar[dict[str, tuple[str, ...]]] = {
-        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "lessons", "coordination"),
+        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "lessons", "coordination"),
         "quartermaster": ("quests",),
-        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "lessons", "coordination"),
+        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "lessons", "coordination"),
     }
 
     def __init__(self, ctx: VillageContext, queue_slots: int) -> None:
         self.ctx = ctx
         self.queue_slots = queue_slots
+        self.clock = Clock()
 
     def render(self, role: str = "operator") -> str:
         v = self.ctx.village
-        lines = [f"Aldeia {v.name} ({v.coords}) · {v.points} pontos"]
+        player = self.ctx.player or {}
+        lines = [
+            f"Aldeia {v.name} ({v.coords}) · {v.points} pontos",
+            self.clock.header(v.synced_at, player.get("protection_until")),
+        ]
 
         for section in self.SECTIONS.get(role, self.SECTIONS["operator"]):
             text = getattr(self, section)()
@@ -30,7 +36,8 @@ class ContextView:
                 lines.append(text)
 
         if self.ctx.goal:
-            lines.append(f"Objetivo: {self.ctx.goal}")
+            written = self.clock.relative(self.ctx.goal_set_at)
+            lines.append(f"Objetivo{' definido ' + written if written else ''}: {self.ctx.goal}")
 
         return "\n".join(lines)
 
@@ -46,8 +53,12 @@ class ContextView:
     def queue(self) -> str:
         queued = self.ctx.queue
         free = max(0, self.queue_slots - len(queued))
-        items = ", ".join(f"{q['building']}→{q['level']}" for q in queued) or "vazia"
+        items = ", ".join(self._queued(q) for q in queued) or "vazia"
         return f"Fila de obras: {items} ({free} vaga(s) livre(s))"
+
+    def _queued(self, q: dict) -> str:
+        until = self.clock.when(q.get("until"))
+        return f"{q['building']}→{q['level']}" + (f" termina {until}" if until else "")
 
     def _building_line(self, b) -> str:
         if b.max_level and b.level >= b.max_level:
@@ -62,7 +73,7 @@ class ContextView:
         elif b.can_build:
             state = "pode"
         else:
-            state = b.blocker or "sem recursos"
+            state = self.clock.annotate(b.blocker) if b.blocker else "sem recursos"
 
         return f"{b.name} {b.level}→{b.next_level} [{cost}] {state}"
 
@@ -78,7 +89,10 @@ class ContextView:
         home = ", ".join(f"{u.name} {u.home}" for u in units if u.home) or "nenhuma"
         away = ", ".join(f"{u.name} {u.away}" for u in units if u.away) or "nenhuma"
         recruit = ", ".join(f"{u.name}(máx {u.max_recruit})" for u in units if u.available) or "nada"
-        queue = ", ".join(f"{r.count} {r.unit}" for r in self.ctx.village.recruit_orders) or "nada"
+        queue = ", ".join(
+            f"{r.count} {r.unit}" + (f" até {self.clock.when(r.finishes_at)}" if r.finishes_at else "")
+            for r in self.ctx.village.recruit_orders
+        ) or "nada"
         return f"Tropas em casa: {home} · fora: {away} · recrutável: {recruit} · recrutando: {queue}"
 
     def scavenge(self) -> str:
@@ -88,8 +102,8 @@ class ContextView:
 
         def state(o) -> str:
             if o.is_locked:
-                return "desbloqueando" if o.unlock_at else "bloqueada"
-            return "em andamento" if o.return_at else "livre"
+                return f"desbloqueando, pronta {self.clock.when(o.unlock_at)}" if o.unlock_at else "bloqueada"
+            return f"em andamento, volta {self.clock.when(o.return_at)}" if o.return_at else "livre"
 
         return "Coleta: " + ", ".join(f"{o.option_id} {state(o)}" for o in options)
 
@@ -114,15 +128,32 @@ class ContextView:
             f"{i}. {KIND.get(s.kind, s.kind)} {s.target} {s.amount} [{STATUS.get(s.status, s.status)}{': ' + s.note if s.note else ''}]"
             for i, s in enumerate(self.ctx.plan, 1)
         ]
-        return "Plano:\n" + "\n".join(rows)
+        written = self.clock.relative(self.ctx.plan_refreshed_at)
+        return f"Plano{' escrito ' + written if written else ''}:\n" + "\n".join(rows)
 
     def commands(self) -> str:
         incoming = [c for c in self.ctx.commands if c["direction"] == "in" and c["kind"] in ("attack", "noble")]
         outgoing = [c for c in self.ctx.commands if c["direction"] == "out"]
         if not incoming and not outgoing:
             return ""
-        alert = f"ATAQUES CHEGANDO: {len(incoming)}" if incoming else "nenhum ataque chegando"
-        return f"Comandos: {alert} · {len(outgoing)} saindo"
+        alert = "nenhum ataque chegando"
+        if incoming:
+            first = min(c["arrival_at"] for c in incoming)
+            alert = f"ATAQUES CHEGANDO: {len(incoming)}, o primeiro {self.clock.when(first)}"
+
+        moving = f"{len(outgoing)} saindo"
+        if outgoing:
+            moving += f", o próximo chega {self.clock.when(min(c['arrival_at'] for c in outgoing))}"
+        return f"Comandos: {alert} · {moving}"
+
+    def recent(self) -> str:
+        rows = [
+            f"- {self.clock.relative(d['at'])}: {d['agent']} {d['action']} "
+            f"{'ok' if d['ok'] else 'falhou'} — {d['result'][:90]}"
+            for d in self.ctx.recent
+            if d["action"] != "summary"
+        ][:6]
+        return "Feito há pouco:\n" + "\n".join(rows) if rows else ""
 
     def lessons(self) -> str:
         return self.ctx.lessons

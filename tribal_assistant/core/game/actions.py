@@ -472,10 +472,11 @@ class GameActions:
 
             if len(after) <= len(before) and not finished:
                 self._capture(await page.content(), f"main-upgrade-{building}")
+                reason = await page.evaluate(BUILDING_ERROR_JS, building)
                 return ActionResult(
                     False,
                     "upgrade_building",
-                    "fila de construção não mudou",
+                    "fila de construção não mudou" + (f": {reason}" if reason else ""),
                     {"building": building},
                 )
 

@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tribal_assistant.core.agents.clock import Clock
 from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.agents.target_intel import TargetIntel
 from tribal_assistant.core.game.scraper.awards import AwardsParser
@@ -302,8 +303,9 @@ class LessonBook:
         rules.sort(key=lambda r: -r.failed)
         notices = await self.repo.list("notice", limit=5)
 
-        lines = [f"- {r.title} ({r.failed}x)" for r in rules[:limit]]
-        lines += [f"- jogo disse: {n.title}" for n in notices]
+        clock = Clock()
+        lines = [f"- {r.title} ({r.failed}x, última {clock.relative(r.last_seen)})" for r in rules[:limit]]
+        lines += [f"- jogo disse {clock.relative(n.last_seen)}: {n.title}" for n in notices]
 
         tribes = await self.repo.list("tribe", limit=1)
         if tribes:

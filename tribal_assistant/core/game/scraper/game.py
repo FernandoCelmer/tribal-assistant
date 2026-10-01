@@ -230,8 +230,9 @@ def parse_report_date(text: str, now: datetime | None = None) -> datetime | None
     now = now or datetime.now(UTC)
     text = (text or "").strip().lower()
     clock = re.search(r"(\d{1,2}):(\d{2})", text)
-    if clock and ("hoje" in text or "ontem" in text):
-        local = now.astimezone(SERVER_TZ) - timedelta(days=1 if "ontem" in text else 0)
+    if clock and ("hoje" in text or "ontem" in text or "amanhã" in text):
+        shift = {"ontem": -1, "amanhã": 1}.get(next((w for w in ("ontem", "amanhã") if w in text), ""), 0)
+        local = now.astimezone(SERVER_TZ) + timedelta(days=shift)
         return _server_time(now, local.month, local.day, int(clock[1]), int(clock[2]))
     match = _REPORT_DATE.search(text)
     if not match or match[1][:3] not in _MONTHS:
@@ -269,7 +270,7 @@ def parse_queue(rows: Sequence[Mapping[str, Any]]) -> dict[str, tuple[int, datet
             continue
         numbers = _NUMBER.findall(str(row.get("text") or ""))
         level = int(numbers[-1]) if numbers else 0
-        until = _from_epoch(row.get("end"))
+        until = _from_epoch(row.get("end")) or parse_report_date(str(row.get("done") or ""))
         previous = queue.get(building)
         if previous is None or level > previous[0]:
             queue[building] = (level, until)

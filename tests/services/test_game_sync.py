@@ -100,10 +100,21 @@ def test_parse_queue_keeps_highest_level() -> None:
     assert parse_queue(rows)["wood"][0] == 6
 
 
+def test_parse_queue_reads_the_finish_text_of_waiting_orders() -> None:
+    rows = [{"building": "wall", "text": "Muralha Nível 9", "end": "1790884340"},
+            {"building": "stone", "text": "Poço de argila Nível 12", "end": None, "done": "hoje às 17:30:05"}]
+
+    queue = parse_queue(rows)
+
+    assert queue["wall"][1] == datetime.fromtimestamp(1790884340, UTC)
+    assert queue["stone"][1] is not None
+
+
 def test_parse_dates_in_server_time() -> None:
     assert parse_protection("acaba em 03.10. às 20:38:21", NOW) == datetime(2026, 10, 3, 23, 38, 21, tzinfo=UTC)
     assert parse_report_date("set. 28, 20:42", NOW) == datetime(2026, 9, 28, 23, 42, tzinfo=UTC)
     assert parse_report_date("hoje às 10:00", NOW) == datetime(2026, 9, 28, 13, 0, tzinfo=UTC)
+    assert parse_report_date("amanhã às 01:15:00", NOW) == datetime(2026, 9, 29, 4, 15, tzinfo=UTC)
 
 
 def test_parse_reports_with_attack_detail() -> None:

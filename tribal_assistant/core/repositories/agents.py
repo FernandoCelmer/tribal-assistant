@@ -93,6 +93,10 @@ class AgentRepository:
         stmt = select(AgentGoal.text).where(AgentGoal.village_id == village_id)
         return (await self.session.execute(stmt)).scalar_one_or_none()
 
+    async def goal_set_at(self, village_id: int) -> datetime | None:
+        stmt = select(AgentGoal.updated_at).where(AgentGoal.village_id == village_id)
+        return (await self.session.execute(stmt)).scalar_one_or_none()
+
     async def set_goal(self, village_id: int, text: str) -> None:
         row = (
             await self.session.execute(select(AgentGoal).where(AgentGoal.village_id == village_id))
