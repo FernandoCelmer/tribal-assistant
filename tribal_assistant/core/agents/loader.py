@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tribal_assistant.core.agents.absence import Absence
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.policy import Policy
-from tribal_assistant.core.agents.knobs import KnobStore
+from tribal_assistant.core.agents.knobs import KnobStore, knob
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.plan import PlanTracker
 from tribal_assistant.core.agents.reflection import Reflection
@@ -76,6 +76,15 @@ class ContextLoader:
         strategy = await CoordinationRepository(self.plans.session).strategy(ctx.id)
         ctx.policy = Policy.for_role(strategy.role if strategy else "growth", await KnobStore(self.plans.session).load())
         await Absence(self.plans.session).attach(ctx)
+        self._expire_goal(ctx)
+
+    @staticmethod
+    def _expire_goal(ctx: VillageContext) -> None:
+        """A goal nobody revised for too long describes an old phase; the agents stop reading it."""
+        if ctx.goal and ctx.goal_set_at:
+            age = datetime.now(UTC).replace(tzinfo=None) - ctx.goal_set_at
+            if age.total_seconds() / 3600 > knob(ctx, "goal.max_age_hours"):
+                ctx.goal = None
 
     async def _coordination(self, village_id: int) -> str:
         rows = await CoordinationRepository(self.plans.session).history(village_id, 1)

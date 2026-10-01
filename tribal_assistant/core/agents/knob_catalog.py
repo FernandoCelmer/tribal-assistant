@@ -63,7 +63,7 @@ SHIPMENTS_FAILED_UP = either(more_when("shipments_failed", 0.3, "envios entre al
 
 def _policy() -> dict[str, KnobSpec]:
     rules = {
-        "resource_reserve": (either(STOCK_EMPTY, STARVED), True, False, "fração do armazém reservada"),
+        "resource_reserve": (either(STOCK_EMPTY, STARVED, less_when("army_stalled", 0.9, "rodadas sem recrutar nada")), True, False, "fração do armazém reservada"),
         "recruit_budget": (
             either(less_when("idle_recruiting", 0.3, "fila de obras parada enquanto recrutava"), STORAGE_FULL_UP, more_when("army_stalled", 0.9, "rodadas sem recrutar nada")),
             True,
@@ -145,6 +145,7 @@ CATALOG: dict[str, KnobSpec] = {
     "plan.storage_cost_share": KnobSpec(0.95, "fração do armazém que uma obra pode custar antes de pedir armazém maior", share=True),
     "learning.min_samples": KnobSpec(4, "resultados mínimos antes de aprender o bônus de um especialista", integer=True),
     "learning.high_factor": KnobSpec(0.5, "valor de um fator a partir do qual a proposta conta como forte nele", share=True),
+    "goal.max_age_hours": KnobSpec(24, "horas até um objetivo da aldeia sem revisão deixar de valer"),
     "reflection.interval_hours": KnobSpec(2, "horas entre reflexões sobre como o jogo foi"),
     "reflection.window_hours": KnobSpec(3, "horas de jogo que cada reflexão mede"),
     "reflection.half_life_hours": KnobSpec(24, "horas para a confiança de uma conclusão não conferida cair pela metade"),
