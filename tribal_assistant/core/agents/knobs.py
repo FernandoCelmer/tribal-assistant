@@ -153,6 +153,15 @@ class KnobStore:
             )
         ).all()
         metrics = Tuner.measure([r.data for r in records], [tuple(d) for d in decisions])
+        recruits = (
+            await self.session.execute(
+                select(AgentDecision.village_id, AgentDecision.created_at).where(
+                    AgentDecision.created_at >= since, AgentDecision.action == "recruit_units", AgentDecision.ok.is_(True), AgentDecision.dry_run.is_(False)
+                )
+            )
+        ).all()
+        if records:
+            metrics.army_stalled = Tuner.stalled([(r.village_id, r.at) for r in records], [tuple(r) for r in recruits])
         ledger = SocialLedger(self.session)
         metrics.contacts_unanswered = await ledger.unanswered_share() or 0.0
         metrics.builds_done = float(await FrameRepository(self.session).most_levels_gained(since))
@@ -312,6 +321,17 @@ class Tuner:
             changes.append((name, value, why))
         await self.session.commit()
         return changes
+
+    @staticmethod
+    def stalled(rounds: list[tuple[int, datetime]], recruits: list[tuple[int | None, datetime]]) -> float:
+        """Share of rounds with no troop recruited since the village's previous round, by any agent or routine."""
+        empty, last = 0, {}
+        for village, at in sorted(rounds, key=lambda r: r[1]):
+            before = last.get(village, at - timedelta(minutes=10))
+            if not any(when > before and when <= at and (owner is None or owner == village) for owner, when in recruits):
+                empty += 1
+            last[village] = at
+        return round(empty / len(rounds), 3)
 
     @staticmethod
     def brake(name: str, current: float, value: float, why: str, history: list[dict[str, Any]], knobs: Knobs) -> tuple[float, str, int] | None:

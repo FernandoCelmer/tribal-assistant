@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -157,3 +157,11 @@ def test_a_shut_direction_stays_shut() -> None:
 
     assert Tuner.brake("filler_wait_hours", 0.75, 0.6, "fila parada", shut, Knobs()) is None
     assert Tuner.brake("filler_wait_hours", 0.75, 0.9, "outra", shut, Knobs())[0] == 0.9
+
+
+def test_recruits_by_the_routine_between_rounds_count_as_recruiting() -> None:
+    start = datetime(2026, 10, 2, 8, 0)
+    rounds = [(1, start + timedelta(minutes=m)) for m in (0, 10, 20, 30)]
+    recruits = [(1, start + timedelta(minutes=15)), (1, start + timedelta(minutes=29))]
+
+    assert Tuner.stalled(rounds, recruits) == 0.5
