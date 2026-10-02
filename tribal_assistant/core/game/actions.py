@@ -31,7 +31,7 @@ from tribal_assistant.core.game.human import (
     reading_pause,
 )
 from tribal_assistant.core.game.items import ItemCount
-from tribal_assistant.core.game.market import Market
+from tribal_assistant.core.game.market import Market, OwnOfferParser
 from tribal_assistant.core.game.profile import Profile
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.scraper.quests import (
@@ -1217,9 +1217,9 @@ class GameActions:
             return await page.evaluate(MERCHANTS_JS)
 
     async def create_offer(
-        self, village_id: str, sell: str, amount: int, buy: str, max_hours: int = 5
+        self, village_id: str, sell: str, amount: int, buy: str, max_hours: int = 5, ratio: float = 1.0
     ) -> ActionResult:
-        """Post an own market offer at the only allowed ratio (1:1): give `amount` of `sell` for the same of `buy`."""
+        """Post an own market offer: give `amount` of `sell` for `amount * ratio` of `buy`, the ratio kept inside the world's range."""
         async with game_session.lock:
             page = await self._in_game(village_id, "market", mode="own_offer")
             merchants = await page.evaluate(MERCHANTS_JS)
@@ -1230,9 +1230,11 @@ class GameActions:
             if not await form.count():
                 return ActionResult(False, "create_offer", "formulário de oferta não encontrado")
 
+            low, high = OwnOfferParser.ratio(await page.content())
+            wanted = int(amount * min(max(ratio, low), high) + 1e-6)
             await human_fill(form.locator("#res_sell_amount"), str(amount))
             await form.locator(f"#res_sell_{sell}").check()
-            await human_fill(form.locator("#res_buy_amount"), str(amount))
+            await human_fill(form.locator("#res_buy_amount"), str(wanted))
             await form.locator(f"#res_buy_{buy}").check()
             await human_fill(form.locator('input[name="multi"]'), "1")
             await human_fill(form.locator('input[name="max_time"]'), str(max_hours))
@@ -1244,11 +1246,11 @@ class GameActions:
             if messages["errors"]:
                 return ActionResult(False, "create_offer", " | ".join(messages["errors"]))
 
-        logger.info("Oferta no mercado: {} {} por {} {}", amount, sell, amount, buy)
+        logger.info("Oferta no mercado: {} {} por {} {}", amount, sell, wanted, buy)
         return ActionResult(
             True,
             "create_offer",
-            f"oferta criada: {amount} {sell} por {amount} {buy} (até {max_hours}h)",
+            f"oferta criada: {amount} {sell} por {wanted} {buy} (até {max_hours}h)",
             {"notices": messages["notices"]},
         )
 

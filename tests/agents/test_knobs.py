@@ -165,3 +165,19 @@ def test_recruits_by_the_routine_between_rounds_count_as_recruiting() -> None:
     recruits = [(1, start + timedelta(minutes=15)), (1, start + timedelta(minutes=29))]
 
     assert Tuner.stalled(rounds, recruits) == 0.5
+
+
+def test_offers_taken_within_minutes_count_as_snapped() -> None:
+    start = datetime(2026, 10, 2, 8, 0, 30)
+    made = [start, start + timedelta(hours=1), start + timedelta(hours=2)]
+    taken = [datetime(2026, 10, 2, 8, 0), datetime(2026, 10, 2, 9, 5)]
+
+    assert Tuner.snapped(made, taken) == 0.667
+
+
+def test_the_ask_ratio_rises_when_offers_go_fast_and_falls_when_they_wait() -> None:
+    fast = {n for n, _, _ in Tuner.plan(Knobs(), Metrics(rounds=20, offers_made=5, offers_snapped=0.9))}
+    slow = {n: v for n, v, _ in Tuner.plan(Knobs(), Metrics(rounds=20, offers_made=5, offers_snapped=0.1))}
+
+    assert "market.ask_ratio" in fast
+    assert slow["market.ask_ratio"] < 1.0

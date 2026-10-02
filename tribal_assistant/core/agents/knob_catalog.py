@@ -248,6 +248,14 @@ CATALOG: dict[str, KnobSpec] = {
     "pacing.military_step": KnobSpec(2, "níveis de quartel e estábulo pedidos por degrau", integer=True),
     "pacing.barracks_base": KnobSpec(5, "quartel pedido no primeiro degrau militar", integer=True),
     "economy.light_research_iron": KnobSpec(2000, "ferro guardado para pesquisar a cavalaria leve", integer=True),
+    "market.ask_ratio": KnobSpec(
+        1.0,
+        "quanto a oferta própria pede por unidade dada (o mundo limita a faixa)",
+        either(
+            lambda m: (+1, f"ofertas aceitas em minutos ({m.offers_snapped:.0%})") if m.offers_made >= 3 and m.offers_snapped > 0.7 else None,
+            lambda m: (-1, f"ofertas demorando para ser aceitas ({m.offers_snapped:.0%})") if m.offers_made >= 3 and m.offers_snapped < 0.3 else None,
+        ),
+    ),
     "market.max_lot": KnobSpec(1000, "maior oferta de mercado de uma vez", STORAGE_FULL_UP, integer=True),
     "scavenge.min_pop": KnobSpec(10, "população mínima que o jogo aceita numa coleta (aprendida do erro)", integer=True),
     "pacing.iron_gap": KnobSpec(3, "níveis que a mina de ferro fica abaixo até o estábulo", either(IRON_SHORT_DOWN, IRON_CALM), integer=True),

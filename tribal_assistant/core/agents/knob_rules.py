@@ -39,6 +39,8 @@ class Metrics:
     yields: dict[str, float] = field(default_factory=dict)
     factor_gaps: dict[str, float] = field(default_factory=dict)
     nothing_to_do: dict[str, float] = field(default_factory=dict)
+    offers_snapped: float = 0.0
+    offers_made: int = 0
 
 
 Rule = Callable[[Metrics], tuple[int, str] | None]

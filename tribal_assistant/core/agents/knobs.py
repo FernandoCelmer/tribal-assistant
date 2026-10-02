@@ -24,6 +24,7 @@ from tribal_assistant.core.agents.social.ledger import SENDS, SocialLedger
 from tribal_assistant.core.models.agent import AgentDecision
 from tribal_assistant.core.models.coordination import CoordinationRound
 from tribal_assistant.core.models.knob import TuningKnob
+from tribal_assistant.core.models.report import Report
 from tribal_assistant.core.repositories.frames import FrameRepository
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
@@ -34,6 +35,7 @@ MIN_ROUNDS = 10
 STEP = 0.15
 HISTORY = 30
 BUCKET_MINUTES = 10
+SNAP_MINUTES = 15
 LAST_RUN = "tuning:last_run"
 FARM_HAULS = re.compile(r"(\d+)/(\d+) relatórios com carga cheia")
 RAIDS = ("send_farm_attack", "send_farm_template")
@@ -134,6 +136,18 @@ class KnobStore:
     async def updated(self) -> dict[str, datetime]:
         return {r.name: r.updated_at for r in (await self.session.execute(select(TuningKnob))).scalars().all()}
 
+    async def offers(self, since: datetime) -> tuple[int, float]:
+        """Own market offers posted in the window and the share another player took within the snap window."""
+        made = (
+            await self.session.execute(
+                select(AgentDecision.created_at).where(
+                    AgentDecision.created_at >= since, AgentDecision.action == "create_market_offer", AgentDecision.ok.is_(True), AgentDecision.dry_run.is_(False)
+                )
+            )
+        ).scalars().all()
+        taken = (await self.session.execute(select(Report.received_at).where(Report.received_at >= since, Report.title.like("%aceitou a sua oferta%")))).scalars().all()
+        return len(made), Tuner.snapped(list(made), [t for t in taken if t])
+
     async def histories(self) -> dict[str, list[dict[str, Any]]]:
         return {r.name: json.loads(r.history or "[]") for r in (await self.session.execute(select(TuningKnob))).scalars().all()}
 
@@ -160,6 +174,7 @@ class KnobStore:
                 )
             )
         ).all()
+        metrics.offers_made, metrics.offers_snapped = await self.offers(since)
         if records:
             metrics.army_stalled = Tuner.stalled([(r.village_id, r.at) for r in records], [tuple(r) for r in recruits])
         ledger = SocialLedger(self.session)
@@ -321,6 +336,20 @@ class Tuner:
             changes.append((name, value, why))
         await self.session.commit()
         return changes
+
+    @staticmethod
+    def snapped(made: list[datetime], taken: list[datetime], minutes: int = SNAP_MINUTES) -> float:
+        """Share of offers matched by an acceptance report within `minutes` (reports carry minute precision)."""
+        if not made:
+            return 0.0
+        pool = sorted(taken)
+        hits = 0
+        for at in sorted(made):
+            match = next((t for t in pool if at - timedelta(minutes=1) <= t <= at + timedelta(minutes=minutes)), None)
+            if match is not None:
+                pool.remove(match)
+                hits += 1
+        return round(hits / len(made), 3)
 
     @staticmethod
     def stalled(rounds: list[tuple[int, datetime]], recruits: list[tuple[int | None, datetime]]) -> float:
