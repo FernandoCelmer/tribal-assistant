@@ -26,6 +26,26 @@ class MarketRule:
         return None
 
     @staticmethod
+    def for_build(stock: dict[str, int], cost: dict[str, int], storage: int, max_lot: int) -> tuple[str, str, int] | None:
+        """When a build waits on one resource and the others have more than it needs, swap that surplus for exactly what is missing."""
+        short = {r: cost.get(r, 0) - stock[r] for r in stock if cost.get(r, 0) > stock[r]}
+        if len(short) != 1:
+            return None
+
+        buy, missing = next(iter(short.items()))
+        surplus = {r: stock[r] - cost.get(r, 0) for r in stock if r != buy and stock[r] > cost.get(r, 0)}
+        if not surplus:
+            return None
+
+        sell = max(surplus, key=surplus.get)
+        need = -(-missing // LOT) * LOT
+        amount = min(need, surplus[sell] // LOT * LOT, max_lot)
+        if amount < LOT or stock[buy] + amount > storage:
+            return None
+
+        return sell, buy, amount
+
+    @staticmethod
     def lot(stock: dict[str, int], min_gap: int | None = None, max_lot: int | None = None) -> tuple[str, str, int] | None:
         min_gap = min_gap if min_gap is not None else Knobs().int("market.min_gap")
         max_lot = max_lot if max_lot is not None else Knobs().int("market.max_lot")

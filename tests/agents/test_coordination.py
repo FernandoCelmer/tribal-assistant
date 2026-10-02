@@ -11,6 +11,7 @@ from tribal_assistant.core.agents.coordination.roles import RoleSelector
 from tribal_assistant.core.agents.coordination.round import VillageRound
 from tribal_assistant.core.agents.coordination.strategy import WEIGHTS, Role
 from tribal_assistant.core.agents.coordination.threat import Threat
+from tribal_assistant.core.agents.market import MarketRule
 from tribal_assistant.core.game.actions import GameActions
 from tribal_assistant.core.models.village import Village
 from tribal_assistant.core.models.world import WorldVillage
@@ -138,3 +139,12 @@ def test_base_reserve_does_not_block_buildings() -> None:
 
     assert budget.affordable({"wood": 231, "clay": 219, "iron": 205}, action="upgrade_building")
     assert not budget.affordable({"wood": 231, "clay": 219, "iron": 205}, action="recruit_units")
+
+
+def test_a_build_waiting_on_wood_swaps_the_iron_pile_for_the_gap() -> None:
+    stock = {"wood": 1726, "stone": 2429, "iron": 2541}
+    stone_15 = {"wood": 1846, "stone": 1343, "iron": 813}
+
+    assert MarketRule.for_build(stock, stone_15, 14670, 1000) == ("iron", "wood", 200)
+    assert MarketRule.for_build({"wood": 100, "stone": 100, "iron": 5000}, stone_15, 14670, 1000) is None
+    assert MarketRule.for_build({"wood": 5000, "stone": 5000, "iron": 5000}, stone_15, 14670, 1000) is None

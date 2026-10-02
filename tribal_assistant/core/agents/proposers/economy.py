@@ -280,6 +280,10 @@ class EconomyProposer(Proposer):
             "stone": ctx.stock.get("clay", 0),
             "iron": ctx.stock.get("iron", 0),
         }
+        urgent = await self._plan_trade(view, stock)
+        if urgent is not None:
+            return urgent
+
         if max(stock.values()) - min(stock.values()) < knob_int(view, "market.min_gap") or not await view.cooldown("market"):
             return None
 
@@ -314,6 +318,39 @@ class EconomyProposer(Proposer):
             horizon=Horizon.TACTICAL,
             confidence=0.8,
             risks=["recurso só chega depois da viagem do comerciante"],
+        )
+
+    async def _plan_trade(self, view: CoordinationView, stock: dict[str, int]) -> Proposal | None:
+        """The next planned build waits on one resource while the others pile up: trade the pile for the gap now."""
+        builds = PlanTracker.next_builds(view.ctx.plan)
+        if not builds:
+            return None
+
+        building = builds[0]
+        cost = view.build_cost(building)
+        need = {"wood": cost.get("wood", 0), "stone": cost.get("clay", 0), "iron": cost.get("iron", 0)}
+        trade = MarketRule.for_build(stock, need, view.ctx.village.storage or 0, knob_int(view, "market.max_lot"))
+        if trade is None:
+            return None
+
+        merchants = await view.actions.market_merchants(view.ctx.game_id)
+        free, carry = merchants.get("free", 0), merchants.get("carry") or 1000
+        if free <= 0:
+            return None
+
+        sell, buy, amount = trade
+        amount = min(amount, free * carry)
+        return Proposal(
+            self.key,
+            "create_market_offer",
+            {"sell": sell, "buy": buy, "amount": amount, "max_hours": knob_int(view, "market.offer_hours"), "reason": f"falta {buy} para {building}"},
+            f"{building} espera {amount} de {buy}; {sell} sobrando",
+            f"+{amount} {buy} e {building} começa antes",
+            cost={"wood" if sell == "wood" else "clay" if sell == "stone" else "iron": amount},
+            factors=Factors(urgency=0.6, impact=0.6, opportunity=0.6, opportunity_cost=0.1),
+            horizon=Horizon.IMMEDIATE,
+            confidence=0.7,
+            risks=["comerciante fica preso até alguém aceitar"],
         )
 
     @staticmethod
