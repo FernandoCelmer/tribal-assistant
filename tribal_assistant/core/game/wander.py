@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
+from tribal_assistant.core.accounts.context import current_account
 from tribal_assistant.core.game.human import reading_pause
 from tribal_assistant.core.game.result import ActionResult
 from tribal_assistant.core.game.session import game_session
@@ -41,6 +42,14 @@ class Wanderer:
     def __init__(self, actions: GameActions) -> None:
         self.actions = actions
 
+    async def _sample(self, page: Any, screen: str, params: dict[str, str]) -> None:
+        """Keeps one copy of each kind of page, so its reader can be written against the real markup."""
+        modes = sorted(v for k, v in params.items() if k != "id")
+        name = "-".join(["tour", screen, *modes, *(["profile"] if "id" in params else [])])
+        directory = current_account().capture_dir
+        if not any(directory.glob(f"{name}-*.html")):
+            self.actions._capture(await page.content(), name)
+
     async def tour(self, village_id: str, stops: list[dict[str, Any]]) -> ActionResult:
         seen: list[str] = []
         pages: list[dict[str, Any]] = []
@@ -57,6 +66,7 @@ class Wanderer:
                 except Exception as exc:
                     logger.warning("Passeio: {} não abriu: {}", screen, exc)
                     continue
+                await self._sample(page, screen, params)
                 heading = str(read.get("heading") or "")[:MAX_HEADING]
                 label = str(stop.get("label") or heading or screen)
                 seen.append(label)
