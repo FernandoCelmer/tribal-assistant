@@ -155,6 +155,7 @@ CATALOG: dict[str, KnobSpec] = {
     "reflection.initial_confidence": KnobSpec(0.5, "confiança de uma conclusão nova", share=True),
     "reflection.max_beliefs": KnobSpec(8, "conclusões ativas ao mesmo tempo", integer=True),
     "sightings.inactive_hours": KnobSpec(24, "horas com os mesmos pontos até um vizinho visitado contar como inativo"),
+    "threat.active_hours": KnobSpec(24, "horas em que um vizinho que derrotou tropas atacando conta como agressivo"),
     "threat.expanding_hours": KnobSpec(48, "horas em que um vizinho visto ganhando aldeias conta como ameaça"),
     "tuner.interval_minutes": KnobSpec(10, "minutos entre passadas do ajuste automático dos knobs"),
     "tuner.window_hours": KnobSpec(3, "horas de rodadas que o ajuste automático mede"),

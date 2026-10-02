@@ -12,9 +12,9 @@ KIND = {"build": "construir", "recruit": "recrutar", "unlock_scavenge": "desbloq
 
 class ContextView:
     SECTIONS: ClassVar[dict[str, tuple[str, ...]]] = {
-        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "beliefs", "sightings", "lessons", "coordination"),
+        "strategist": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "beliefs", "neighbours", "sightings", "lessons", "coordination"),
         "quartermaster": ("quests",),
-        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "beliefs", "sightings", "lessons", "coordination"),
+        "operator": ("resources", "queue", "buildings", "troops", "scavenge", "quests", "plan", "commands", "recent", "beliefs", "neighbours", "sightings", "lessons", "coordination"),
     }
 
     def __init__(self, ctx: VillageContext, queue_slots: int) -> None:
@@ -159,6 +159,9 @@ class ContextView:
 
     def beliefs(self) -> str:
         return self.ctx.beliefs
+
+    def neighbours(self) -> str:
+        return self.ctx.neighbours
 
     def sightings(self) -> str:
         return self.ctx.sightings

@@ -10,7 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tribal_assistant.core.accounts.context import current_world
 from tribal_assistant.core.game.world import WorldData
-from tribal_assistant.core.models.world import WorldAlly, WorldPlayer, WorldSetting, WorldVillage
+from tribal_assistant.core.models.world import (
+    WorldAlly,
+    WorldCombat,
+    WorldConquest,
+    WorldPlayer,
+    WorldSetting,
+    WorldVillage,
+)
 
 _CHUNK = 4000
 
@@ -31,9 +38,42 @@ class WorldRepository:
                 chunk = [{**row, "world": world} for row in rows[start : start + _CHUNK]]
                 await self.session.execute(insert(model), chunk)
         now = datetime.now(UTC).replace(tzinfo=None)
+        await self._fights(data, world, now)
         for key, value in data.settings.items():
             await self.session.merge(WorldSetting(world=world, key=key, data=json.dumps(value), fetched_at=now))
         await self.session.commit()
+
+    async def _fights(self, data: WorldData, world: str, now: datetime) -> None:
+        """Fight scores keep how much each player grew since the previous sync; conquests are replaced whole."""
+        if not data.attack and not data.defence:
+            return
+
+        old = {r.id: r for r in (await self.session.execute(select(WorldCombat))).scalars().all()}
+        rows = []
+        for pid in set(data.attack) | set(data.defence):
+            before = old.get(pid)
+            attack, defence = data.attack.get(pid, 0), data.defence.get(pid, 0)
+            gain = attack - before.attack if before else 0
+            rows.append(
+                {
+                    "world": world,
+                    "id": pid,
+                    "attack": attack,
+                    "defence": defence,
+                    "attack_gain": gain,
+                    "defence_gain": defence - before.defence if before else 0,
+                    "attacked_at": now if gain > 0 else (before.attacked_at if before else None),
+                }
+            )
+        await self.session.execute(delete(WorldCombat))
+        for start in range(0, len(rows), _CHUNK):
+            await self.session.execute(insert(WorldCombat), rows[start : start + _CHUNK])
+
+        await self.session.execute(delete(WorldConquest))
+        unique = {(c["village_id"], c["at"]): c for c in data.conquests}
+        conquests = [{**c, "world": world} for c in unique.values()]
+        for start in range(0, len(conquests), _CHUNK):
+            await self.session.execute(insert(WorldConquest), conquests[start : start + _CHUNK])
 
     async def setting(self, key: str) -> dict[str, Any]:
         row = await self.session.get(WorldSetting, {"world": current_world() or "default", "key": key})

@@ -1,4 +1,4 @@
-"""Public world data: every village, player and tribe, plus world settings."""
+"""Public world data: every village, player and tribe, their fight scores and conquests, plus world settings."""
 
 from datetime import datetime
 
@@ -51,3 +51,25 @@ class WorldSetting(WorldScoped, Base):
     key: Mapped[str] = mapped_column(String(40), primary_key=True)
     data: Mapped[str] = mapped_column(Text, nullable=False)
     fetched_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class WorldCombat(WorldScoped, Base):
+    """Opponents defeated by each player, as attacker and defender, and how much that grew at the last sync."""
+
+    __tablename__ = "world_combat"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    attack: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    defence: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    attack_gain: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    defence_gain: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    attacked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class WorldConquest(WorldScoped, Base):
+    __tablename__ = "world_conquests"
+
+    village_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    at: Mapped[datetime] = mapped_column(DateTime, primary_key=True)
+    new_owner: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    old_owner: Mapped[int] = mapped_column(Integer, nullable=False)

@@ -26,7 +26,14 @@ from tribal_assistant.core.models.scavenge_option import ScavengeOption
 from tribal_assistant.core.models.snapshot import VillageSnapshot
 from tribal_assistant.core.models.unit import Unit
 from tribal_assistant.core.models.village import Village
-from tribal_assistant.core.models.world import WorldAlly, WorldPlayer, WorldSetting, WorldVillage
+from tribal_assistant.core.models.world import (
+    WorldAlly,
+    WorldCombat,
+    WorldConquest,
+    WorldPlayer,
+    WorldSetting,
+    WorldVillage,
+)
 
 __all__ = [
     "Account",
@@ -55,6 +62,8 @@ __all__ = [
     "VillageSnapshot",
     "VillageStrategy",
     "WorldAlly",
+    "WorldCombat",
+    "WorldConquest",
     "WorldPlayer",
     "WorldSetting",
     "WorldVillage",

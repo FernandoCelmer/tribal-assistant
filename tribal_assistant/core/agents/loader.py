@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tribal_assistant.core.agents.absence import Absence
 from tribal_assistant.core.agents.context import VillageContext
 from tribal_assistant.core.agents.coordination.policy import Policy
+from tribal_assistant.core.agents.coordination.threat import ThreatScan
 from tribal_assistant.core.agents.knobs import KnobStore, knob
 from tribal_assistant.core.agents.learning import LessonBook
 from tribal_assistant.core.agents.plan import PlanTracker
@@ -76,6 +77,8 @@ class ContextLoader:
         strategy = await CoordinationRepository(self.plans.session).strategy(ctx.id)
         ctx.policy = Policy.for_role(strategy.role if strategy else "growth", await KnobStore(self.plans.session).load())
         await Absence(self.plans.session).attach(ctx)
+        scan = ThreatScan(self.plans.session, ctx.policy.knobs)
+        ctx.neighbours = ThreatScan.summary(await scan.near(ctx))
         self._expire_goal(ctx)
 
     @staticmethod

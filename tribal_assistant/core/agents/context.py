@@ -29,6 +29,7 @@ class VillageContext:
     absence_soon: str = ""
     sightings: str = ""
     beliefs: str = ""
+    neighbours: str = ""
     lessons: str = ""
     coordination: str = ""
     policy: Policy = field(default_factory=Policy)
