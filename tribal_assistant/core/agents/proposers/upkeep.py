@@ -62,17 +62,20 @@ class UpkeepProposer(Proposer):
             return []
 
         state = await view.actions.forge.state(view.ctx.game_id)
+        prizes = []
+        if state.get("prizes"):
+            prizes = [self._free("collect_event_prizes", {}, f"{state['prizes']} prêmio(s) grátis na trilha do evento", "recursos, bandeiras e medalhas do evento", 0.6)]
         if not state.get("active"):
-            return []
+            return prizes
 
         amounts = {m: int(v.get("amount", 0)) for m, v in state.get("materials", {}).items()}
         materials = Forge.pick(amounts, state.get("recipes", {}))
         if materials is None:
-            return []
+            return prizes
 
         new = "-".join(materials) not in state.get("recipes", {})
         reason = "fórmula nova na forja do evento" if new else "material grátis parado na forja"
-        return [self._free("craft_event_item", {"materials": materials}, reason, "item do evento, ranking diário e conquista da Antiga Forja", 0.5)]
+        return [*prizes, self._free("craft_event_item", {"materials": materials}, reason, "item do evento, ranking diário e conquista da Antiga Forja", 0.5)]
 
     async def _relic(self, view: CoordinationView) -> list[Proposal]:
         if not await view.cooldown("relic"):

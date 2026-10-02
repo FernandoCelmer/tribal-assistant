@@ -790,6 +790,20 @@ class CraftEventItem(AgentTool):
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
+class CollectEventPrizes(AgentTool):
+    name = "collect_event_prizes"
+    description = "Coleta os prêmios grátis já liberados na trilha do evento (Coletar tudo). Nunca ativa o Prêmio Nobre pago."
+    parameters: ClassVar[dict[str, Any]] = {"type": "object", "properties": {"reason": REASON}, "additionalProperties": False}
+    acts = True
+
+    async def run(self, box: "Toolbox", args: dict[str, Any]) -> ToolOutcome:
+        if box.dry_run:
+            return ToolOutcome(True, "(simulação) coletar prêmios do evento")
+
+        result = await box.actions.forge.collect_prizes(box.ctx.game_id)
+        return ToolOutcome(result.ok, result.detail, result.data)
+
+
 class ApplyToTribe(AgentTool):
     name = "apply_to_tribe"
     description = (

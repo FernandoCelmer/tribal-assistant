@@ -1,4 +1,4 @@
-"""Crafting event (Bigorna do Rei Mercenário): read the free materials and craft with them, never buying any."""
+"""Crafting event (Bigorna do Rei Mercenário): craft with the free materials and collect the free event pass prizes, never buying anything."""
 
 from __future__ import annotations
 
@@ -26,9 +26,12 @@ STATE_JS = """() => {
   const found = html.match(/\\]\\s*,\\s*\\d+\\s*,\\s*(\\{[^{}]*\\})\\s*\\)\\s*;?\\s*\\}\\s*\\)/);
   let recipes = {};
   try { recipes = found ? JSON.parse(found[1]) : {}; } catch (e) { recipes = {}; }
-  return { active: !!document.querySelector('.material-craft-form'), materials, recipes };
+  const badge = document.querySelector('#event_pass_popup_btn .event-pass-badge');
+  const prizes = Number((badge?.textContent || '0').replace(/\\D/g, '')) || 0;
+  return { active: !!document.querySelector('.material-craft-form'), materials, recipes, prizes };
 }"""
 
+COLLECT_ALL = "button.btn-confirm-yes:not([data-cost]):not(.event-pass-buy-btn)"
 SELECTED_JS = "() => [...document.querySelectorAll('.material-craft-form input[name=\"material[]\"]')].map(i => i.value).filter(Boolean)"
 
 
@@ -56,6 +59,35 @@ class Forge:
             page = await self.actions._in_game(village_id, SCREEN)
             await page.wait_for_timeout(800)
             return await page.evaluate(STATE_JS)
+
+    async def collect_prizes(self, village_id: str) -> ActionResult:
+        """Open the event pass and press "Coletar tudo" on the free track; anything with a premium cost is never touched."""
+        async with game_session.lock:
+            page = await self.actions._in_game(village_id, SCREEN)
+            await page.wait_for_timeout(800)
+            before = int((await page.evaluate(STATE_JS)).get("prizes", 0))
+            if not before:
+                return ActionResult(False, "collect_event_prizes", "nenhum prêmio do evento para coletar")
+
+            await human_click(page, page.locator("#event_pass_popup_btn").first)
+            await page.wait_for_timeout(2_000)
+            button = page.locator(COLLECT_ALL, has_text="Coletar tudo").first
+            if not await button.count() or not await button.is_visible():
+                return ActionResult(False, "collect_event_prizes", "botão Coletar tudo não encontrado")
+
+            await human_click(page, button)
+            await page.wait_for_timeout(2_500)
+            messages = await self.actions.screen_messages(page)
+
+            await self.actions._in_game(village_id, SCREEN)
+            await page.wait_for_timeout(800)
+            after = int((await page.evaluate(STATE_JS)).get("prizes", 0))
+
+        if after >= before:
+            return ActionResult(False, "collect_event_prizes", "o jogo não entregou os prêmios" + (f": {' | '.join(messages['errors'])}" if messages["errors"] else ""))
+
+        logger.info("Prêmios do evento coletados: {}", before - after)
+        return ActionResult(True, "collect_event_prizes", f"{before - after} prêmio(s) do evento coletado(s)", {"notices": messages["notices"]})
 
     async def craft(self, village_id: str, materials: list[str]) -> ActionResult:
         async with game_session.lock:
