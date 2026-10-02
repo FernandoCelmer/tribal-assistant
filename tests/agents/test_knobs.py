@@ -140,3 +140,20 @@ async def test_tuner_runs_once_per_interval_even_across_restarts(session: AsyncS
     assert not await Tuner(session).due()
     assert await Tuner(session).run() == []
     assert await Tuner(session).run(force=True) == []
+
+
+def test_a_knob_that_keeps_moving_without_effect_returns_to_default() -> None:
+    default = Knobs.SPECS["filler_wait_hours"].default
+    walk = [{"at": "2026-10-01T10:00", "from": 1.0, "to": 0.85, "why": "fila"}] * 6
+
+    value, why, blocked = Tuner.brake("filler_wait_hours", 0.4, 0.34, "fila parada", walk, Knobs())
+
+    assert value == default and blocked == -1 and "sem resolver" in why
+
+
+def test_a_shut_direction_stays_shut() -> None:
+    now = datetime.now().isoformat(timespec="minutes")
+    shut = [{"at": now, "from": 0.4, "to": 0.75, "why": "x", "blocked": -1}]
+
+    assert Tuner.brake("filler_wait_hours", 0.75, 0.6, "fila parada", shut, Knobs()) is None
+    assert Tuner.brake("filler_wait_hours", 0.75, 0.9, "outra", shut, Knobs())[0] == 0.9

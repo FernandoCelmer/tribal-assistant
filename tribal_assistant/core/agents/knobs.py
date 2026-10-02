@@ -119,7 +119,7 @@ class KnobStore:
             )
         return items
 
-    async def set(self, name: str, value: float, reason: str) -> None:
+    async def set(self, name: str, value: float, reason: str, blocked: int = 0) -> None:
         now = datetime.now(UTC).replace(tzinfo=None)
         row = (await self.session.execute(select(TuningKnob).where(TuningKnob.name == name))).scalar_one_or_none()
         if row is None:
@@ -127,11 +127,15 @@ class KnobStore:
             self.session.add(row)
 
         history = json.loads(row.history or "[]")
-        history.append({"at": now.isoformat(timespec="minutes"), "from": row.value, "to": value, "why": reason})
+        entry = {"at": now.isoformat(timespec="minutes"), "from": row.value, "to": value, "why": reason}
+        history.append(entry | ({"blocked": blocked} if blocked else {}))
         row.value, row.reason, row.updated_at, row.history = value, reason, now, json.dumps(history[-HISTORY:], ensure_ascii=False)
 
     async def updated(self) -> dict[str, datetime]:
         return {r.name: r.updated_at for r in (await self.session.execute(select(TuningKnob))).scalars().all()}
+
+    async def histories(self) -> dict[str, list[dict[str, Any]]]:
+        return {r.name: json.loads(r.history or "[]") for r in (await self.session.execute(select(TuningKnob))).scalars().all()}
 
     async def metrics(self, since: datetime | None = None) -> Metrics:
         moment = datetime.now(UTC).replace(tzinfo=None)
@@ -293,11 +297,41 @@ class Tuner:
             if spec.rule is not None:
                 groups.setdefault(self.since(updated.get(name), start), set()).add(name)
 
-        changes = []
+        planned = []
         for since, names in sorted(groups.items()):
-            changes += self.plan(knobs, await self.store.metrics(since), names, knobs.int("tuner.min_rounds"))
+            planned += self.plan(knobs, await self.store.metrics(since), names, knobs.int("tuner.min_rounds"))
 
-        for name, value, why in changes:
-            await self.store.set(name, value, why)
+        histories = await self.store.histories()
+        changes = []
+        for name, value, why in planned:
+            braked = self.brake(name, knobs.get(name), value, why, histories.get(name, []), knobs)
+            if braked is None:
+                continue
+            value, why, blocked = braked
+            await self.store.set(name, value, why, blocked)
+            changes.append((name, value, why))
         await self.session.commit()
         return changes
+
+    @staticmethod
+    def brake(name: str, current: float, value: float, why: str, history: list[dict[str, Any]], knobs: Knobs) -> tuple[float, str, int] | None:
+        """A knob that kept moving one way while its problem stayed is not the fix: back to the default, and that way stays shut for a while."""
+        direction = (value > current) - (value < current)
+        if not direction:
+            return value, why, 0
+
+        default = Knobs.SPECS[name].default
+        now = datetime.now(UTC).replace(tzinfo=None)
+        shut = next((h for h in reversed(history) if h.get("blocked")), None)
+        if shut and shut["blocked"] == direction and now - datetime.fromisoformat(shut["at"]) < timedelta(hours=knobs.get("tuner.blocked_hours")):
+            return (default, f"{why}: já se mostrou sem efeito, fica no padrão", 0) if current != default else None
+
+        streak = 0
+        for entry in reversed(history):
+            if (entry["to"] > entry["from"]) - (entry["to"] < entry["from"]) != direction or entry.get("blocked"):
+                break
+            streak += 1
+
+        if streak >= knobs.int("tuner.max_streak"):
+            return default, f"{why}: {streak} passos sem resolver, volta ao padrão", direction
+        return value, why, 0

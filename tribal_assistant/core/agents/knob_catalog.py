@@ -158,6 +158,8 @@ CATALOG: dict[str, KnobSpec] = {
     "threat.expanding_hours": KnobSpec(48, "horas em que um vizinho visto ganhando aldeias conta como ameaça"),
     "tuner.interval_minutes": KnobSpec(10, "minutos entre passadas do ajuste automático dos knobs"),
     "tuner.window_hours": KnobSpec(3, "horas de rodadas que o ajuste automático mede"),
+    "tuner.max_streak": KnobSpec(6, "passos seguidos no mesmo sentido sem resolver o problema antes de o knob voltar ao padrão", integer=True),
+    "tuner.blocked_hours": KnobSpec(24, "horas em que um sentido que não resolveu fica fechado para o knob"),
     "tuner.min_rounds": KnobSpec(4, "rodadas jogadas com o valor atual de um knob antes de ele poder mudar de novo", integer=True),
     "absence.min_minutes": KnobSpec(60, "minutos sem rodada que contam como ausência do bot"),
     "absence.recall_hours": KnobSpec(2, "horas em que os agentes ainda veem o resumo da última ausência"),
