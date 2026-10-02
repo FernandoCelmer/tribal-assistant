@@ -16,20 +16,20 @@ from tribal_assistant.core.agents.knobs import Knobs
 from tribal_assistant.core.models.lesson import Lesson
 from tribal_assistant.core.repositories.lessons import LessonRepository
 
-NUMBER = re.compile(r"-?\d[\d.]*")
-RECRUITING = re.compile(r"recrut|aceitamos|procuramos|vagas abertas|aberta a novos|candidat", re.I)
+NUMBER = re.compile(r"-?\d[\d.,]*")
+RECRUITING = re.compile(r"recrut|aceitamos|procuramos|vagas abertas|aberta a novos|candidat|junte-se agora", re.I)
 CLOSED = re.compile(r"não aceitamos|nao aceitamos|fechad[ao] para|sem vagas|apenas convidados", re.I)
-POINTS = ("Pontos", "Pontuação")
-MEMBERS = ("Membros",)
+POINTS = ("Pontos", "Pontuação", "Total de pontos")
+MEMBERS = ("Número de membros", "Membros")
 FINDINGS_KEPT = 40
 
 
 def number(text: Any) -> int | None:
-    match = NUMBER.search(str(text or ""))
+    match = NUMBER.search(re.sub(r"(?<=\d)\s*([.,])\s*(?=\d)", r"\1", str(text or "")))
     if not match:
         return None
     try:
-        return int(match.group().replace(".", ""))
+        return int(match.group().replace(".", "").replace(",", ""))
     except ValueError:
         return None
 

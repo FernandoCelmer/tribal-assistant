@@ -15,6 +15,16 @@ def test_numbers_read_like_the_game_writes_them() -> None:
     assert number("12.345") == 12345
     assert number("Rank 7") == 7
     assert number("") is None
+    assert number("53 . 382") == 53382
+    assert number("10,553") == 10553
+
+
+def test_the_real_tribe_page_reads_members_and_open_door() -> None:
+    page = Sighting("info_ally", {"id": "1"}, "tribo [OMG]", {"Número de membros": "42", "Total de pontos": "53 . 382"}, [], "Propriedades Junte-se agora! Descrição")
+
+    found = SightingBook.findings(page, {}, 0, Knobs())[0]
+
+    assert found.data["members"] == 42 and found.data["recruiting"]
 
 
 def test_a_neighbour_who_took_a_village_is_flagged_expanding() -> None:
