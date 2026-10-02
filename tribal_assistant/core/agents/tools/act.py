@@ -826,8 +826,8 @@ class ApplyToTribe(AgentTool):
             return ToolOutcome(True, f"(simulação) candidatar à tribo {ally_id}")
 
         result = await box.actions.diplomacy.apply(box.ctx.game_id, ally_id, text)
-        if result.ok:
-            await SocialLedger(box.session).set_application(ally_id, tag, "pendente")
+        if result.ok or (result.data or {}).get("gone"):
+            await SocialLedger(box.session).set_application(ally_id, tag, "pendente" if result.ok else "inexistente")
         return ToolOutcome(result.ok, result.detail, result.data | {"text": text})
 
 

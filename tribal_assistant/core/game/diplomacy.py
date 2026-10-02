@@ -29,6 +29,9 @@ MENTORS_JS = """() => [...document.querySelectorAll('a[href*="action=accept_ment
 })"""
 
 
+GONE = "Tribo não encontrada"
+GONE_TEXT = "a tribo não existe mais"
+
 class Diplomacy:
     def __init__(self, actions: GameActions) -> None:
         self.actions = actions
@@ -60,7 +63,10 @@ class Diplomacy:
     async def apply(self, village_id: str, ally_id: str, text: str) -> ActionResult:
         async with game_session.lock:
             page = await self.actions._in_game(village_id, "info_ally", mode="apply", id=ally_id)
-            self.actions._capture(await page.content(), "tribe_apply")
+            html = await page.content()
+            self.actions._capture(html, "tribe_apply")
+            if GONE in html:
+                return ActionResult(False, "apply_to_tribe", GONE_TEXT, {"gone": True})
 
             field = page.locator("form textarea:visible").first
             if not await field.count():
