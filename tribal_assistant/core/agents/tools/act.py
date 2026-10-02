@@ -923,8 +923,8 @@ class AcceptMarketOffer(AgentTool):
 class CreateMarketOffer(AgentTool):
     name = "create_market_offer"
     description = (
-        "Cria uma oferta própria no mercado: dá `amount` de `sell` e pede `buy` na proporção aprendida (knob "
-        "market.ask_ratio, dentro da faixa do mundo). Prende um comerciante até alguém aceitar. Recusado se esvaziar o recurso oferecido."
+        "Cria uma oferta própria no mercado na proporção 1:1 (a única permitida): dá `amount` de `sell` e pede "
+        "o mesmo de `buy`. Prende um comerciante até alguém aceitar. Recusado se esvaziar o recurso oferecido."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
@@ -952,7 +952,7 @@ class CreateMarketOffer(AgentTool):
         if box.dry_run:
             return ToolOutcome(True, f"(simulação) oferta {amount} {sell} por {amount} {buy}")
 
-        result = await box.actions.create_offer(box.ctx.game_id, sell, amount, buy, int(args.get("max_hours", 5)), knob(box, "market.ask_ratio"))
+        result = await box.actions.create_offer(box.ctx.game_id, sell, amount, buy, int(args.get("max_hours", 5)))
         return ToolOutcome(result.ok, result.detail, result.data)
 
 
