@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Tribal Wars assistant: account sync, build advisor, farm assistant, world map search — CLI, Python library and web dashboard."
 requires-python = ">=3.12"
 readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Fernando Celmer", email = "fernandocelmer@gmail.com" }]
 keywords = [
     "tribal-wars", "tribalwars", "guerra-tribal", "die-staemme", "browser-game",
@@ -15,6 +16,7 @@ classifiers = [
     "Environment :: Web Environment",
     "Framework :: FastAPI",
     "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
