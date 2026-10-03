@@ -165,3 +165,11 @@ def test_recruits_by_the_routine_between_rounds_count_as_recruiting() -> None:
     recruits = [(1, start + timedelta(minutes=15)), (1, start + timedelta(minutes=29))]
 
     assert Tuner.stalled(rounds, recruits) == 0.5
+
+
+def test_a_cooldown_that_keeps_finding_nothing_may_keep_growing() -> None:
+    walk = [{"at": "2026-10-01T10:00", "from": 1.0, "to": 1.15, "why": "nada"}] * 8
+
+    value, _, blocked = Tuner.brake("cooldown.relic", 2.0, 2.3, "equip_relic sem nada a fazer", walk, Knobs())
+
+    assert value == 2.3 and blocked == 0

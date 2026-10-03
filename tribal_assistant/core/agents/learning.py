@@ -48,8 +48,9 @@ class LessonBook:
         if row is not None:
             return f"RECUSADO: aprendido — {action} falhou {row.failed}x com os mesmos argumentos: {row.text[:120]}"
 
-        row = await self.repo.recent_failure(key, round(knobs.get("learning.requirement_hours") * 60), 1)
-        if row is not None and REQUIREMENT.search(row.text or ""):
+        row = await self.repo.get(key)
+        window = timedelta(hours=knobs.get("learning.requirement_hours") * max(1, row.failed if row else 1))
+        if row is not None and row.failed and REQUIREMENT.search(row.text or "") and datetime.now(UTC).replace(tzinfo=None) - row.last_seen < window:
             return f"RECUSADO: aprendido — o jogo pede um requisito que ainda falta: {row.text[:120]}"
 
         return None

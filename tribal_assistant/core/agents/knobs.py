@@ -337,7 +337,8 @@ class Tuner:
     def brake(name: str, current: float, value: float, why: str, history: list[dict[str, Any]], knobs: Knobs) -> tuple[float, str, int] | None:
         """A knob that kept moving one way while its problem stayed is not the fix: back to the default, and that way stays shut for a while."""
         direction = (value > current) - (value < current)
-        if not direction:
+        rule = Knobs.SPECS[name].rule
+        if not direction or (direction > 0 and getattr(rule, "steady_up", False)):
             return value, why, 0
 
         default = Knobs.SPECS[name].default

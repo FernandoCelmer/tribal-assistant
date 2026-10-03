@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 
 from tribal_assistant.core.agents.learning import LessonBook
@@ -31,6 +33,20 @@ async def test_a_missing_requirement_blocks_after_one_failure(session):
 
     assert "requisito" in (await book.blocked("use_item", args) or "")
     assert await book.blocked("use_item", {"key": "1001_0"}) is None
+
+
+@pytest.mark.asyncio
+async def test_a_requirement_refused_again_and_again_waits_longer_each_time(session):
+    book = LessonBook(session)
+    args = {"key": "2001_0"}
+    for _ in range(4):
+        await book.action("steward", "use_item", args, False, "Paladino deve ter pelo menos o nível 8.")
+
+    row = await LessonRepository(session).get(f"attempt:{LessonBook.signature('use_item', args)}")
+    row.last_seen = row.last_seen - timedelta(hours=30)
+    await session.commit()
+
+    assert "requisito" in (await book.blocked("use_item", args) or "")
 
 
 @pytest.mark.asyncio

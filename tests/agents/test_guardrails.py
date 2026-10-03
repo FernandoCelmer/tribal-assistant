@@ -70,3 +70,11 @@ async def test_dodge_ignores_the_raid_limits_only_with_an_attack_coming(session:
     ctx.commands = [{"direction": "in", "kind": "attack"}]
     assert await guard.check_attack(ctx, "515|500", {"spear": 10}, dodge=True) is None
     assert "limite" in await guard.check_attack(ctx, "515|500", {"spear": 10})
+
+
+def test_the_reserve_never_locks_more_than_an_hour_of_production(session: AsyncSession) -> None:
+    ctx = context(stock=1500, storage=14670)
+    ctx.village.wood_prod = ctx.village.clay_prod = ctx.village.iron_prod = 500
+
+    assert Guardrails(session, AgentSettings()).reserve(ctx) == 500
+    assert Guardrails(session, AgentSettings()).plan_recruit(ctx, "spear", 50).count > 0

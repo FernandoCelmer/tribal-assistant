@@ -37,7 +37,10 @@ class Guardrails:
         self.repo = AgentRepository(session)
 
     def reserve(self, ctx: VillageContext) -> int:
-        return int(ctx.village.storage * ctx.policy.resource_reserve)
+        """A share of the storage, but never more than a few hours of production: a big storage must not lock a small stock."""
+        v = ctx.village
+        production = max(v.wood_prod, v.clay_prod, v.iron_prod) * knob(ctx, "reserve.production_hours")
+        return int(min(v.storage * ctx.policy.resource_reserve, production)) if production > 0 else int(v.storage * ctx.policy.resource_reserve)
 
     def check_upgrade(self, ctx: VillageContext, building: str) -> str | None:
         current = ctx.building(building)

@@ -69,6 +69,7 @@ def either(*rules: Rule) -> Rule:
                 return result
         return None
 
+    rule.steady_up = any(getattr(candidate, "steady_up", False) for candidate in rules)
     return rule
 
 
@@ -85,6 +86,7 @@ def cooldown(action: str) -> Rule:
             return -1, f"{action} encontrou trabalho em {1 - empty:.0%} das tentativas"
         return None
 
+    rule.steady_up = True
     return rule
 
 
