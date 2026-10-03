@@ -9,6 +9,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-panel-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![MCP](https://img.shields.io/badge/MCP-server-8A2BE2)](https://modelcontextprotocol.io/)
+[![M8ven Score](https://m8ven.ai/badge/mcp/fernandocelmer/tribal-assistant)](https://m8ven.ai/mcp/fernandocelmer/tribal-assistant?s=readme)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-FE5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
 
 **Tribal Assistant** is an open-source Python assistant and AI bot for the browser strategy game **Tribal Wars** (Guerra Tribal, Die Stämme, Plemiona, Tribalwars). It plays your accounts through a real browser session, like a person would: village agents decide builds, troops, raids, scavenging, research, trades, quests, the event forge, tribe, friends and mentor, while a coordinator weighs their proposals, learns from the outcomes and tunes its own numbers. Everything they see and decide is stored in the database (SQLite or PostgreSQL) and shown in a Next.js panel that works on desktop and phone, plus a live overlay for streaming the bot on Twitch or YouTube.
